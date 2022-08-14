@@ -1,20 +1,35 @@
 {
-  "name": "web-blog",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
-  },
-  "dependencies": {
-    "next": "12.2.4",
-    "react": "18.2.0",
-    "react-dom": "18.2.0"
-  },
-  "devDependencies": {
-    "eslint": "8.21.0",
-    "eslint-config-next": "12.2.4"
-  }
+    "name": "web-blog",
+    "version": "0.1.0",
+    "private": true,
+    "scripts": {
+        "dev": "next dev",
+        "build": "next build",
+        "start": "export PORT=8888 && next start",
+        "lint": "next lint",
+        "analyze": "cross-env ANALYZE=true next build",
+        "analyze:server": "cross-env BUNDLE_ANALYZE=server next build",
+        "analyze:browser": "cross-env BUNDLE_ANALYZE=browser next build"
+    },
+    "dependencies": {
+        "@ant-design/icons": "^4.7.0",
+        "@next/bundle-analyzer": "^12.2.5",
+        "antd": "^4.22.4",
+        "cross-env": "^7.0.3",
+        "github-markdown-css": "^5.1.0",
+        "gray-matter": "^4.0.3",
+        "next": "12.2.4",
+        "next-images": "^1.8.4",
+        "react": "18.2.0",
+        "react-dom": "18.2.0",
+        "react-markdown": "^8.0.3"
+    },
+    "devDependencies": {
+        "autoprefixer": "^10.4.8",
+        "eslint": "8.21.0",
+        "eslint-config-next": "12.2.4",
+        "next-bundle-analyzer": "^0.6.4",
+        "postcss": "^8.4.16",
+        "tailwindcss": "^3.1.8"
+    }
 }
