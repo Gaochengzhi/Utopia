@@ -1,26 +1,74 @@
-html,
-body {
-  padding: 0;
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
-    Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.none{
+    visibility:hidden;
+}
+.main{
+    margin-top: 4rem;
+    -webkit-overflow-scrolling:touch
+}
+.myblur {
+    backdrop-filter: blur(50px);
+}
+h2, h3 {
+    scroll-margin-top: 16px;
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
+/* Safari-only */
+
+/* .svg{
+
+    
+
+} */
+.hidetoc{
+    @apply fixed left-2 top-[6rem] w-[19rem] py-3 border-gray-600 bg-white border-2 border-dashed h-[60vh]  overflow-scroll transition-all duration-150 ease-in lg:mt-5 z-50
+}
+.navbar {
+	position: sticky;
+	top: 6rem;
+    bottom: 2rem;
+	align-self: start;
 }
 
-* {
-  box-sizing: border-box;
+
+
+.linkable {
+    @apply focus:scale-110 focus:text-black hover:text-black
+}
+.gradient {
+    @apply rounded-full border border-4 border-gray-400 p-1;
+    /* linear-gradient:(#e66465, #319654); 模拟渐变边框 */
+    /* background-clip: padding-box, border-box;
+    background-origin: border-box; */
+}
+@media (min-width: 968px) {
+    .mdnav {
+        position: sticky;
+        top: 4rem;
+        align-self: start; 
+    }
+}
+.jobs{
+    @apply hover:scale-105 hover:text-blue-400 transition-all ease-in
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
-  body {
-    color: white;
-    background: black;
-  }
+.mytag{
+    @apply m-1 rounded-full border  shadow-sm py-[1px]  text-white px-[8px]
+}
+.ant-tree-node-content-wrapper {
+    font-size: 1.05rem/* 18px */;
+    line-height: 1.75rem/* 28px */;
+}
+.ant-tree-title{
+    @apply m-1
+}
+.clickable{
+    @apply hover:scale-110 transition-all ease-in
+}
+
+.firstT:first-child{
+    @apply text-lg text-gray-500 font-semibold border-b-2 border-dashed p-0 pb-2 mb-2 border-gray-300
 }
