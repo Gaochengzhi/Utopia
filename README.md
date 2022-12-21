@@ -7,9 +7,8 @@
 * Once installed, never bother to upload&Synic. Everything works automatically backside.
 * Full bolg features supported: tree file classification, search, hierarchical directory……
 
-![IMG_5230](file:///Users/kounarushi/mycode/web-blog/public/.pic/IMG_5230.JPEG)
-
-<img src="file:///Users/kounarushi/mycode/web-blog/public/.pic/IMG_5231.JPEG" alt="IMG_5231" style="zoom:50%;" />
+![](public/IMG_5230.JPEG)
+![](public/IMG_5231.JPEG)
 
 
 
