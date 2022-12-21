@@ -2,17 +2,26 @@
 @tailwind components;
 @tailwind utilities;
 
-.none{
-    visibility:hidden;
+.none {
+    visibility: hidden;
 }
-.main{
+
+.main {
     margin-top: 4rem;
-    -webkit-overflow-scrolling:touch
+    -webkit-overflow-scrolling: touch
 }
+
+.pnav {
+    background: #0000004a;
+    backdrop-filter: blur(10px);
+}
+
 .myblur {
     backdrop-filter: blur(50px);
 }
-h2, h3 {
+
+h2,
+h3 {
     scroll-margin-top: 16px;
 }
 
@@ -23,14 +32,15 @@ h2, h3 {
     
 
 } */
-.hidetoc{
-    @apply fixed left-2 top-[6rem] w-[19rem] py-3 border-gray-600 bg-white border-2 border-dashed h-[60vh]  overflow-scroll transition-all duration-150 ease-in lg:mt-5 z-50
+.hidetoc {
+    @apply fixed right-2 top-[6rem] w-[19rem] py-3 border-gray-600 bg-white border-2 border-dashed h-[60vh] overflow-scroll transition-all duration-150 ease-in lg:mt-5 z-50
 }
+
 .navbar {
-	position: sticky;
-	top: 6rem;
+    position: sticky;
+    top: 6rem;
     bottom: 2rem;
-	align-self: start;
+    align-self: start;
 }
 
 
@@ -38,37 +48,109 @@ h2, h3 {
 .linkable {
     @apply focus:scale-110 focus:text-black hover:text-black
 }
+
 .gradient {
-    @apply rounded-full border border-4 border-gray-400 p-1;
+    @apply rounded-full border-4 border-gray-400 p-1;
     /* linear-gradient:(#e66465, #319654); 模拟渐变边框 */
     /* background-clip: padding-box, border-box;
     background-origin: border-box; */
 }
+
 @media (min-width: 968px) {
     .mdnav {
         position: sticky;
         top: 4rem;
-        align-self: start; 
+        align-self: start;
     }
 }
-.jobs{
+
+.jobs {
     @apply hover:scale-105 hover:text-blue-400 transition-all ease-in
 }
 
-.mytag{
-    @apply m-1 rounded-full border  shadow-sm py-[1px]  text-white px-[8px]
+.mytag {
+    @apply m-1 rounded-full border shadow-sm py-[1px] text-white px-[8px]
 }
+
 .ant-tree-node-content-wrapper {
-    font-size: 1.05rem/* 18px */;
-    line-height: 1.75rem/* 28px */;
+    font-size: 1.05rem
+        /* 18px */
+    ;
+    line-height: 1.75rem
+        /* 28px */
+    ;
 }
-.ant-tree-title{
+
+.ant-tree-title {
     @apply m-1
 }
-.clickable{
+
+.clickable {
     @apply hover:scale-110 transition-all ease-in
 }
 
-.firstT:first-child{
-    @apply text-lg text-gray-500 font-semibold border-b-2 border-dashed p-0 pb-2 mb-2 border-gray-300
+.firstT:first-child {
+    @apply text-2xl text-gray-500 font-semibold pb-2 mb-2 border-gray-300
+}
+
+.pclick {
+    @apply cursor-pointer hover:text-white transition-all ease-in duration-150
+}
+
+.picon {
+    position: relative;
+    width: 100%;
+    padding-top: 125%;
+    /* 16:9 Aspect Ratio */
+}
+
+.piconsq {
+    position: relative;
+    width: 100%;
+    padding-top: 100%;
+    /* 16:9 Aspect Ratio */
+}
+
+.picinside {
+    position: absolute;
+    top: 0;
+}
+
+.mylist ul
+{
+    list-style: initial;
+    margin: initial;
+    padding: 0 0 0 40px;
+}
+.mylist ul li
+{
+    display: list-item;
+}
+
+.mylist ol
+{
+    list-style-type:decimal;
+    margin: initial;
+    padding: 0 0 0 40px;
+}
+
+.mylist ol li
+{
+    display: list-item;
+}
+
+.mylist pre {
+    margin-bottom: 2em !important;
+    padding: 0em !important;
+    padding-left: 1ch !important;
+    border-radius: 3px !important;
+    background: rgb(30, 30, 30) !important;
+}
+
+.mynav {
+    background: rgba(255, 255, 255, 0.587);
+}
+
+.search_bar {
+   @apply text-base bg-white md:min-w-[24rem] max-w-[34rem] p-2 border absolute top-10 left-2 rounded shadow-lg z-10
 }

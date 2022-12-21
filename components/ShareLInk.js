@@ -6,7 +6,7 @@ import {
 } from "@ant-design/icons"
 import { Modal } from "antd"
 import { useState } from "react"
-export function ShareLInk() {
+export default function ShareLInk() {
   const [isModalVisible, setIsModalVisible] = useState(false)
   const handleOk = () => {
     setIsModalVisible(false)
@@ -16,7 +16,7 @@ export function ShareLInk() {
     setIsModalVisible(false)
   }
 
-  const showModal = () => {
+  function showModal() {
     setIsModalVisible(true)
   }
   const goToUrl = (index) => {

@@ -42,3 +42,5 @@ export const deleteTree = (data, callbacki = (i) => i.title === "x") => {
   })
   return data
 }
+export const firstUpperCase = ([first, ...rest]) =>
+  first.toUpperCase() + rest.join("")

@@ -1,11 +1,13 @@
+import { useRouter } from "next/router"
 import { useState, useEffect } from "react"
+
 export function Toc({}) {
   const [toc, setToc] = useState([])
+  const router = useRouter()
   function getHeadingList(list) {
     if (!Array.isArray(list)) {
       return
     }
-
     const reg = /h(\d)/ // 使用正则来匹配标题节点
     const levelStack = [] // 记录标题层级
     const prefixStack = [] // 记录前缀
@@ -80,17 +82,17 @@ export function Toc({}) {
     setToc(tree)
 
     // console.log(Array.from(document.querySelectorAll("h2,h3,h4,h5")))
-  }, [])
+  }, [router.asPath])
   return (
     <>
-      <div className="lg:h-[80vh] h-[60vh] overflow-scroll lg:m-4 mb-4 p-3 lg:w-[19rem] border-2 border-gray-300 border-dashed ">
+      <div className="lg:h-[88vh] overflow-y-scroll mb-4 p-3 lg:min-w-[18rem] lg:max-w-[18rem] border-x-2 border-gray-300 border-dashed ">
         {toc.map((o) => (
           <div
             onClick={(e) => handleClick(e, o)}
             key={o.id}
-            className="flex text-base mt-1 text-gray-500 hover:text-black transition-colors ease-in firstT  cursor-pointer"
+            className="flex text-base mt-1 text-gray-500 hover:text-black overflow-ellipsis transition-colors ease-in firstT  cursor-pointer"
           >
-            <div className="invisible ">{times("iii", o.indent)} </div>
+            <div className="invisible ">{times("iiii", o.indent)} </div>
             <div>{o.title}</div>
           </div>
         ))}

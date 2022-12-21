@@ -1,4 +1,4 @@
-import { ShareLInk } from "/components/ShareLInk"
+import ShareLInk from "/components/ShareLInk"
 import { Divider } from "antd"
 import React from "react"
 export function Footer({}) {

@@ -1,3 +1,4 @@
+import Link from "next/link"
 import React from "react"
 export function Info({}) {
   return (
@@ -21,7 +22,11 @@ export function Info({}) {
             </div>
             <div className="jobs">🌈 瓦梁湖生态观察小队副队长</div>
             <div className="jobs">👨🏻‍💻 Software Engnieer</div>
-            <div className="jobs">📸 Photographer</div>
+            <div className="jobs">
+              <Link href="/photographer">
+                <a className="text-gray-400">📸 Photographer</a>
+              </Link>
+            </div>
           </div>
           <div className="text-blue-400 mt-2 font-semibold flex flex-wrap max-w-[48rem]">
             <div className="mytag clickable bg-orange-600"> Unix/Linux </div>
