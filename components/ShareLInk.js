@@ -6,6 +6,7 @@ import {
 } from "@ant-design/icons"
 import { Modal } from "antd"
 import { useState } from "react"
+const config = require('../config.local.js')
 export default function ShareLInk() {
   const [isModalVisible, setIsModalVisible] = useState(false)
   const handleOk = () => {
@@ -25,11 +26,11 @@ export default function ShareLInk() {
       return
     }
     const urlList = [
-      "https://www.instagram.com/gaochengzhi1999/",
-      "https://github.com/Gaochengzhi",
-      "https://m.weibo.cn/profile/5637399935",
+      config.SOCIAL_LINKS.instagram,
+      config.SOCIAL_LINKS.github,
+      config.SOCIAL_LINKS.weibo,
       "#",
-      "https://www.douban.com/people/121879545",
+      config.SOCIAL_LINKS.douban,
     ]
     window.open(urlList[index], "_blank")
   }

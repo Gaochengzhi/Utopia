@@ -31,7 +31,7 @@ export default function PostList({ posts, rest }) {
                     <ReactMarkdown
                       className="markdown-body  p-4 mylist"
                       remarkPlugins={[remarkGfm, remarkMath]}
-                      rehypePlugins={[rehypeKatex, rehypeRaw]}
+                      rehypePlugins={[[rehypeKatex, { strict: false }], rehypeRaw]}
                       components={{
                         pre: ({ node, inline, className, ...props }) => (
                           <pre className={className} {...props} />

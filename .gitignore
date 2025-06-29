@@ -5,7 +5,8 @@
 /.pnp
 .pnp.js
 /post
-/public
+/public/.pic
+/public/photography
 # testing
 /coverage
 
@@ -28,6 +29,7 @@ yarn-error.log*
 
 # local env files
 .env*.local
+config.local.js
 
 # vercel
 .vercel
