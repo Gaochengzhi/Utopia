@@ -1,4 +1,4 @@
-import PostList from "/components/main/PostList"
+import WaterfallCards from "/components/main/WaterfallCards"
 import FileTree from "/components/main/FileTree"
 import { Info } from "/components/Info"
 import matter from "gray-matter"
@@ -10,9 +10,9 @@ import { readAllFile } from "/components/util/readAllfile"
 import Cookies from "js-cookie"
 const config = require('../config.local.js')
 
-export default function Home({ paths, posts, rest }) {
+export default function Home({ paths, posts }) {
     useEffect(() => {
-        // localStorage.setItem("paths", JSON.stringify(paths))
+        localStorage.setItem("paths", JSON.stringify(paths))
         Cookies.set("refreshed", "true", { expires: 1 })
         if (!Cookies.get("refreshed")) {
             localStorage.setItem("refreshed", "true")
@@ -27,22 +27,87 @@ export default function Home({ paths, posts, rest }) {
                 <meta name="viewport" content="initial-scale=1.0, width=device-width" />
             </Head>
             <Navbar paths={paths} state={"index"} />
-            <div className="main  lg:pl-16">
-                <div className="flex flex-col items-start  lg:flex-row ">
-                    {/* left down */}
-                    <div className="flex lg:flex-col flex-wrap mdnav items-center justify-around  w-full lg:w-fit">
-                        <div className="flex  flex-col items-center">
-                            <div className="flex flex-col items-center space-y-5  m-6  w-48">
-                                <Info />
-                            </div>
+            
+            {/* 全新的布局：侧边栏 + 瀑布流卡片 */}
+            <div className="relative pt-8">
+                {/* 左侧边栏 - 固定定位 */}
+                <div className="fixed left-0 top-16 h-[calc(100vh-4rem)] w-80 z-30 hidden lg:block">
+                    <div className="h-full p-6 bg-white border-r border-gray-200 shadow-lg">
+                        <div className="flex flex-col items-center space-y-6 mb-8">
+                            <Info />
                         </div>
-                        <div className="pt-4">
-                            <div className="w-[94vw] max-h-[430px] border-2 border-dashed border-gray-300  p-3 overflow-scroll lg:max-h-[45vh] bg-white  items-center  sm:w-[22rem] lg:w-[18rem] rounded-sm">
-                                <FileTree paths={paths} />
+                        <div className="bg-white rounded-2xl p-4 max-h-[calc(100vh-20rem)] overflow-y-auto border border-gray-200">
+                            <FileTree paths={paths} />
+                        </div>
+                    </div>
+                </div>
+
+                {/* 移动端布局 */}
+                <div className="lg:hidden mt-16">
+                    {/* 个人信息容器 - 添加响应式宽度控制 */}
+                    <div className="bg-white border-b border-gray-200 shadow-sm">
+                        <div className="flex justify-center p-4">
+                            <div className="w-full max-w-lg">
+                                {/* 头像和基本信息 */}
+                                <div className="flex items-center space-x-4 mb-4">
+                                    <div className="flex justify-center items-center rounded-full p-1 border-gray-400 border-dotted border-2 shadow-md">
+                                        <img src="/icon.jpeg" alt="" className="w-16 h-16 rounded-full object-cover" />
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <div className="text-xl font-light">@Taitan_Pascal</div>
+                                        
+                                        {/* 彩色点击提示 */}
+                                        <div className="text-base font-serif flex items-center mt-1">
+                                            <div className="inline m-[-1px] text-purple-600 text-sm">C</div>
+                                            <div className="inline m-[-1px] text-orange-600 text-sm">l</div>
+                                            <div className="inline m-[-1px] text-yellow-600 text-sm">i</div>
+                                            <div className="inline m-[-1px] text-green-600 text-sm">c</div>
+                                            <div className="inline m-[-1px] text-blue-600 text-sm">k</div>
+                                            <div className="inline text-lg ml-1">👇</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* 职业描述 */}
+                                <div className="text-gray-500 text-sm space-y-1 mb-3">
+                                    <div className="jobs cursor-pointer">🌈 瓦梁湖生态观察小队副队长</div>
+                                    <div className="jobs cursor-pointer">👨🏻‍💻 Software Engineer</div>
+                                    <div className="jobs cursor-pointer">📸 Photographer</div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <PostList posts={posts} rest={rest} />
+
+                    {/* 标签胶囊 */}
+                    <div className="bg-white border-b border-gray-200 px-4 py-3">
+                        <div className="flex justify-center">
+                            <div className="w-full max-w-lg">
+                                <div className="flex flex-wrap justify-center gap-2">
+                                    <div className="mytag bg-orange-600 text-white text-xs px-3 py-1 rounded-full">Unix/Linux</div>
+                                    <div className="mytag bg-purple-500 text-white text-xs px-3 py-1 rounded-full">film shoot</div>
+                                    <div className="mytag bg-sky-500 text-white text-xs px-3 py-1 rounded-full">React</div>
+                                    <div className="mytag bg-gray-800 text-white text-xs px-3 py-1 rounded-full">Nextjs</div>
+                                    <div className="mytag bg-green-600 text-white text-xs px-3 py-1 rounded-full">nvim</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 目录 */}
+                    <div className="bg-white border-b border-gray-200">
+                        <div className="flex justify-center p-4">
+                            <div className="w-full max-w-lg">
+                                <div className="bg-white rounded-lg border border-gray-200 p-3 max-h-60 overflow-y-auto">
+                                    <FileTree paths={paths} />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 主内容区域 - 瀑布流卡片 */}
+                <div className="lg:ml-80 pt-8">
+                    <WaterfallCards posts={posts} />
                 </div>
             </div>
         </>
@@ -51,7 +116,8 @@ export default function Home({ paths, posts, rest }) {
 
 export const getStaticProps = async () => {
     let infoArray = await readAllFile("post", (i) => i)
-    let posts = infoArray.SortedInfoArray.slice(0, 3).map((o) => {
+    // 获取所有文章而不是只有3篇，用于瀑布流显示
+    let posts = infoArray.SortedInfoArray.map((o) => {
         const fullpath = o.path
         const rawMarkdown = fs
             .readFileSync(fullpath)
@@ -64,9 +130,10 @@ export const getStaticProps = async () => {
                 config.IMAGE_SERVER_URL
             )
         const markDownWithoutYarm = matter(rawMarkdown)
+        // 增加预览内容长度以适应卡片显示
         o.content =
-            markDownWithoutYarm.content.length > 1024
-                ? markDownWithoutYarm.content.slice(0, 1023)
+            markDownWithoutYarm.content.length > 1500
+                ? markDownWithoutYarm.content.slice(0, 1500) + "..."
                 : markDownWithoutYarm.content
         return o
     })
@@ -75,7 +142,6 @@ export const getStaticProps = async () => {
         props: {
             paths: infoArray.InfoArray,
             posts,
-            rest: infoArray.SortedInfoArray,
         },
         revalidate: 1,
     }

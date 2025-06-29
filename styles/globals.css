@@ -154,3 +154,220 @@ h3 {
 .search_bar {
    @apply text-base bg-white md:min-w-[24rem] max-w-[34rem] p-2 border absolute top-10 left-2 rounded shadow-lg z-10
 }
+
+/* 瀑布流卡片样式 */
+.waterfall-container {
+  min-height: calc(100vh - 4rem);
+  background: #ffffff;
+  padding-top: 2rem;
+}
+
+.waterfall-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  grid-auto-rows: masonry;
+}
+
+/* 如果浏览器不支持masonry，使用JavaScript实现 */
+@supports not (grid-auto-rows: masonry) {
+  .waterfall-grid {
+    display: block;
+    columns: 3;
+    column-gap: 1.5rem;
+  }
+  
+  .waterfall-card {
+    display: inline-block;
+    width: 100%;
+    margin-bottom: 1.5rem;
+    break-inside: avoid;
+  }
+}
+
+@media (max-width: 1024px) and (min-width: 769px) {
+  .waterfall-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  @supports not (grid-auto-rows: masonry) {
+    .waterfall-grid {
+      columns: 2;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .waterfall-grid {
+    grid-template-columns: 1fr;
+    padding: 0 1rem;
+  }
+  
+  @supports not (grid-auto-rows: masonry) {
+    .waterfall-grid {
+      columns: 1;
+      column-gap: 0;
+    }
+  }
+  
+  .waterfall-container {
+    padding-top: 1rem;
+  }
+}
+
+.waterfall-card {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.95);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.waterfall-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+.card-content {
+  position: relative;
+  z-index: 2;
+  padding: 1.5rem;
+}
+
+.card-header {
+  margin-bottom: 1rem;
+}
+
+.card-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.card-body {
+  margin-bottom: 1rem;
+}
+
+.markdown-preview {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: #4b5563;
+  overflow: hidden;
+  position: relative;
+}
+
+.markdown-preview::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  background: linear-gradient(transparent, rgba(255, 255, 255, 0.95));
+}
+
+.markdown-preview h1, .markdown-preview h2, .markdown-preview h3 {
+  margin: 0.5rem 0;
+  color: #374151;
+}
+
+.card-h1 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0.5rem 0;
+}
+
+.card-h2 {
+  font-size: 1rem;
+  font-weight: 500;
+  margin: 0.5rem 0;
+}
+
+.card-h3 {
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin: 0.5rem 0;
+}
+
+.card-image {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 0.5rem 0;
+}
+
+.inline-code {
+  background: rgba(99, 102, 241, 0.1);
+  color: #4f46e5;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(156, 163, 175, 0.2);
+}
+
+.read-more-arrow {
+  font-size: 1.2rem;
+  color: #6366f1;
+  transition: transform 0.2s ease;
+}
+
+.waterfall-card:hover .read-more-arrow {
+  transform: translateX(4px);
+}
+
+.card-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.02);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 1;
+  border-radius: 16px;
+}
+
+.waterfall-card:hover .card-overlay {
+  opacity: 1;
+}
+
+/* JavaScript瀑布流样式 */
+.waterfall-grid-js {
+  /* 样式通过内联样式控制 */
+}
+
+.waterfall-column {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+}
+
+@media (max-width: 768px) {
+  .waterfall-grid-js {
+    padding: 0 1rem !important;
+  }
+}
