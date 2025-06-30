@@ -1,8 +1,14 @@
 import Link from "next/link"
 import React from "react"
+import ShareLInk from "./ShareLInk"
 export function Info({}) {
   return (
     <>
+      {/* 社交媒体链接 */}
+      <div className="flex justify-center items-center space-x-4 mb-4">
+        <ShareLInk />
+      </div>
+      
       <div className="">
         <div className="flex justify-center items-center rounded-full p-1  border-gray-400 border-dotted border-2 shadow-md">
           <img src="/icon.jpeg" alt="" className="w-28 rounded-full" />

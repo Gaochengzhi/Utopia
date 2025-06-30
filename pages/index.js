@@ -1,6 +1,7 @@
 import WaterfallCards from "/components/main/WaterfallCards"
 import FileTree from "/components/main/FileTree"
 import { Info } from "/components/Info"
+import ShareLInk from "/components/ShareLInk"
 import matter from "gray-matter"
 import Head from "next/head"
 import Navbar from "/components/Navbar"
@@ -48,6 +49,11 @@ export default function Home({ paths, posts }) {
                     <div className="bg-white border-b border-gray-200 shadow-sm">
                         <div className="flex justify-center p-4">
                             <div className="w-full max-w-lg">
+                                {/* 社交媒体链接 */}
+                                <div className="flex justify-center items-center space-x-4 mb-4">
+                                    <ShareLInk />
+                                </div>
+
                                 {/* 头像和基本信息 */}
                                 <div className="flex items-center space-x-4 mb-4">
                                     <div className="flex justify-center items-center rounded-full p-1 border-gray-400 border-dotted border-2 shadow-md">

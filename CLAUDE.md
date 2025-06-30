@@ -80,6 +80,12 @@ npm run analyze:browser # Browser bundle
 ### Cookie-Based Refresh System
 The app uses a cookie-based system to handle refresh scenarios across different page types (`refreshed`, `refreshed_slug`, `refreshedP`).
 
+### Image Serving System
+- **Dynamic Image API**: `/api/images/[...path].js` serves images from `public/.pic/` with caching and security
+- **URL Rewrites**: `/.pic/*` automatically redirects to `/api/images/*` via next.config.js
+- **Hot Reload Support**: New images uploaded via `imgUpload.sh` are immediately available without rebuild
+- **Unified Configuration**: All environments use `/.pic/` paths, eliminating external server dependency
+
 ### Search Functionality
 - **Backend API**: `/api/search` endpoint handles full-text search across markdown files
 - **Security features**: Input validation, character filtering, result limiting
@@ -91,3 +97,31 @@ The app uses a cookie-based system to handle refresh scenarios across different 
 - **Ant Design** components for UI elements
 - **GitHub Markdown CSS** for content styling
 - Custom CSS classes for photography layout (`bg-black` theme)
+
+## Development Workflow
+
+### Git Commit Guidelines
+**重要原则**: 每次完成一个重大功能都要及时commit
+
+重大功能包括但不限于：
+- 新增API路由或核心功能
+- 重构系统架构
+- 修复关键bug
+- 优化性能或用户体验
+- 更新依赖或配置
+
+**Commit信息格式**：
+- 使用英文描述主要变更
+- 包含详细的变更列表
+- 说明解决的问题和影响
+
+**示例**：
+```
+Replace Python image server with Next.js API routes
+
+- Created /api/images/[...path].js to serve dynamic images
+- Added rewrites in next.config.js to redirect /.pic/* to API
+- Simplified config.local.js to use unified image path
+- Eliminated dependency on external Python server
+- Improved image serving with caching and security features
+```

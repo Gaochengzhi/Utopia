@@ -33,7 +33,13 @@ h3 {
 
 } */
 .hidetoc {
-    @apply fixed right-2 top-[6rem] w-[19rem] py-3 border-gray-600 bg-white border-2 border-dashed h-[60vh] overflow-scroll transition-all duration-150 ease-in lg:mt-5 z-50
+    @apply fixed right-2 top-[6rem] w-[19rem] py-4 px-3 h-[60vh] overflow-scroll lg:mt-5 z-50;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .navbar {
@@ -89,6 +95,43 @@ h3 {
     @apply hover:scale-110 transition-all ease-in
 }
 
+.compass-float {
+    @apply transition-all duration-300 ease-in-out;
+}
+
+.compass-icon-wrapper {
+    @apply relative rounded-full p-3 shadow-lg transition-all duration-300 ease-in-out;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(10px);
+}
+
+.compass-icon-wrapper:hover {
+    @apply scale-110 shadow-xl;
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    transform: rotate(15deg) scale(1.1);
+}
+
+.compass-icon {
+    @apply text-white transition-all duration-300 ease-in-out;
+}
+
+.compass-icon-wrapper:hover .compass-icon {
+    transform: rotate(-15deg);
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(100px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
 .firstT:first-child {
     @apply text-2xl text-gray-500 font-semibold pb-2 mb-2 border-gray-300
 }
@@ -116,26 +159,23 @@ h3 {
     top: 0;
 }
 
-.mylist ul
-{
+.mylist ul {
     list-style: initial;
     margin: initial;
     padding: 0 0 0 40px;
 }
-.mylist ul li
-{
+
+.mylist ul li {
     display: list-item;
 }
 
-.mylist ol
-{
-    list-style-type:decimal;
+.mylist ol {
+    list-style-type: decimal;
     margin: initial;
     padding: 0 0 0 40px;
 }
 
-.mylist ol li
-{
+.mylist ol li {
     display: list-item;
 }
 
@@ -152,222 +192,224 @@ h3 {
 }
 
 .search_bar {
-   @apply text-base bg-white md:min-w-[24rem] max-w-[34rem] p-2 border absolute top-10 left-2 rounded shadow-lg z-10
+    @apply text-base bg-white md:min-w-[24rem] max-w-[34rem] p-2 border absolute top-10 left-2 rounded shadow-lg z-10
 }
 
 /* 瀑布流卡片样式 */
 .waterfall-container {
-  min-height: calc(100vh - 4rem);
-  background: #ffffff;
-  padding-top: 2rem;
+    min-height: calc(100vh - 4rem);
+    background: #ffffff;
+    padding-top: 2rem;
 }
 
 .waterfall-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1.5rem;
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 1.5rem;
-  grid-auto-rows: masonry;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+    grid-auto-rows: masonry;
 }
 
 /* 如果浏览器不支持masonry，使用JavaScript实现 */
 @supports not (grid-auto-rows: masonry) {
-  .waterfall-grid {
-    display: block;
-    columns: 3;
-    column-gap: 1.5rem;
-  }
-  
-  .waterfall-card {
-    display: inline-block;
-    width: 100%;
-    margin-bottom: 1.5rem;
-    break-inside: avoid;
-  }
+    .waterfall-grid {
+        display: block;
+        columns: 3;
+        column-gap: 1.5rem;
+    }
+
+    .waterfall-card {
+        display: inline-block;
+        width: 100%;
+        margin-bottom: 1.5rem;
+        break-inside: avoid;
+    }
 }
 
 @media (max-width: 1024px) and (min-width: 769px) {
-  .waterfall-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  @supports not (grid-auto-rows: masonry) {
     .waterfall-grid {
-      columns: 2;
+        grid-template-columns: repeat(2, 1fr);
     }
-  }
+
+    @supports not (grid-auto-rows: masonry) {
+        .waterfall-grid {
+            columns: 2;
+        }
+    }
 }
 
 @media (max-width: 768px) {
-  .waterfall-grid {
-    grid-template-columns: 1fr;
-    padding: 0 1rem;
-  }
-  
-  @supports not (grid-auto-rows: masonry) {
     .waterfall-grid {
-      columns: 1;
-      column-gap: 0;
+        grid-template-columns: 1fr;
+        padding: 0 1rem;
     }
-  }
-  
-  .waterfall-container {
-    padding-top: 1rem;
-  }
+
+    @supports not (grid-auto-rows: masonry) {
+        .waterfall-grid {
+            columns: 1;
+            column-gap: 0;
+        }
+    }
+
+    .waterfall-container {
+        padding-top: 1rem;
+    }
 }
 
 .waterfall-card {
-  position: relative;
-  border-radius: 16px;
-  overflow: hidden;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  background: rgba(255, 255, 255, 0.95);
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background: rgba(255, 255, 255, 0.95);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .waterfall-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
 }
 
 .card-content {
-  position: relative;
-  z-index: 2;
-  padding: 1.5rem;
+    position: relative;
+    z-index: 2;
+    padding: 1.5rem;
 }
 
 .card-header {
-  margin-bottom: 1rem;
+    margin-bottom: 1rem;
 }
 
 .card-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #1f2937;
-  margin: 0;
-  line-height: 1.4;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 .card-body {
-  margin-bottom: 1rem;
+    margin-bottom: 1rem;
 }
 
 .markdown-preview {
-  font-size: 0.9rem;
-  line-height: 1.6;
-  color: #4b5563;
-  overflow: hidden;
-  position: relative;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: #4b5563;
+    overflow: hidden;
+    position: relative;
 }
 
 .markdown-preview::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 40px;
-  background: linear-gradient(transparent, rgba(255, 255, 255, 0.95));
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 40px;
+    background: linear-gradient(transparent, rgba(255, 255, 255, 0.95));
 }
 
-.markdown-preview h1, .markdown-preview h2, .markdown-preview h3 {
-  margin: 0.5rem 0;
-  color: #374151;
+.markdown-preview h1,
+.markdown-preview h2,
+.markdown-preview h3 {
+    margin: 0.5rem 0;
+    color: #374151;
 }
 
 .card-h1 {
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin: 0.5rem 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0.5rem 0;
 }
 
 .card-h2 {
-  font-size: 1rem;
-  font-weight: 500;
-  margin: 0.5rem 0;
+    font-size: 1rem;
+    font-weight: 500;
+    margin: 0.5rem 0;
 }
 
 .card-h3 {
-  font-size: 0.9rem;
-  font-weight: 500;
-  margin: 0.5rem 0;
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin: 0.5rem 0;
 }
 
 .card-image {
-  max-width: 100%;
-  height: auto;
-  border-radius: 8px;
-  margin: 0.5rem 0;
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin: 0.5rem 0;
 }
 
 .inline-code {
-  background: rgba(99, 102, 241, 0.1);
-  color: #4f46e5;
-  padding: 0.125rem 0.25rem;
-  border-radius: 0.25rem;
-  font-size: 0.875rem;
+    background: rgba(99, 102, 241, 0.1);
+    color: #4f46e5;
+    padding: 0.125rem 0.25rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
 }
 
 .card-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-top: 1rem;
-  border-top: 1px solid rgba(156, 163, 175, 0.2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(156, 163, 175, 0.2);
 }
 
 .read-more-arrow {
-  font-size: 1.2rem;
-  color: #6366f1;
-  transition: transform 0.2s ease;
+    font-size: 1.2rem;
+    color: #6366f1;
+    transition: transform 0.2s ease;
 }
 
 .waterfall-card:hover .read-more-arrow {
-  transform: translateX(4px);
+    transform: translateX(4px);
 }
 
 .card-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.02);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  z-index: 1;
-  border-radius: 16px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.02);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 1;
+    border-radius: 16px;
 }
 
 .waterfall-card:hover .card-overlay {
-  opacity: 1;
+    opacity: 1;
 }
 
 /* JavaScript瀑布流样式 */
 .waterfall-grid-js {
-  /* 样式通过内联样式控制 */
+    /* 样式通过内联样式控制 */
 }
 
 .waterfall-column {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  min-width: 0;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-width: 0;
 }
 
 @media (max-width: 768px) {
-  .waterfall-grid-js {
-    padding: 0 1rem !important;
-  }
+    .waterfall-grid-js {
+        padding: 0 1rem !important;
+    }
 }

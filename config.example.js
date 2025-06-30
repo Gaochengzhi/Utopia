@@ -17,7 +17,7 @@ const config = {
 
   // 社交媒体链接
   SOCIAL_LINKS: {
-    instagram: 'https://www.instagram.com/yourusername/',
+    twitter: 'https://x.com/yourusername',
     github: 'https://github.com/yourusername',
     weibo: 'https://m.weibo.cn/profile/yourweiboid',
     douban: 'https://www.douban.com/people/yourdoubanid'

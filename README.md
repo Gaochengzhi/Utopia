@@ -12,5 +12,7 @@
 
 
 
+## Development
 
+Next.js 12.2.4 with React 18.2.0
 

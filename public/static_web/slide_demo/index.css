@@ -1,0 +1,120 @@
+body,
+main {
+    height: 100vh;
+    width: 100vw;
+    margin: 0px;
+    background-color: black;
+}
+
+main {
+    background-image: url(http://74.48.115.131:5555/.pic/A6EA6E45-A264-4AA3-A77C-17978F611F2A_1_105_c.jpeg);
+    background-size: cover;
+    background-position: center 0%;
+    position: relative;
+    z-index: 2;
+}
+
+#nav-toggle {
+    height: 5rem;
+    width: 5rem;
+    position: fixed;
+    z-index: 3;
+    left: 50%;
+    bottom: 3rem;
+    transform: translateX(-50%);
+    background-color: rgb(182, 142, 113);
+    border: none;
+    border-radius: 5rem;
+    outline: none;
+    box-shadow: 0rem 0rem 4rem rgba(0 0 0/35%);
+    cursor: pointer;
+    transition: transform, backgroud-color;
+    transition-timing-function: ease;
+    transition-duration: 400ms;
+}
+
+#nav-toggle:hover {
+    transform: translateX(-50%) scale(1.04);
+}
+
+#nav-toggle:active {
+    transform: translateX(-50%) scale(0.96);
+}
+
+#nav-toggle>i {
+    position: absolute;
+    left: 59%;
+    top: 50%;
+    transform: translate(-50%, -50%) scale(0.9);
+    color: rgb(246, 231, 224);
+    font-size: 1.75rem;
+    opacity: 0;
+    transition: transform, opacity;
+    transition-timing-function: ease;
+    transition-duration: 400ms;
+}
+
+body[data-nav="true"]>main {
+    transform: translate(0, -50%);
+}
+
+main {
+    transition: transform 500ms cubic-bezier(.13, .52, .38, .97);
+}
+
+body[data-nav="true"]>#nav-toggle:hover>.close {
+    opacity: 1;
+    transform: translate(-80%, -50%) scale(1);
+}
+
+body:not([data-nav="true"])>#nav-toggle:hover>.open {
+    opacity: 1;
+    transform: translate(-80%, -50%) scale(1);
+}
+
+#nav-links>.nav-link {
+    text-decoration: none;
+}
+
+#nav-links>.nav-link>.nav-link-image {
+    width: max(20vw, 400px);
+    aspect-ratio: 1.8/1;
+    border-radius: 0.5rem;
+    margin-top: 0.75rem;
+    object-fit: cover;
+}
+
+#nav-links>.nav-link>.nav-link-label {
+    color: white;
+    font-size: 1.25rem;
+    margin: 0rem;
+    text-transform: uppercase;
+}
+
+nav {
+    height: 50vh;
+    width: 100%;
+    position: absolute;
+    left: 0px;
+    bottom: 0px;
+    z-index: 1;
+    overflow-x: scroll;
+}
+
+#nav-links {
+    display: flex;
+    gap: clamp(1rem, 2vw, 3rem);
+    padding: 0rem clamp(1rem, 2vw, 2rem);
+    margin-top: clamp(1rem, 2vw, 2rem);
+    transform: translateY(70%) scale(0.9);
+    transition: transform 500ms cubic-bezier(.13, .53, .38, .97);
+}
+
+body[data-nav="true"]>nav>#nav-links {
+    transform: translateY(0%) scale(1);
+}
+
+i {
+    font-family: sans-serif;
+    font-style: normal !important;
+}

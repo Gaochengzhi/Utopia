@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="index.css">
+    <title>slice_demo</title>
+</head>
+
+<script>
+    const toggleNav = () => {
+        document.body.dataset.nav = document.body.dataset.nav === "true" ? "false" : "true"
+        console.log("this");
+    }
+</script>
+
+<body data-nav="false">
+    <main></main>
+    <nav id="nav">
+        <div id="nav-links">
+            <a href="#" class="nav-link">
+                <h2 class="nav-link-label rubik-font">
+                    Home
+                </h2>
+                <img class="nav-link-image" src="http://74.48.115.131:5555/.pic/0069vXfply8h9e1838c5aj30pz0zkwko.jpg"
+                    alt="">
+            </a>
+            <a href="#" class="nav-link">
+                <h2 class="nav-link-label rubik-font">
+                    about
+                </h2>
+                <img class="nav-link-image"
+                    src="http://74.48.115.131:5555/.pic/C2A36CA4-4E3C-48F1-BB77-996E04280293_1_105_c.jpeg" alt="">
+            </a>
+            <a href="#" class="nav-link">
+                <h2 class="nav-link-label rubik-font">
+                    work
+                </h2>
+                <img class="nav-link-image"
+                    src="http://74.48.115.131:5555/.pic/EE3D4970-5C44-455A-934C-43A3E5497C42.jpeg" alt="">
+            </a>
+            <a href="#" class="nav-link">
+                <h2 class="nav-link-label rubik-font">
+                    join us
+                </h2>
+                <img class="nav-link-image" src="http://74.48.115.131:5555/.pic/IMG%204123.JPG" alt="">
+            </a>
+            <a href="#" class="nav-link">
+                <h2 class="nav-link-label rubik-font">
+                    contract
+                </h2>
+                <img class="nav-link-image"
+                    src="http://74.48.115.131:5555/.pic/F9445A1D-BD3D-49C6-873C-925A99FD2766.jpeg" alt="">
+            </a>
+        </div>
+    </nav>
+
+    <button id="nav-toggle" type="button" onclick="toggleNav()">
+        <i class="open fa-light fa-bars-staggered">=</i>
+        <i class="close fa-light fa-xmark-large">X</i>
+    </button>
+
+</body>
+
+</html>
