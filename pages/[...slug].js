@@ -67,10 +67,10 @@ export default function Post({ contents, filename, status }) {
                         <div className="hidden lg:flex mr-3 navbar ">
                             <Toc />
                         </div>
-                        <div>
+                        <div className="flex-1 max-w-4xl mx-auto">
                             <div className="lg:flex flex-col items-center justify-center text-3xl mt-10"></div>
                             <ReactMarkdown
-                                className="markdown-body lg:max-w-[75vw] p-4 mylist bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+                                className="markdown-body lg:max-w-3xl p-4 mylist bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 mx-auto"
                                 remarkPlugins={[remarkGfm, remarkMath]}
                                 rehypePlugins={[[rehypeKatex, { strict: false }], rehypeRaw]}
                                 components={{

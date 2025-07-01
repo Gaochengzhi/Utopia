@@ -4,55 +4,396 @@
 
 /* Dark mode base styles */
 @layer base {
-  html {
-    @apply transition-colors duration-300;
-  }
-  
-  body {
-    @apply bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300;
-  }
+    html {
+        @apply transition-colors duration-300;
+        scroll-behavior: smooth;
+    }
+
+    body {
+        @apply bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300;
+    }
+}
+
+/* 摄影页面专用动画效果 */
+@layer utilities {
+    /* 浮动动画 */
+    @keyframes float {
+        0%, 100% { 
+            transform: translateY(0px) rotate(0deg); 
+            opacity: 0.6;
+        }
+        25% { 
+            transform: translateY(-20px) rotate(90deg); 
+            opacity: 1;
+        }
+        50% { 
+            transform: translateY(-10px) rotate(180deg); 
+            opacity: 0.8;
+        }
+        75% { 
+            transform: translateY(-15px) rotate(270deg); 
+            opacity: 0.9;
+        }
+    }
+
+    /* 闪烁动画 */
+    @keyframes shimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+
+    /* 脉冲发光 */
+    @keyframes pulse-glow {
+        0%, 100% { 
+            box-shadow: 0 0 5px rgba(255, 255, 255, 0.2);
+            transform: scale(1);
+        }
+        50% { 
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.4), 0 0 30px rgba(255, 255, 255, 0.2);
+            transform: scale(1.02);
+        }
+    }
+
+    /* 波纹效果 */
+    @keyframes ripple {
+        0% {
+            transform: scale(0);
+            opacity: 1;
+        }
+        100% {
+            transform: scale(4);
+            opacity: 0;
+        }
+    }
+
+    /* 旋转渐变 */
+    @keyframes rotate-gradient {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* 文字打字机效果 */
+    @keyframes typewriter {
+        from { width: 0; }
+        to { width: 100%; }
+    }
+
+    /* 无限滚动效果 */
+    @keyframes infinite-scroll {
+        0% { transform: translateX(0); }
+        100% { transform: translateX(-50%); }
+    }
+
+    /* 3D翻转 */
+    @keyframes flip-3d {
+        0% { transform: perspective(400px) rotateY(0); }
+        100% { transform: perspective(400px) rotateY(360deg); }
+    }
+
+    /* 粒子流动 */
+    @keyframes particle-flow {
+        0% { 
+            transform: translateY(100vh) translateX(-50px);
+            opacity: 0;
+        }
+        10% { opacity: 1; }
+        90% { opacity: 1; }
+        100% { 
+            transform: translateY(-100px) translateX(50px);
+            opacity: 0;
+        }
+    }
+
+    .animate-float {
+        animation: float 6s ease-in-out infinite;
+    }
+
+    .animate-shimmer {
+        animation: shimmer 1.5s ease-in-out infinite;
+    }
+
+    .animate-pulse-glow {
+        animation: pulse-glow 2s ease-in-out infinite;
+    }
+
+    .animate-ripple {
+        animation: ripple 0.6s ease-out;
+    }
+
+    .animate-rotate-gradient {
+        animation: rotate-gradient 3s linear infinite;
+    }
+
+    .animate-typewriter {
+        animation: typewriter 2s steps(20) 1s forwards;
+        overflow: hidden;
+        white-space: nowrap;
+        border-right: 2px solid;
+    }
+
+    .animate-infinite-scroll {
+        animation: infinite-scroll 20s linear infinite;
+    }
+
+    .animate-flip-3d {
+        animation: flip-3d 0.8s ease-in-out;
+    }
+
+    .animate-particle-flow {
+        animation: particle-flow 8s linear infinite;
+    }
+}
+
+/* 摄影专用图片效果 */
+@layer components {
+    .picon {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 1;
+        overflow: hidden;
+        border-radius: 8px;
+    }
+
+    .picinside {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .piconsq {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 1;
+        overflow: hidden;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    /* 增强的瀑布流卡片样式 */
+    .waterfall-card {
+        background: linear-gradient(145deg, #ffffff, #f8f9fa);
+        border-radius: 16px;
+        border: 1px solid rgba(229, 231, 235, 0.8);
+        overflow: hidden;
+        position: relative;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        backdrop-filter: blur(10px);
+    }
+
+    .dark .waterfall-card {
+        background: linear-gradient(145deg, #1f2937, #111827);
+        border-color: rgba(75, 85, 99, 0.3);
+    }
+
+    .waterfall-card:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 
+            0 25px 50px -12px rgba(0, 0, 0, 0.25),
+            0 0 0 1px rgba(255, 255, 255, 0.1);
+    }
+
+    .dark .waterfall-card:hover {
+        box-shadow: 
+            0 25px 50px -12px rgba(0, 0, 0, 0.5),
+            0 0 0 1px rgba(255, 255, 255, 0.1);
+    }
+
+    .card-content {
+        padding: 1.5rem;
+        position: relative;
+        z-index: 10;
+    }
+
+    .card-header {
+        margin-bottom: 1rem;
+    }
+
+    .card-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        line-height: 1.4;
+        color: #1f2937;
+        margin: 0;
+        transition: color 0.3s ease;
+    }
+
+    .dark .card-title {
+        color: #f9fafb;
+    }
+
+    .card-body {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .card-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(229, 231, 235, 0.8);
+    }
+
+    .dark .card-footer {
+        border-top-color: rgba(75, 85, 99, 0.3);
+    }
+
+    .card-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, 
+            rgba(168, 85, 247, 0.1) 0%, 
+            rgba(59, 130, 246, 0.1) 50%, 
+            rgba(16, 185, 129, 0.1) 100%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        pointer-events: none;
+        border-radius: inherit;
+    }
+
+    .waterfall-card:hover .card-overlay {
+        opacity: 1;
+    }
+
+    .read-more-arrow {
+        transition: transform 0.3s ease;
+    }
+
+    .waterfall-card:hover .read-more-arrow {
+        transform: translateX(4px);
+    }
+
+    /* Markdown 内容样式优化 */
+    .markdown-preview {
+        line-height: 1.6;
+        color: #6b7280;
+    }
+
+    .dark .markdown-preview {
+        color: #d1d5db;
+    }
+
+    .markdown-preview h1, 
+    .markdown-preview h2, 
+    .markdown-preview h3 {
+        margin: 0.5rem 0;
+        font-weight: 600;
+    }
+
+    .markdown-preview .card-h1 {
+        font-size: 1.125rem;
+        color: #1f2937;
+    }
+
+    .dark .markdown-preview .card-h1 {
+        color: #f9fafb;
+    }
+
+    .markdown-preview .card-h2 {
+        font-size: 1rem;
+        color: #374151;
+    }
+
+    .dark .markdown-preview .card-h2 {
+        color: #e5e7eb;
+    }
+
+    .markdown-preview .card-h3 {
+        font-size: 0.875rem;
+        color: #4b5563;
+    }
+
+    .dark .markdown-preview .card-h3 {
+        color: #d1d5db;
+    }
+
+    .markdown-preview .card-image {
+        width: 100%;
+        height: auto;
+        border-radius: 8px;
+        margin: 0.5rem 0;
+        max-height: 200px;
+        object-fit: cover;
+    }
+
+    .markdown-preview .inline-code {
+        background-color: rgba(229, 231, 235, 0.8);
+        color: #dc2626;
+        padding: 0.125rem 0.25rem;
+        border-radius: 0.25rem;
+        font-size: 0.875em;
+    }
+
+    .dark .markdown-preview .inline-code {
+        background-color: rgba(55, 65, 81, 0.8);
+        color: #fca5a5;
+    }
+
+    /* 摄影页面专用样式 */
+    .enhanced-photo-item {
+        position: relative;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .enhanced-photo-item:hover {
+        z-index: 10;
+    }
+
+    /* 加载骨架屏 */
+    .skeleton {
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
+    }
+
+    .dark .skeleton {
+        background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
+        background-size: 200% 100%;
+    }
 }
 
 /* Dark mode Ant Design overrides */
 .dark .ant-tree {
-  background: transparent !important;
-  color: #f3f4f6 !important;
+    background: transparent !important;
+    color: #f3f4f6 !important;
 }
 
 .dark .ant-tree .ant-tree-node-content-wrapper {
-  color: #d1d5db !important;
+    color: #d1d5db !important;
 }
 
 .dark .ant-tree .ant-tree-node-content-wrapper:hover {
-  background-color: rgba(75, 85, 99, 0.3) !important;
-  color: #f9fafb !important;
+    background-color: rgba(75, 85, 99, 0.3) !important;
+    color: #f9fafb !important;
 }
 
 .dark .ant-tree .ant-tree-node-selected {
-  background-color: rgba(99, 102, 241, 0.3) !important;
-  color: #f9fafb !important;
+    background-color: rgba(99, 102, 241, 0.3) !important;
+    color: #f9fafb !important;
 }
 
 .dark .ant-tree .ant-tree-switcher {
-  color: #9ca3af !important;
+    color: #9ca3af !important;
 }
 
 .dark .ant-tree .ant-tree-iconEle {
-  color: #9ca3af !important;
+    color: #9ca3af !important;
 }
 
 .dark .ant-divider {
-  border-color: #4b5563 !important;
+    border-color: #4b5563 !important;
 }
 
 .dark .ant-divider-inner-text {
-  color: #d1d5db !important;
+    color: #d1d5db !important;
 }
 
 /* Markdown content dark mode styles */
 .dark .markdown-body {
-  background-color: #111827 !important;
-  color: #f9fafb !important;
+    background-color: #111827 !important;
+    color: #f9fafb !important;
 }
 
 .dark .markdown-body h1,
@@ -61,51 +402,51 @@
 .dark .markdown-body h4,
 .dark .markdown-body h5,
 .dark .markdown-body h6 {
-  color: #f9fafb !important;
-  border-bottom-color: #4b5563 !important;
+    color: #f9fafb !important;
+    border-bottom-color: #4b5563 !important;
 }
 
 .dark .markdown-body p,
 .dark .markdown-body li,
 .dark .markdown-body td,
 .dark .markdown-body th {
-  color: #e5e7eb !important;
+    color: #e5e7eb !important;
 }
 
 .dark .markdown-body blockquote {
-  color: #d1d5db !important;
-  border-left-color: #6b7280 !important;
+    color: #d1d5db !important;
+    border-left-color: #6b7280 !important;
 }
 
 .dark .markdown-body table {
-  background-color: transparent !important;
+    background-color: transparent !important;
 }
 
 .dark .markdown-body tr {
-  background-color: transparent !important;
-  border-top-color: #4b5563 !important;
+    background-color: transparent !important;
+    border-top-color: #4b5563 !important;
 }
 
 .dark .markdown-body th,
 .dark .markdown-body td {
-  border-color: #4b5563 !important;
+    border-color: #4b5563 !important;
 }
 
 .dark .markdown-body code {
-  background-color: rgba(55, 65, 81, 0.8) !important;
-  color: #f9fafb !important;
+    background-color: rgba(55, 65, 81, 0.8) !important;
+    color: #f9fafb !important;
 }
 
 .dark .markdown-body pre {
-  background-color: #1f2937 !important;
+    background-color: #1f2937 !important;
 }
 
 .dark .markdown-body a {
-  color: #60a5fa !important;
+    color: #60a5fa !important;
 }
 
 .dark .markdown-body a:hover {
-  color: #93c5fd !important;
+    color: #93c5fd !important;
 }
 
 .none {
@@ -551,3 +892,14 @@ h3 {
         padding: 0 1rem !important;
     }
 }
+
+/* 隐藏滚动条 */
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+

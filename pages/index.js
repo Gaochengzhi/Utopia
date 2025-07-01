@@ -11,7 +11,7 @@ import { readAllFile } from "/components/util/readAllfile"
 import Cookies from "js-cookie"
 const config = require('../config.local.js')
 
-export default function Home({ paths, posts }) {
+export default function Home({ paths, initialPosts, totalPosts }) {
     useEffect(() => {
         localStorage.setItem("paths", JSON.stringify(paths))
         Cookies.set("refreshed", "true", { expires: 1 })
@@ -113,7 +113,10 @@ export default function Home({ paths, posts }) {
 
                 {/* 主内容区域 - 瀑布流卡片 */}
                 <div className="lg:ml-80 pt-8">
-                    <WaterfallCards posts={posts} />
+                    <WaterfallCards 
+                        initialPosts={initialPosts} 
+                        totalPosts={totalPosts} 
+                    />
                 </div>
             </div>
         </>
@@ -122,8 +125,14 @@ export default function Home({ paths, posts }) {
 
 export const getStaticProps = async () => {
     let infoArray = await readAllFile("post", (i) => i)
-    // 获取所有文章而不是只有3篇，用于瀑布流显示
-    let posts = infoArray.SortedInfoArray.map((o) => {
+    
+    // 按时间排序，最新的在前
+    const sortedPosts = infoArray.SortedInfoArray.sort((a, b) => 
+        new Date(b.time) - new Date(a.time)
+    )
+    
+    // 只加载第一页数据 (前10篇文章)
+    const initialPosts = sortedPosts.slice(0, 10).map((o) => {
         const fullpath = o.path
         const rawMarkdown = fs
             .readFileSync(fullpath)
@@ -147,7 +156,8 @@ export const getStaticProps = async () => {
     return {
         props: {
             paths: infoArray.InfoArray,
-            posts,
+            initialPosts,
+            totalPosts: sortedPosts.length,
         },
         revalidate: 1,
     }
