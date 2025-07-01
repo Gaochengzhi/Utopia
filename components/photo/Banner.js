@@ -110,7 +110,7 @@ export function Banner({ }) {
             {/* 文字内容区域 */}
             <div
                 ref={textRef}
-                className="w-full md:w-[50%] h-60 flex flex-col justify-center items-center text-white relative z-10 p-6"
+                className="w-full md:w-[50%] h-60 flex flex-col justify-center items-center text-white relative z-10 p-6 pb-20"
                 style={{
                     transform: `translateY(${scrollY * 0.1}px)`
                 }}
@@ -122,15 +122,6 @@ export function Banner({ }) {
                     Taitan_Pascal
                 </div>
 
-                <div
-                    className="text-lg md:text-xl font-serif flex items-center mt-4 text-gray-300"
-                    style={getTextAnimation(200)}
-                >
-                    <CodeOutlined className="text-base inline pr-2 text-blue-400" />
-                    Programmer,
-                    <CameraOutlined className="text-base inline px-2 text-purple-400" />
-                    Photographer and ……
-                </div>
 
                 <div
                     className="flex flex-col justify-center items-center mt-6"
@@ -228,18 +219,6 @@ export function Banner({ }) {
                                 ))}
                             </Carousel>
 
-                            {/* 自定义指示器 */}
-                            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-                                {[0, 1, 2, 3, 4].map((index) => (
-                                    <div
-                                        key={index}
-                                        className={`w-2 h-2 rounded-full transition-all duration-300 ${currentSlide === index
-                                            ? 'bg-white scale-125'
-                                            : 'bg-white/50 hover:bg-white/75'
-                                            }`}
-                                    />
-                                ))}
-                            </div>
                         </div>
                     </div>
                 </PhotoProvider>

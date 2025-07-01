@@ -1,12 +1,13 @@
 import { cataList } from "/components/photo/cataList"
 import { readAllFile } from "/components/util/readAllfile"
+import { getCategoryList } from "/components/util/getCategoryList"
 import { Footer } from "/components/footer"
 import { Pnav } from "/components/photo/Pnav"
 import { Walls } from "/components/photo/Wall"
 import { useEffect } from "react"
 import { firstUpperCase } from "/components/util/treeSort"
 import Cookies from "js-cookie"
-export default function Wall({ paths, title }) {
+export default function Wall({ paths, title, categories }) {
   // newpaths = paths.pop()
   useEffect(() => {
     Cookies.set("refreshed_pp", "true", { expires: 1 })
@@ -17,7 +18,7 @@ export default function Wall({ paths, title }) {
   }, [])
   return (
     <div className="bg-black">
-      <Pnav select={title} />
+      <Pnav select={title} categories={categories} />
       <div className="max-w-5xl md:mx-auto">
         <img
           src={paths[0].path}
@@ -26,7 +27,7 @@ export default function Wall({ paths, title }) {
         />
         <div className=" text-white p-3 text-6xl">{firstUpperCase(title)}</div>
         <div></div>
-        <Walls path={paths} />
+        <Walls path={paths} scrollDirection="vertical" />
         <div className="text-lg font-thin font-serif flex justify-center h-56 m-5 text-white border-b-2 border-gray-400 border-dashed ">
           End
         </div>
@@ -38,8 +39,12 @@ export default function Wall({ paths, title }) {
 }
 
 export async function getStaticPaths() {
+  // 使用动态分类生成路径
+  const categories = getCategoryList()
+  const categoryData = categories.length > 0 ? categories : cataList
+  
   return {
-    paths: cataList.map((i) => ({
+    paths: categoryData.map((i) => ({
       params: {
         slug: i.title.toLowerCase(),
       },
@@ -54,10 +59,15 @@ export async function getStaticProps({ params: { slug } }) {
     (i) => i.replace("public", "")
   )
   const infoArrays = infoArray.SortedInfoArray
+  
+  // 获取动态分类列表
+  const categories = getCategoryList()
+  
   return {
     props: {
       paths: infoArrays,
       title: slug,
+      categories,
     }, // will be passed to the page component as props
     revalidate: 1,
   }

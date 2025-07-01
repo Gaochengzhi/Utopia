@@ -15,9 +15,11 @@ SYNC_ITEMS=(
     "public"
     "pages"
     "components"
+    "contexts"
     "styles"
     "next.config.js"
     "config.local.js"
+    "tailwind.config.js"
 )
 
 echo "开始同步到服务器: $SERVER_IP"

@@ -16,6 +16,15 @@
 
 /* 摄影页面专用动画效果 */
 @layer utilities {
+    /* 隐藏滚动条 */
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+    
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
     /* 浮动动画 */
     @keyframes float {
         0%, 100% { 
@@ -72,6 +81,29 @@
         100% { transform: rotate(360deg); }
     }
 
+    /* 3D卡片浮动动画 */
+    @keyframes card-float {
+        0%, 100% { 
+            transform: translateY(0px) rotateX(0deg) rotateY(0deg); 
+        }
+        50% { 
+            transform: translateY(-5px) rotateX(1deg) rotateY(0.5deg); 
+        }
+    }
+
+    /* 3D卡片摆动动画 */
+    @keyframes card-wiggle {
+        0%, 100% { 
+            transform: rotateZ(0deg); 
+        }
+        25% { 
+            transform: rotateZ(0.5deg); 
+        }
+        75% { 
+            transform: rotateZ(-0.5deg); 
+        }
+    }
+
     /* 文字打字机效果 */
     @keyframes typewriter {
         from { width: 0; }
@@ -101,6 +133,29 @@
         100% { 
             transform: translateY(-100px) translateX(50px);
             opacity: 0;
+        }
+    }
+
+    /* 照片墙自动向右滚动动画 - 优化无缝循环 */
+    @keyframes autoScrollRight {
+        0% { 
+            transform: translateX(0);
+        }
+        100% { 
+            transform: translateX(-50%);
+        }
+    }
+
+    /* 响应式照片尺寸 */
+    .responsive-photo-item {
+        /* 移动端尺寸已在内联样式中设置 */
+    }
+
+    /* 桌面端（768px以上）使用更大的尺寸 */
+    @media (min-width: 768px) {
+        .responsive-photo-item {
+            width: var(--desktop-width) !important;
+            height: var(--desktop-height) !important;
         }
     }
 
@@ -142,6 +197,15 @@
     .animate-particle-flow {
         animation: particle-flow 8s linear infinite;
     }
+
+    .animate-card-float {
+        animation: card-float 4s ease-in-out infinite;
+    }
+
+    .animate-card-wiggle {
+        animation: card-wiggle 6s ease-in-out infinite;
+    }
+
 }
 
 /* 摄影专用图片效果 */
@@ -179,6 +243,8 @@
         position: relative;
         transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         backdrop-filter: blur(10px);
+        transform-style: preserve-3d;
+        perspective: 1000px;
     }
 
     .dark .waterfall-card {
@@ -187,10 +253,11 @@
     }
 
     .waterfall-card:hover {
-        transform: translateY(-8px) scale(1.02);
         box-shadow: 
             0 25px 50px -12px rgba(0, 0, 0, 0.25),
-            0 0 0 1px rgba(255, 255, 255, 0.1);
+            0 0 0 1px rgba(255, 255, 255, 0.1),
+            0 0 30px rgba(99, 102, 241, 0.15);
+        z-index: 10;
     }
 
     .dark .waterfall-card:hover {

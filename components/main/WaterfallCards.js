@@ -19,6 +19,33 @@ export default function WaterfallCards({ initialPosts, totalPosts }) {
     const [error, setError] = useState(null)
     const containerRef = useRef(null)
     const [columnCount, setColumnCount] = useState(3)
+    const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
+    const [hoveredCard, setHoveredCard] = useState(null)
+
+    // 处理鼠标移动事件，获取相对位置
+    const handleMouseMove = (e, cardRect) => {
+        const rect = cardRect
+        const x = (e.clientX - rect.left) / rect.width - 0.5
+        const y = (e.clientY - rect.top) / rect.height - 0.5
+        setMousePosition({ x, y })
+    }
+
+    // 生成3D变换效果
+    const get3DTransform = (cardKey, columnIndex, index) => {
+        if (hoveredCard === cardKey) {
+            const tiltX = mousePosition.y * 15  // 增加倾斜角度
+            const tiltY = mousePosition.x * -15
+            const translateZ = 30
+            const scale = 1.05
+            return `perspective(1000px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) scale(${scale}) translateZ(${translateZ}px)`
+        }
+        // 给每个卡片添加轻微的随机旋转角度和位移
+        const rotationSeed = cardKey.length + columnIndex + index
+        const baseRotationZ = (Math.sin(rotationSeed) * 3) * (rotationSeed % 2 === 0 ? 1 : -1) // 随机正负方向
+        const offsetX = Math.cos(columnIndex + index) * 1 // 轻微的X轴偏移
+        const offsetY = Math.sin(columnIndex + index) * 0.5 // 轻微的Y轴偏移
+        return `perspective(1000px) rotateX(0deg) rotateY(0deg) rotateZ(${baseRotationZ}deg) translateX(${offsetX}px) translateY(${offsetY}px) scale(1) translateZ(0px)`
+    }
 
     // 加载更多文章
     const loadMorePosts = useCallback(async () => {
@@ -73,11 +100,11 @@ export default function WaterfallCards({ initialPosts, totalPosts }) {
         const updateColumnCount = () => {
             if (window.innerWidth <= 600) {
                 setColumnCount(1)
-            } else if (window.innerWidth <= 900) {
-                setColumnCount(2)
             } else if (window.innerWidth <= 1200) {
+                setColumnCount(2)
+            } else if (window.innerWidth <= 1800) {
                 setColumnCount(3)
-            } else if (window.innerWidth <= 1600) {
+            } else if (window.innerWidth <= 2400) {
                 setColumnCount(4)
             } else {
                 setColumnCount(5)
@@ -138,11 +165,30 @@ export default function WaterfallCards({ initialPosts, totalPosts }) {
                     <div key={columnIndex} className="waterfall-column">
                         {column.map((post, index) => (
                             <Link key={post.key} href={post.path}>
-                                <div className="waterfall-card group shadow-md" style={{
-                                    marginBottom: '1.5rem',
-                                    maxHeight: '50rem',
-                                    overflow: 'hidden'
-                                }}>
+                                <div
+                                    className={`waterfall-card group shadow-md ${(columnIndex + index) % 4 === 0 ? 'animate-card-float' :
+                                        (columnIndex + index) % 4 === 1 ? 'animate-card-wiggle' : ''
+                                        }`}
+                                    style={{
+                                        marginBottom: '1.5rem',
+                                        maxHeight: '50rem',
+                                        transform: get3DTransform(post.key, columnIndex, index),
+                                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                        transformStyle: 'preserve-3d'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        setHoveredCard(post.key)
+                                    }}
+                                    onMouseMove={(e) => {
+                                        if (hoveredCard === post.key) {
+                                            handleMouseMove(e, e.currentTarget.getBoundingClientRect())
+                                        }
+                                    }}
+                                    onMouseLeave={() => {
+                                        setHoveredCard(null)
+                                        setMousePosition({ x: 0, y: 0 })
+                                    }}
+                                >
                                     {/* 卡片内容 */}
                                     <div className="card-content">
                                         {/* 卡片头部 */}
@@ -224,13 +270,13 @@ export default function WaterfallCards({ initialPosts, totalPosts }) {
                         <span>正在加载更多文章...</span>
                     </div>
                 )}
-                
+
                 {error && (
                     <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 max-w-md">
                         <div className="text-red-600 dark:text-red-400 text-sm text-center">
                             {error}
                         </div>
-                        <button 
+                        <button
                             onClick={loadMorePosts}
                             className="mt-2 w-full text-sm bg-red-100 dark:bg-red-800 text-red-700 dark:text-red-200 px-3 py-1 rounded hover:bg-red-200 dark:hover:bg-red-700 transition-colors"
                         >
@@ -238,7 +284,7 @@ export default function WaterfallCards({ initialPosts, totalPosts }) {
                         </button>
                     </div>
                 )}
-                
+
                 {!hasMore && !loading && posts.length > 0 && (
                     <div className="text-gray-500 dark:text-gray-400 text-sm">
                         ✨ 已加载全部 {posts.length} 篇文章

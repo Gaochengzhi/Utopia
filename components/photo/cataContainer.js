@@ -4,24 +4,27 @@ import { ParallaxBanner } from "react-scroll-parallax"
 import { ParallaxProvider } from "react-scroll-parallax"
 import Link from "next/link"
 
-export function CataContainer({ }) {
+export function CataContainer({ categories }) {
     const [loadedImages, setLoadedImages] = useState(new Set())
 
+    // 使用传入的分类数据，如果没有则fallback到cataList
+    const categoryData = categories && categories.length > 0 ? categories : cataList
+    
     // 预加载图片
     useEffect(() => {
-        cataList.forEach((item) => {
+        categoryData.forEach((item) => {
             const img = new Image()
             img.onload = () => {
                 setLoadedImages(prev => new Set([...prev, item.index]))
             }
-            img.src = `/photography/cata/${item.index}.jpg`
+            img.src = item.coverImage || `/photography/cata/${item.index}.jpg`
         })
-    }, [])
+    }, [categoryData])
 
     return (
         <div className="flex flex-col justify-center items-center w-full">
             <ParallaxProvider>
-                {cataList.map((item) => {
+                {categoryData.map((item) => {
                     const isLoaded = loadedImages.has(item.index)
                     
                     return (
@@ -36,7 +39,7 @@ export function CataContainer({ }) {
 
                                 <ParallaxBanner
                                     layers={[
-                                        { image: `/photography/cata/${item.index}.jpg`, speed: -20 },
+                                        { image: item.coverImage || `/photography/cata/${item.index}.jpg`, speed: -20 },
                                     ]}
                                     className="aspect-[2/1] w-full transition-transform duration-500 group-hover:scale-105"
                                 >
