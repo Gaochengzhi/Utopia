@@ -90,7 +90,7 @@ export default function SearchIcon() {
         <>
             {/* 搜索图标 */}
             <div 
-                className="clickable flex justify-center items-center text-2xl cursor-pointer"
+                className="clickable flex justify-center items-center text-2xl cursor-pointer text-gray-900 dark:text-gray-100"
                 onClick={handleOpenSearch}
             >
                 <SearchOutlined />
@@ -104,12 +104,12 @@ export default function SearchIcon() {
                 >
                     <div className="flex justify-center pt-20">
                         <div 
-                            className="bg-white rounded-lg shadow-lg border border-gray-300 p-4 w-full max-w-2xl mx-4 animate-fade-in"
+                            className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-300 dark:border-gray-600 p-4 w-full max-w-2xl mx-4 animate-fade-in"
                             onClick={(e) => e.stopPropagation()}
                         >
                             {/* 搜索输入框 */}
                             <div className="relative">
-                                <div className="rounded-md border border-gray-400 flex justify-around items-center bg-white text-base">
+                                <div className="rounded-md border border-gray-400 dark:border-gray-500 flex justify-around items-center bg-white dark:bg-gray-700 text-base">
                                     <input
                                         type="text"
                                         id="search_input"
@@ -118,10 +118,10 @@ export default function SearchIcon() {
                                         onKeyDown={handleKeyDown}
                                         autoComplete="off"
                                         placeholder="搜索文章内容..."
-                                        className="px-4 py-2 flex-1 focus:!outline-none"
+                                        className="px-4 py-2 flex-1 focus:!outline-none bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                                     />
                                     <div
-                                        className="text-gray-400 flex items-center px-3 cursor-pointer hover:text-gray-600"
+                                        className="text-gray-400 dark:text-gray-300 flex items-center px-3 cursor-pointer hover:text-gray-600 dark:hover:text-gray-100"
                                         onClick={handleSubmit}
                                     >
                                         <SearchOutlined />
@@ -129,7 +129,7 @@ export default function SearchIcon() {
                                 </div>
 
                                 {/* 搜索结果 */}
-                                <div className={show ? "mt-2 border border-gray-200 rounded-md bg-white max-h-96 overflow-auto" : "hidden"}>
+                                <div className={show ? "mt-2 border border-gray-200 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 max-h-96 overflow-auto" : "hidden"}>
                                     {reslist.map((item, index) => {
                                         const queText = searchText.trim()
                                         const resList = item.split(":")
@@ -146,7 +146,7 @@ export default function SearchIcon() {
                                         return (
                                             <div
                                                 key={`${item}-${index}`}
-                                                className="border-b p-3 hover:bg-gray-100 cursor-pointer"
+                                                className="border-b border-gray-200 dark:border-gray-600 p-3 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer"
                                                 onClick={() =>
                                                     handleGoToPage(
                                                         url,
@@ -154,12 +154,12 @@ export default function SearchIcon() {
                                                     )
                                                 }
                                             >
-                                                <div className="font-semibold text-sm text-gray-700 mb-1">
+                                                <div className="font-semibold text-sm text-gray-700 dark:text-gray-300 mb-1">
                                                     {url}：第{lineNumber}行
                                                 </div>
-                                                <div className="text-gray-600 text-sm">
+                                                <div className="text-gray-600 dark:text-gray-400 text-sm">
                                                     <span>{contentList[0] || ''}</span>
-                                                    <span className="text-blue-500 font-bold bg-blue-100 px-1 rounded">
+                                                    <span className="text-blue-500 dark:text-blue-400 font-bold bg-blue-100 dark:bg-blue-900 px-1 rounded">
                                                         {queText}
                                                     </span>
                                                     <span>{contentList[1] || ''}</span>

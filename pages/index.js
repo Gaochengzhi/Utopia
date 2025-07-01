@@ -33,11 +33,11 @@ export default function Home({ paths, posts }) {
             <div className="relative pt-8">
                 {/* 左侧边栏 - 固定定位 */}
                 <div className="fixed left-0 top-16 h-[calc(100vh-4rem)] w-80 z-30 hidden lg:block">
-                    <div className="h-full p-6 bg-white border-r border-gray-200 shadow-lg">
+                    <div className="h-full p-6 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 shadow-lg">
                         <div className="flex flex-col items-center space-y-6 mb-8">
                             <Info />
                         </div>
-                        <div className="bg-white rounded-2xl p-4 max-h-[calc(100vh-20rem)] overflow-y-auto border border-gray-200">
+                        <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 max-h-[calc(100vh-20rem)] overflow-y-auto border border-gray-200 dark:border-gray-600">
                             <FileTree paths={paths} />
                         </div>
                     </div>
@@ -46,7 +46,7 @@ export default function Home({ paths, posts }) {
                 {/* 移动端布局 */}
                 <div className="lg:hidden mt-16">
                     {/* 个人信息容器 - 添加响应式宽度控制 */}
-                    <div className="bg-white border-b border-gray-200 shadow-sm">
+                    <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shadow-sm">
                         <div className="flex justify-center p-4">
                             <div className="w-full max-w-lg">
                                 {/* 社交媒体链接 */}
@@ -60,7 +60,7 @@ export default function Home({ paths, posts }) {
                                         <img src="/icon.jpeg" alt="" className="w-16 h-16 rounded-full object-cover" />
                                     </div>
                                     <div className="flex flex-col">
-                                        <div className="text-xl font-light">@Taitan_Pascal</div>
+                                        <div className="text-xl font-light text-gray-900 dark:text-gray-100">@Taitan_Pascal</div>
                                         
                                         {/* 彩色点击提示 */}
                                         <div className="text-base font-serif flex items-center mt-1">
@@ -75,7 +75,7 @@ export default function Home({ paths, posts }) {
                                 </div>
 
                                 {/* 职业描述 */}
-                                <div className="text-gray-500 text-sm space-y-1 mb-3">
+                                <div className="text-gray-500 dark:text-gray-400 text-sm space-y-1 mb-3">
                                     <div className="jobs cursor-pointer">🌈 瓦梁湖生态观察小队副队长</div>
                                     <div className="jobs cursor-pointer">👨🏻‍💻 Software Engineer</div>
                                     <div className="jobs cursor-pointer">📸 Photographer</div>
@@ -85,7 +85,7 @@ export default function Home({ paths, posts }) {
                     </div>
 
                     {/* 标签胶囊 */}
-                    <div className="bg-white border-b border-gray-200 px-4 py-3">
+                    <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
                         <div className="flex justify-center">
                             <div className="w-full max-w-lg">
                                 <div className="flex flex-wrap justify-center gap-2">
@@ -100,10 +100,10 @@ export default function Home({ paths, posts }) {
                     </div>
 
                     {/* 目录 */}
-                    <div className="bg-white border-b border-gray-200">
+                    <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
                         <div className="flex justify-center p-4">
                             <div className="w-full max-w-lg">
-                                <div className="bg-white rounded-lg border border-gray-200 p-3 max-h-60 overflow-y-auto">
+                                <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600 p-3 max-h-60 overflow-y-auto">
                                     <FileTree paths={paths} />
                                 </div>
                             </div>

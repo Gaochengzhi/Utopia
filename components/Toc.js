@@ -85,12 +85,12 @@ export function Toc({}) {
   }, [router.asPath])
   return (
     <>
-      <div className="lg:h-[88vh] overflow-y-scroll mb-4 p-3 lg:min-w-[18rem] lg:max-w-[18rem] border-x-2 border-gray-300 border-dashed ">
+      <div className="lg:h-[88vh] overflow-y-scroll mb-4 p-3 lg:min-w-[18rem] lg:max-w-[18rem] border-x-2 border-gray-400 dark:border-gray-500 border-dashed bg-white dark:bg-gray-900">
         {toc.map((o) => (
           <div
             onClick={(e) => handleClick(e, o)}
             key={o.id}
-            className="flex text-base mt-1 text-gray-500 hover:text-black overflow-ellipsis transition-colors ease-in firstT  cursor-pointer"
+            className="flex text-base mt-1 text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white overflow-ellipsis transition-colors ease-in firstT cursor-pointer"
           >
             <div className="invisible ">{times("iiii", o.indent)} </div>
             <div>{o.title}</div>

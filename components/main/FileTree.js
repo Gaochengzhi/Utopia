@@ -13,9 +13,9 @@ export default function FileTree({ paths }) {
   }
 
   return (
-    <div>
+    <div className="bg-white dark:bg-gray-900">
       <DirectoryTree
-        className="transition-all duration-150 ease-in min-w-[16rem] overflow-y-scroll "
+        className="transition-all duration-150 ease-in min-w-[16rem] overflow-y-scroll text-gray-900 dark:text-gray-100"
         multiple
         selectable={false}
         onClick={onSelect}

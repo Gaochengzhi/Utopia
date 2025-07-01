@@ -2,6 +2,112 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Dark mode base styles */
+@layer base {
+  html {
+    @apply transition-colors duration-300;
+  }
+  
+  body {
+    @apply bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300;
+  }
+}
+
+/* Dark mode Ant Design overrides */
+.dark .ant-tree {
+  background: transparent !important;
+  color: #f3f4f6 !important;
+}
+
+.dark .ant-tree .ant-tree-node-content-wrapper {
+  color: #d1d5db !important;
+}
+
+.dark .ant-tree .ant-tree-node-content-wrapper:hover {
+  background-color: rgba(75, 85, 99, 0.3) !important;
+  color: #f9fafb !important;
+}
+
+.dark .ant-tree .ant-tree-node-selected {
+  background-color: rgba(99, 102, 241, 0.3) !important;
+  color: #f9fafb !important;
+}
+
+.dark .ant-tree .ant-tree-switcher {
+  color: #9ca3af !important;
+}
+
+.dark .ant-tree .ant-tree-iconEle {
+  color: #9ca3af !important;
+}
+
+.dark .ant-divider {
+  border-color: #4b5563 !important;
+}
+
+.dark .ant-divider-inner-text {
+  color: #d1d5db !important;
+}
+
+/* Markdown content dark mode styles */
+.dark .markdown-body {
+  background-color: #111827 !important;
+  color: #f9fafb !important;
+}
+
+.dark .markdown-body h1,
+.dark .markdown-body h2,
+.dark .markdown-body h3,
+.dark .markdown-body h4,
+.dark .markdown-body h5,
+.dark .markdown-body h6 {
+  color: #f9fafb !important;
+  border-bottom-color: #4b5563 !important;
+}
+
+.dark .markdown-body p,
+.dark .markdown-body li,
+.dark .markdown-body td,
+.dark .markdown-body th {
+  color: #e5e7eb !important;
+}
+
+.dark .markdown-body blockquote {
+  color: #d1d5db !important;
+  border-left-color: #6b7280 !important;
+}
+
+.dark .markdown-body table {
+  background-color: transparent !important;
+}
+
+.dark .markdown-body tr {
+  background-color: transparent !important;
+  border-top-color: #4b5563 !important;
+}
+
+.dark .markdown-body th,
+.dark .markdown-body td {
+  border-color: #4b5563 !important;
+}
+
+.dark .markdown-body code {
+  background-color: rgba(55, 65, 81, 0.8) !important;
+  color: #f9fafb !important;
+}
+
+.dark .markdown-body pre {
+  background-color: #1f2937 !important;
+}
+
+.dark .markdown-body a {
+  color: #60a5fa !important;
+}
+
+.dark .markdown-body a:hover {
+  color: #93c5fd !important;
+}
+
 .none {
     visibility: hidden;
 }
@@ -42,6 +148,12 @@ h3 {
     animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.dark .hidetoc {
+    background: rgba(31, 41, 55, 0.95);
+    border: 1px solid rgba(75, 85, 99, 0.3);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
 .navbar {
     position: sticky;
     top: 6rem;
@@ -52,7 +164,7 @@ h3 {
 
 
 .linkable {
-    @apply focus:scale-110 focus:text-black hover:text-black
+    @apply focus:scale-110 focus:text-black hover:text-black dark:focus:text-white dark:hover:text-white transition-colors duration-200
 }
 
 .gradient {
@@ -71,7 +183,7 @@ h3 {
 }
 
 .jobs {
-    @apply hover:scale-105 hover:text-blue-400 transition-all ease-in
+    @apply hover:scale-105 hover:text-blue-400 dark:hover:text-blue-300 transition-all ease-in
 }
 
 .mytag {
@@ -133,7 +245,7 @@ h3 {
 }
 
 .firstT:first-child {
-    @apply text-2xl text-gray-500 font-semibold pb-2 mb-2 border-gray-300
+    @apply text-2xl text-gray-600 dark:text-gray-300 font-semibold pb-2 mb-2 border-b border-gray-400 dark:border-gray-500
 }
 
 .pclick {
@@ -192,7 +304,7 @@ h3 {
 }
 
 .search_bar {
-    @apply text-base bg-white md:min-w-[24rem] max-w-[34rem] p-2 border absolute top-10 left-2 rounded shadow-lg z-10
+    @apply text-base bg-white dark:bg-gray-800 dark:text-white md:min-w-[24rem] max-w-[34rem] p-2 border dark:border-gray-600 absolute top-10 left-2 rounded shadow-lg z-10
 }
 
 /* 瀑布流卡片样式 */
@@ -200,6 +312,10 @@ h3 {
     min-height: calc(100vh - 4rem);
     background: #ffffff;
     padding-top: 2rem;
+}
+
+.dark .waterfall-container {
+    background: #111827;
 }
 
 .waterfall-grid {
@@ -272,6 +388,11 @@ h3 {
     box-sizing: border-box;
 }
 
+.dark .waterfall-card {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(31, 41, 55, 0.95);
+}
+
 .waterfall-card:hover {
     transform: translateY(-8px);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
@@ -299,6 +420,10 @@ h3 {
     overflow: hidden;
 }
 
+.dark .card-title {
+    color: #f9fafb;
+}
+
 .card-body {
     margin-bottom: 1rem;
 }
@@ -311,6 +436,10 @@ h3 {
     position: relative;
 }
 
+.dark .markdown-preview {
+    color: #d1d5db;
+}
+
 .markdown-preview::after {
     content: '';
     position: absolute;
@@ -319,6 +448,10 @@ h3 {
     right: 0;
     height: 40px;
     background: linear-gradient(transparent, rgba(255, 255, 255, 0.95));
+}
+
+.dark .markdown-preview::after {
+    background: linear-gradient(transparent, rgba(31, 41, 55, 0.95));
 }
 
 .markdown-preview h1,
@@ -359,6 +492,11 @@ h3 {
     padding: 0.125rem 0.25rem;
     border-radius: 0.25rem;
     font-size: 0.875rem;
+}
+
+.dark .inline-code {
+    background: rgba(99, 102, 241, 0.2);
+    color: #a5b4fc;
 }
 
 .card-footer {

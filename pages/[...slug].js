@@ -56,7 +56,7 @@ export default function Post({ contents, filename, status }) {
                         />
                     </Head>
                     <Navbar />
-                    <div className="main lg:flex lg:mr-9 w-screen">
+                    <div className="main lg:flex lg:mr-9 w-screen bg-white dark:bg-gray-900">
                         {showToc ? (
                             <div className="hidetoc">
                                 <SlugToc paths={path} />
@@ -70,7 +70,7 @@ export default function Post({ contents, filename, status }) {
                         <div>
                             <div className="lg:flex flex-col items-center justify-center text-3xl mt-10"></div>
                             <ReactMarkdown
-                                className="markdown-body lg:max-w-[75vw]  p-4 mylist"
+                                className="markdown-body lg:max-w-[75vw] p-4 mylist bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
                                 remarkPlugins={[remarkGfm, remarkMath]}
                                 rehypePlugins={[[rehypeKatex, { strict: false }], rehypeRaw]}
                                 components={{
@@ -89,8 +89,8 @@ export default function Post({ contents, filename, status }) {
                                                 {String(children).replace(/\n$/, "")}
                                             </SyntaxHighlighter>
                                         ) : (
-                                            <code className={"text-white"} {...props}>
-                                                <div className="m-3">{children}</div>
+                                            <code className="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-1 py-0.5 rounded" {...props}>
+                                                {children}
                                             </code>
                                         )
                                     },
