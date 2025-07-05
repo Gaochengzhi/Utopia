@@ -32,6 +32,9 @@ export default function WaterfallCards({ initialPosts, totalPosts }) {
 
     // 生成3D变换效果
     const get3DTransform = (cardKey, columnIndex, index) => {
+        // 检查是否为移动端（宽度小于768px）
+        const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
+
         if (hoveredCard === cardKey) {
             const tiltX = mousePosition.y * 15  // 增加倾斜角度
             const tiltY = mousePosition.x * -15
@@ -39,7 +42,13 @@ export default function WaterfallCards({ initialPosts, totalPosts }) {
             const scale = 1.05
             return `perspective(1000px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) scale(${scale}) translateZ(${translateZ}px)`
         }
-        // 给每个卡片添加轻微的随机旋转角度和位移
+
+        // 移动端不应用随机旋转效果
+        if (isMobile) {
+            return 'perspective(1000px) rotateX(0deg) rotateY(0deg) rotateZ(0deg) translateX(0px) translateY(0px) scale(1) translateZ(0px)'
+        }
+
+        // 给每个卡片添加轻微的随机旋转角度和位移（仅桌面端）
         const rotationSeed = cardKey.length + columnIndex + index
         const baseRotationZ = (Math.sin(rotationSeed) * 3) * (rotationSeed % 2 === 0 ? 1 : -1) // 随机正负方向
         const offsetX = Math.cos(columnIndex + index) * 1 // 轻微的X轴偏移
@@ -154,8 +163,8 @@ export default function WaterfallCards({ initialPosts, totalPosts }) {
                 style={{
                     display: 'grid',
                     gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))`,
-                    gap: columnCount === 1 ? '1rem' : '1.5rem',
-                    maxWidth: columnCount * 600 + (columnCount - 1) * 24 + 'px', // 每列300px，间距24px
+                    gap: columnCount === 1 ? '1.5rem' : '2rem',
+                    maxWidth: columnCount * 600 + (columnCount - 1) * 32 + 'px', // 每列600px，间距32px
                     margin: '0 auto',
                     padding: getPadding(),
                     width: '100%'
@@ -163,101 +172,102 @@ export default function WaterfallCards({ initialPosts, totalPosts }) {
             >
                 {columns.map((column, columnIndex) => (
                     <div key={columnIndex} className="waterfall-column">
-                        {column.map((post, index) => (
-                            <Link key={post.key} href={post.path}>
-                                <div
-                                    className={`waterfall-card group shadow-md ${(columnIndex + index) % 4 === 0 ? 'animate-card-float' :
-                                        (columnIndex + index) % 4 === 1 ? 'animate-card-wiggle' : ''
-                                        }`}
-                                    style={{
-                                        marginBottom: '1.5rem',
-                                        maxHeight: '50rem',
-                                        transform: get3DTransform(post.key, columnIndex, index),
-                                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                                        transformStyle: 'preserve-3d'
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        setHoveredCard(post.key)
-                                    }}
-                                    onMouseMove={(e) => {
-                                        if (hoveredCard === post.key) {
-                                            handleMouseMove(e, e.currentTarget.getBoundingClientRect())
-                                        }
-                                    }}
-                                    onMouseLeave={() => {
-                                        setHoveredCard(null)
-                                        setMousePosition({ x: 0, y: 0 })
-                                    }}
-                                >
-                                    {/* 卡片内容 */}
-                                    <div className="card-content">
-                                        {/* 卡片头部 */}
-                                        <div className="card-header">
-                                            <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-                                                <ClockCircleOutlined className="text-xs" />
-                                                <span>{formateTime(post.time)}</span>
+                        {column.map((post, index) => {
+                            // 为每个卡片生成随机的最大高度（1倍到1.5倍之间）
+                            const randomHeightMultiplier = 1 + (Math.sin(post.key.length + columnIndex + index) * 0.5 + 0.5) * 0.5; // 1-1.5倍
+                            const maxHeight = `${30 * randomHeightMultiplier}rem`; // 基础高度30rem
+
+                            return (
+                                <Link key={post.key} href={post.path}>
+                                    <div
+                                        className={`waterfall-card group shadow-md ${columnCount > 1 ? ((columnIndex + index) % 4 === 0 ? 'animate-card-float' : (columnIndex + index) % 4 === 1 ? 'animate-card-wiggle' : '') : ''}`}
+                                        style={{
+                                            marginBottom: '2rem',
+                                            maxHeight: maxHeight,
+                                            transform: get3DTransform(post.key, columnIndex, index),
+                                            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                            transformStyle: 'preserve-3d'
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            setHoveredCard(post.key)
+                                        }}
+                                        onMouseMove={(e) => {
+                                            if (hoveredCard === post.key) {
+                                                handleMouseMove(e, e.currentTarget.getBoundingClientRect())
+                                            }
+                                        }}
+                                        onMouseLeave={() => {
+                                            setHoveredCard(null)
+                                            setMousePosition({ x: 0, y: 0 })
+                                        }}
+                                    >
+                                        {/* 卡片内容 */}
+                                        <div className="card-content">
+                                            {/* 卡片头部 */}
+                                            <div className="card-header">
+                                                <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+                                                    <ClockCircleOutlined className="text-xs" />
+                                                    <span>{formateTime(post.time)}</span>
+                                                </div>
                                             </div>
-                                            <h3 className="card-title">
-                                                {post.title.replace(".md", "")}
-                                            </h3>
+
+                                            {/* 文章预览内容 */}
+                                            <div className="card-body">
+                                                <ReactMarkdown
+                                                    className="markdown-preview"
+                                                    remarkPlugins={[remarkGfm, remarkMath]}
+                                                    rehypePlugins={[[rehypeKatex, { strict: false }], rehypeRaw]}
+                                                    components={{
+                                                        pre: ({ node, inline, className, ...props }) => (
+                                                            <pre className={className} {...props} />
+                                                        ),
+                                                        code({ node, inline, className, children, ...props }) {
+                                                            const match = /language-(\w+)/.exec(className || "")
+                                                            return !inline && match ? (
+                                                                <SyntaxHighlighter
+                                                                    style={vscDarkPlus}
+                                                                    language={match[1]}
+                                                                    PreTag="div"
+                                                                    {...props}
+                                                                >
+                                                                    {String(children).replace(/\n$/, "")}
+                                                                </SyntaxHighlighter>
+                                                            ) : (
+                                                                <code className="inline-code" {...props}>
+                                                                    {children}
+                                                                </code>
+                                                            )
+                                                        },
+                                                        // 限制图片大小
+                                                        img: ({ node, ...props }) => (
+                                                            <img {...props} className="card-image" />
+                                                        ),
+                                                        // 限制标题层级
+                                                        h1: ({ children }) => <h4 className="card-h1">{children}</h4>,
+                                                        h2: ({ children }) => <h5 className="card-h2">{children}</h5>,
+                                                        h3: ({ children }) => <h6 className="card-h3">{children}</h6>,
+                                                    }}
+                                                >
+                                                    {post.content}
+                                                </ReactMarkdown>
+                                            </div>
+
+                                            {/* 卡片底部 */}
+                                            <div className="card-footer">
+                                                <div className="flex items-center gap-2 text-sm text-gray-500">
+                                                    <FileTextOutlined />
+                                                    <span>阅读更多</span>
+                                                </div>
+                                                <div className="read-more-arrow">→</div>
+                                            </div>
                                         </div>
 
-                                        {/* 文章预览内容 */}
-                                        <div className="card-body">
-                                            <ReactMarkdown
-                                                className="markdown-preview"
-                                                remarkPlugins={[remarkGfm, remarkMath]}
-                                                rehypePlugins={[[rehypeKatex, { strict: false }], rehypeRaw]}
-                                                components={{
-                                                    pre: ({ node, inline, className, ...props }) => (
-                                                        <pre className={className} {...props} />
-                                                    ),
-                                                    code({ node, inline, className, children, ...props }) {
-                                                        const match = /language-(\w+)/.exec(className || "")
-                                                        return !inline && match ? (
-                                                            <SyntaxHighlighter
-                                                                style={vscDarkPlus}
-                                                                language={match[1]}
-                                                                PreTag="div"
-                                                                {...props}
-                                                            >
-                                                                {String(children).replace(/\n$/, "")}
-                                                            </SyntaxHighlighter>
-                                                        ) : (
-                                                            <code className="inline-code" {...props}>
-                                                                {children}
-                                                            </code>
-                                                        )
-                                                    },
-                                                    // 限制图片大小
-                                                    img: ({ node, ...props }) => (
-                                                        <img {...props} className="card-image" />
-                                                    ),
-                                                    // 限制标题层级
-                                                    h1: ({ children }) => <h4 className="card-h1">{children}</h4>,
-                                                    h2: ({ children }) => <h5 className="card-h2">{children}</h5>,
-                                                    h3: ({ children }) => <h6 className="card-h3">{children}</h6>,
-                                                }}
-                                            >
-                                                {post.content}
-                                            </ReactMarkdown>
-                                        </div>
-
-                                        {/* 卡片底部 */}
-                                        <div className="card-footer">
-                                            <div className="flex items-center gap-2 text-sm text-gray-500">
-                                                <FileTextOutlined />
-                                                <span>阅读更多</span>
-                                            </div>
-                                            <div className="read-more-arrow">→</div>
-                                        </div>
+                                        {/* 悬停效果遮罩 */}
+                                        <div className="card-overlay"></div>
                                     </div>
-
-                                    {/* 悬停效果遮罩 */}
-                                    <div className="card-overlay"></div>
-                                </div>
-                            </Link>
-                        ))}
+                                </Link>
+                            )
+                        })}
                     </div>
                 ))}
             </div>
