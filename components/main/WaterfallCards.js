@@ -22,38 +22,37 @@ export default function WaterfallCards({ initialPosts, totalPosts }) {
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
     const [hoveredCard, setHoveredCard] = useState(null)
 
-    // 处理鼠标移动事件，获取相对位置
-    const handleMouseMove = (e, cardRect) => {
+    // 处理鼠标移动事件，获取相对位置 - 添加节流优化
+    const handleMouseMove = useCallback((e, cardRect) => {
         const rect = cardRect
         const x = (e.clientX - rect.left) / rect.width - 0.5
         const y = (e.clientY - rect.top) / rect.height - 0.5
         setMousePosition({ x, y })
-    }
+    }, [])
 
-    // 生成3D变换效果
+    // 生成3D变换效果 - 优化性能和流畅度
     const get3DTransform = (cardKey, columnIndex, index) => {
         // 检查是否为移动端（宽度小于768px）
         const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
 
-        if (hoveredCard === cardKey) {
-            const tiltX = mousePosition.y * 15  // 增加倾斜角度
-            const tiltY = mousePosition.x * -15
-            const translateZ = 30
-            const scale = 1.05
+        if (hoveredCard === cardKey && !isMobile) {
+            // 减少倾斜角度，提高流畅度
+            const tiltX = mousePosition.y * 8  // 从15度减少到8度
+            const tiltY = mousePosition.x * -8
+            const translateZ = 20  // 从30px减少到20px
+            const scale = 1.03  // 从1.05减少到1.03
             return `perspective(1000px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) scale(${scale}) translateZ(${translateZ}px)`
         }
 
-        // 移动端不应用随机旋转效果
+        // 移动端完全不应用3D效果
         if (isMobile) {
-            return 'perspective(1000px) rotateX(0deg) rotateY(0deg) rotateZ(0deg) translateX(0px) translateY(0px) scale(1) translateZ(0px)'
+            return 'none'
         }
 
-        // 给每个卡片添加轻微的随机旋转角度和位移（仅桌面端）
+        // 给每个卡片添加轻微的随机旋转角度（仅桌面端）
         const rotationSeed = cardKey.length + columnIndex + index
-        const baseRotationZ = (Math.sin(rotationSeed) * 3) * (rotationSeed % 2 === 0 ? 1 : -1) // 随机正负方向
-        const offsetX = Math.cos(columnIndex + index) * 1 // 轻微的X轴偏移
-        const offsetY = Math.sin(columnIndex + index) * 0.5 // 轻微的Y轴偏移
-        return `perspective(1000px) rotateX(0deg) rotateY(0deg) rotateZ(${baseRotationZ}deg) translateX(${offsetX}px) translateY(${offsetY}px) scale(1) translateZ(0px)`
+        const baseRotationZ = (Math.sin(rotationSeed) * 1.5) * (rotationSeed % 2 === 0 ? 1 : -1) // 减少旋转角度
+        return `perspective(1000px) rotateZ(${baseRotationZ}deg)`
     }
 
     // 加载更多文章
@@ -128,7 +127,7 @@ export default function WaterfallCards({ initialPosts, totalPosts }) {
 
     // 根据屏幕大小计算合适的padding
     const getPadding = () => {
-        if (typeof window === 'undefined') return '0 1.5rem'
+        if (typeof window === 'undefined') return '0 2rem'
 
         const width = window.innerWidth
         if (width <= 768) {
@@ -136,7 +135,7 @@ export default function WaterfallCards({ initialPosts, totalPosts }) {
         } else if (width <= 1024) {
             return '0 2rem'  // 平板：32px边距
         } else {
-            return '0 1.5rem'  // 桌面端：24px边距
+            return '0 3rem'  // 桌面端：48px边距，增加更多空间
         }
     }
 
@@ -163,7 +162,7 @@ export default function WaterfallCards({ initialPosts, totalPosts }) {
                 style={{
                     display: 'grid',
                     gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))`,
-                    gap: columnCount === 1 ? '1.5rem' : '2rem',
+                    gap: columnCount === 1 ? '2rem' : '3rem',  // 增加卡片间距
                     maxWidth: columnCount * 600 + (columnCount - 1) * 32 + 'px', // 每列600px，间距32px
                     margin: '0 auto',
                     padding: getPadding(),
@@ -173,27 +172,34 @@ export default function WaterfallCards({ initialPosts, totalPosts }) {
                 {columns.map((column, columnIndex) => (
                     <div key={columnIndex} className="waterfall-column">
                         {column.map((post, index) => {
-                            // 为每个卡片生成随机的最大高度（1倍到1.5倍之间）
+                            // 为每个卡片生成随机的最大长度（1倍到1.5倍之间）
                             const randomHeightMultiplier = 1 + (Math.sin(post.key.length + columnIndex + index) * 0.5 + 0.5) * 0.5; // 1-1.5倍
-                            const maxHeight = `${30 * randomHeightMultiplier}rem`; // 基础高度30rem
+                            const maxContentHeight = `${20 * randomHeightMultiplier}rem`; // 内容区域基础高度20rem
 
                             return (
                                 <Link key={post.key} href={post.path}>
                                     <div
                                         className={`waterfall-card group shadow-md ${columnCount > 1 ? ((columnIndex + index) % 4 === 0 ? 'animate-card-float' : (columnIndex + index) % 4 === 1 ? 'animate-card-wiggle' : '') : ''}`}
                                         style={{
-                                            marginBottom: '2rem',
-                                            maxHeight: maxHeight,
-                                            transform: get3DTransform(post.key, columnIndex, index),
-                                            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                                            transformStyle: 'preserve-3d'
+                                            marginBottom: columnCount === 1 ? '2rem' : '3rem',
+                                            transition: 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease',  // 优化过渡效果
+                                            transformStyle: 'preserve-3d',
+                                            transform: get3DTransform(post.key, columnIndex, index)
                                         }}
                                         onMouseEnter={(e) => {
-                                            setHoveredCard(post.key)
+                                            // 只在桌面端启用3D效果
+                                            if (window.innerWidth >= 768) {
+                                                setHoveredCard(post.key)
+                                            }
                                         }}
                                         onMouseMove={(e) => {
-                                            if (hoveredCard === post.key) {
-                                                handleMouseMove(e, e.currentTarget.getBoundingClientRect())
+                                            // 只在桌面端且当前卡片被悬停时更新鼠标位置
+                                            if (hoveredCard === post.key && window.innerWidth >= 768) {
+                                                const rect = e.currentTarget.getBoundingClientRect()
+                                                // 使用requestAnimationFrame优化性能
+                                                requestAnimationFrame(() => {
+                                                    handleMouseMove(e, rect)
+                                                })
                                             }
                                         }}
                                         onMouseLeave={() => {
@@ -212,7 +218,11 @@ export default function WaterfallCards({ initialPosts, totalPosts }) {
                                             </div>
 
                                             {/* 文章预览内容 */}
-                                            <div className="card-body">
+                                            <div className="card-body" style={{
+                                                maxHeight: maxContentHeight,  // 使用随机高度
+                                                overflow: 'hidden',
+                                                position: 'relative'
+                                            }}>
                                                 <ReactMarkdown
                                                     className="markdown-preview"
                                                     remarkPlugins={[remarkGfm, remarkMath]}
@@ -250,6 +260,8 @@ export default function WaterfallCards({ initialPosts, totalPosts }) {
                                                 >
                                                     {post.content}
                                                 </ReactMarkdown>
+                                                {/* 渐变遮罩，确保底部有淡出效果 */}
+                                                <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-white dark:from-gray-800 to-transparent pointer-events-none" />
                                             </div>
 
                                             {/* 卡片底部 */}

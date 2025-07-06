@@ -85,15 +85,20 @@ export function Toc({}) {
   }, [router.asPath])
   return (
     <>
-      <div className="lg:h-[88vh] overflow-y-scroll mb-4 p-3 lg:min-w-[18rem] lg:max-w-[18rem] border-x-2 border-gray-400 dark:border-gray-500 border-dashed bg-white dark:bg-gray-900">
+      <div className="lg:h-[88vh] overflow-y-scroll mb-4 p-4 ml-4 lg:min-w-[18rem] lg:max-w-[18rem] bg-gray-50/80 dark:bg-gray-800/40 rounded-lg backdrop-blur-sm">
         {toc.map((o) => (
           <div
             onClick={(e) => handleClick(e, o)}
             key={o.id}
-            className="flex text-base mt-1 text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white overflow-ellipsis transition-colors ease-in firstT cursor-pointer"
+            className={`flex text-sm mt-1 overflow-ellipsis transition-all ease-in firstT cursor-pointer py-1.5 px-2 rounded-md hover:bg-gray-200/60 dark:hover:bg-gray-700/60 ${
+              o.indent === 0 ? 'text-gray-800 dark:text-gray-100 font-medium' :
+              o.indent === 1 ? 'text-gray-700 dark:text-gray-200' :
+              o.indent === 2 ? 'text-gray-600 dark:text-gray-300' :
+              'text-gray-500 dark:text-gray-400'
+            }`}
+            style={{marginLeft: `${o.indent * 0.75}rem`}}
           >
-            <div className="invisible ">{times("iiii", o.indent)} </div>
-            <div>{o.title}</div>
+            <div className="truncate text-left leading-5">{o.title}</div>
           </div>
         ))}
       </div>
