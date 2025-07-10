@@ -8,6 +8,7 @@ import Navbar from "/components/Navbar"
 import fs from "fs"
 import { useEffect } from "react"
 import { readAllFile } from "/components/util/readAllfile"
+import Link from "next/link"
 import Cookies from "js-cookie"
 const config = require('../config.local.js')
 
@@ -78,7 +79,7 @@ export default function Home({ paths, initialPosts, totalPosts }) {
                                 <div className="text-gray-500 dark:text-gray-400 text-sm space-y-1 mb-3">
                                     <div className="jobs cursor-pointer">🌈 瓦梁湖生态观察小队副队长</div>
                                     <div className="jobs cursor-pointer">👨🏻‍💻 Software Engineer</div>
-                                    <div className="jobs cursor-pointer">📸 Photographer</div>
+                                    <Link href="/photographer" className="jobs cursor-pointer">📸 Photographer</Link>
                                 </div>
                             </div>
                         </div>
