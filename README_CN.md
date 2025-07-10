@@ -37,21 +37,21 @@
   <table>
     <tr>
       <td align="center" width="50%">
-        <img src="./public/readme-assets/search-feature.gif" height="200" alt="搜索功能"/><br/>
+        <img src="./public/readme-assets/search-feature.gif" height="300" alt="搜索功能"/><br/>
         <sub><b>🔍 实时搜索</b></sub>
       </td>
       <td align="center" width="50%">
-        <img src="./public/readme-assets/dark-light-mode.gif" height="200" alt="深浅主题"/><br/>
+        <img src="./public/readme-assets/dark-light-mode.gif" height="300" alt="深浅主题"/><br/>
         <sub><b>🌗 深浅主题切换</b></sub>
       </td>
     </tr>
     <tr>
       <td align="center" width="50%">
-        <img src="./public/readme-assets/animated-cards.gif" height="200" alt="动态卡片"/><br/>
+        <img src="./public/readme-assets/animated-cards.gif" height="300" alt="动态卡片"/><br/>
         <sub><b>✨ 动态卡片动画</b></sub>
       </td>
       <td align="center" width="50%">
-        <img src="./public/readme-assets/photo-wall.gif" height="200" alt="照片墙"/><br/>
+        <img src="./public/readme-assets/photo-wall.gif" height="300" alt="照片墙"/><br/>
         <sub><b>🖼️ 照片墙展示</b></sub>
       </td>
     </tr>
@@ -60,12 +60,12 @@
 
 ## 快速对比
 
-| 功能 | 传统博客 | Utopia |
-|------|----------|--------|
-| 添加新文章 | 重构整个网站 | 增量更新 |
-| 发布时间 | 5-10分钟 | 1-2秒 |
-| 停机时间 | 30-60秒 | 0秒 |
-| 内容流程 | Git提交 → CI/CD → 部署 | 本地写作 → 上传 → 上线 |
+| 功能       | 传统博客               | Utopia                 |
+| ---------- | ---------------------- | ---------------------- |
+| 添加新文章 | 重构整个网站           | 增量更新               |
+| 发布时间   | 5-10分钟               | 1-2秒                  |
+| 停机时间   | 30-60秒                | 0秒                    |
+| 内容流程   | Git提交 → CI/CD → 部署 | 本地写作 → 上传 → 上线 |
 
 ---
 
@@ -177,12 +177,12 @@ npm run deploy          # 完整部署并重启服务器
 
 ### 部署脚本
 
-| 脚本 | 使用场景 | 特性 |
-|------|----------|------|
-| `quick-deploy.sh` | 日常更新 | 一键部署 |
-| `simple-deploy.sh` | 不稳定网络 | 顺序同步，重试机制 |
-| `deploy.sh` | 完整部署 | 文件同步 + 服务器重启 |
-| `upload.sh` | 仅文件同步 | 并行上传，压缩优化 |
+| 脚本               | 使用场景   | 特性                  |
+| ------------------ | ---------- | --------------------- |
+| `quick-deploy.sh`  | 日常更新   | 一键部署              |
+| `simple-deploy.sh` | 不稳定网络 | 顺序同步，重试机制    |
+| `deploy.sh`        | 完整部署   | 文件同步 + 服务器重启 |
+| `upload.sh`        | 仅文件同步 | 并行上传，压缩优化    |
 
 ### 服务器配置
 

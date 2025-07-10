@@ -37,21 +37,21 @@ A personal blog and photography portfolio built with Next.js, featuring incremen
   <table>
     <tr>
       <td align="center" width="50%">
-        <img src="./public/readme-assets/search-feature.gif" height="200" alt="Search Feature"/><br/>
+        <img src="./public/readme-assets/search-feature.gif" height="300" alt="Search Feature"/><br/>
         <sub><b>🔍 Real-time Search</b></sub>
       </td>
       <td align="center" width="50%">
-        <img src="./public/readme-assets/dark-light-mode.gif" height="200" alt="Dark/Light Mode"/><br/>
+        <img src="./public/readme-assets/dark-light-mode.gif" height="300" alt="Dark/Light Mode"/><br/>
         <sub><b>🌗 Dark/Light Mode</b></sub>
       </td>
     </tr>
     <tr>
       <td align="center" width="50%">
-        <img src="./public/readme-assets/animated-cards.gif" height="200" alt="Animated Cards"/><br/>
+        <img src="./public/readme-assets/animated-cards.gif" height="300" alt="Animated Cards"/><br/>
         <sub><b>✨ Animated Cards</b></sub>
       </td>
       <td align="center" width="50%">
-        <img src="./public/readme-assets/photo-wall.gif" height="200" alt="Photo Wall"/><br/>
+        <img src="./public/readme-assets/photo-wall.gif" height="300" alt="Photo Wall"/><br/>
         <sub><b>🖼️ Photography Wall</b></sub>
       </td>
     </tr>
