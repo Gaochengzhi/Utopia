@@ -704,7 +704,88 @@ h3 {
     padding: 0em !important;
     padding-left: 1ch !important;
     border-radius: 3px !important;
+}
+
+/* 亮色模式下的代码块背景 */
+.mylist pre {
+    background: #f8f9fa !important;
+}
+
+/* 暗色模式下的代码块背景 */
+.dark .mylist pre {
     background: rgb(30, 30, 30) !important;
+}
+
+/* 修复暗色模式下的代码块行高亮问题 */
+.line-highlight.line-highlight {
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+/* 暗色模式下的代码块行高亮 - 如果需要保留高亮功能 */
+.dark .line-highlight.line-highlight {
+    background: rgba(255, 255, 255, 0.05) !important;
+    box-shadow: inset 3px 0 0 rgba(255, 255, 255, 0.2) !important;
+}
+
+/* 修复所有可能的 Prism.js 行高亮样式 */
+.token.line-highlight,
+.prism-code .line-highlight,
+code .line-highlight,
+pre .line-highlight {
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+/* 暗色模式下的 Prism.js 行高亮 */
+.dark .token.line-highlight,
+.dark .prism-code .line-highlight,
+.dark code .line-highlight,
+.dark pre .line-highlight {
+    background: rgba(255, 255, 255, 0.05) !important;
+    box-shadow: inset 3px 0 0 rgba(255, 255, 255, 0.2) !important;
+}
+
+/* 修复 react-syntax-highlighter 代码行背景问题 */
+.token-line,
+.prism-code .token-line,
+code .token-line,
+pre .token-line,
+.linenumber {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+/* 修复代码块内的所有行元素 */
+.dark .token-line,
+.dark .prism-code .token-line,
+.dark code .token-line,
+.dark pre .token-line,
+.dark .linenumber {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+/* 更彻底的修复：覆盖所有可能的代码块行背景样式 */
+.mylist pre *,
+.mylist pre span,
+.mylist pre div,
+.mylist code *,
+.mylist code span,
+.mylist code div {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+/* 专门针对 react-syntax-highlighter 生成的元素 */
+.dark .mylist pre *,
+.dark .mylist pre span,
+.dark .mylist pre div,
+.dark .mylist code *,
+.dark .mylist code span,
+.dark .mylist code div {
+    background: transparent !important;
+    background-color: transparent !important;
 }
 
 .mynav {

@@ -116,7 +116,7 @@ export function Banner({ }) {
                 }}
             >
                 <div
-                    className="text-4xl md:text-5xl mt-9 font-serif bg-gradient-to-r from-white via-purple-200 to-blue-200 bg-clip-text text-transparent"
+                    className="text-4xl md:text-5xl mt-9 font-serif bg-gradient-to-r from-white to-white bg-clip-text text-transparent"
                     style={getTextAnimation(100)}
                 >
                     Taitan_Pascal

@@ -236,10 +236,10 @@ export function Walls({ path, scrollDirection = 'horizontal' }) {
     return (
         <div className="w-full">
             <PhotoProvider
-                maskOpacity={0.8}
+                maskOpacity={0.5}
                 pullClosable={true}
                 toolbarRender={({ rotate, onRotate, onScale, scale }) => (
-                    <div className="flex space-x-2 text-white bg-black/70 rounded-lg p-3">
+                    <div className="flex space-x-4 text-white bg-black/70 rounded-lg p-3">
                         <button onClick={() => onRotate(rotate + 90)} className="p-2 hover:bg-white/20 rounded transition-all">
                             ↻
                         </button>
@@ -270,19 +270,19 @@ export function Walls({ path, scrollDirection = 'horizontal' }) {
                                     className="flex items-end photo-row"
                                     style={{
                                         // 为每行添加轻微的垂直偏移
-                                        transform: `translateY(${rowIndex % 2 === 0 ? '0px' : '4px'})`,
+                                        transform: `translateY(${rowIndex % 2 === 0 ? '-2px' : '9px'})`,
                                         // 动画控制 - 拖拽时暂停
                                         animation: (isPaused || isDraggingActive) ? 'none' : `autoScrollRight ${60 + rowIndex * 10}s linear infinite`,
                                         animationPlayState: (isPaused || isDraggingActive) ? 'paused' : 'running',
                                         // 确保有足够的宽度
                                         width: 'max-content',
                                         display: 'flex',
-                                        gap: '0.5rem',
+                                        gap: '1rem',
                                         willChange: isDraggingActive ? 'transform' : 'auto',
                                         transition: isDraggingActive ? 'none' : 'transform 0.3s ease',
                                         // 进一步减少行的上下边距
-                                        paddingTop: `${1 + (rowIndex % 3) * 2}px`,
-                                        paddingBottom: `${1 + ((rowIndex + 1) % 3) * 2}px`,
+                                        paddingTop: `${(rowIndex % 3)}px`,
+                                        paddingBottom: `${((rowIndex + 1) % 3)}px`,
                                     }}
                                 >
                                     {/* 渲染图片两次实现无缝循环 */}
@@ -416,8 +416,8 @@ export function Walls({ path, scrollDirection = 'horizontal' }) {
                                                     height: sizeOptions.mobile.height,
                                                     // 恢复完整的旋转效果
                                                     transform: isDraggingActive
-                                                        ? `rotate(${(index % 7 - 3) * 0.3}deg)`
-                                                        : `rotate(${(index % 7 - 3) * 0.5}deg)`,
+                                                        ? `rotate(${(index % 7 - 3) * 0.9}deg)`
+                                                        : `rotate(${(index % 7 - 3) * 2}deg)`,
                                                     // 桌面端尺寸
                                                     '--desktop-width': sizeOptions.desktop.width,
                                                     '--desktop-height': sizeOptions.desktop.height,

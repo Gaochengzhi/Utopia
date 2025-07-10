@@ -5,8 +5,8 @@ SERVER_IP=$(node -e "console.log(require('./config.local.js').SERVER_IP)")
 REMOTE_USER="kounarushi"
 REMOTE_PATH="~/web/"
 
-# SSH连接选项
-SSH_OPTS="-p 22 -o ConnectTimeout=10 -o ServerAliveInterval=30"
+# SSH连接选项 - 增加超时时间和重试机制
+SSH_OPTS="-p 22 -o ConnectTimeout=30 -o ServerAliveInterval=60 -o ServerAliveCountMax=3 -o TCPKeepAlive=yes -o Compression=yes"
 
 # 需要同步的目录和文件
 SYNC_ITEMS=(
@@ -49,7 +49,7 @@ test_connection() {
         local connection_time=$((test_end - test_start))
 
         if [ $connection_time -gt 5 ]; then
-            SSH_OPTS="-p 22 -o ConnectTimeout=60 -o ServerAliveInterval=120"
+            SSH_OPTS="-p 22 -o ConnectTimeout=90 -o ServerAliveInterval=120 -o ServerAliveCountMax=5 -o TCPKeepAlive=yes -o Compression=yes"
             echo "⚠️  网络较慢，已自动调整超时设置"
         else
             echo "✅ 网络连接良好"
@@ -64,7 +64,7 @@ test_connection() {
 # 智能选择rsync选项
 get_rsync_opts() {
     local item="$1"
-    local base_opts="--timeout=300 --delete --compress --partial --inplace"
+    local base_opts="--timeout=600 --delete --compress --partial --inplace"
 
     # 根据文件类型自动优化
     if [[ "$item" == *.js ]] || [[ "$item" == *.json ]] || [[ "$item" == *.css ]]; then
@@ -98,7 +98,8 @@ async_sync() {
         fi
     } &
 
-    echo $! # 返回PID
+    local pid=$!
+    echo $pid # 返回PID
 }
 
 # 智能进度显示
@@ -148,8 +149,12 @@ main() {
         # 控制并发数
         if [ ${#PIDS[@]} -ge $MAX_CONCURRENT ]; then
             echo "⏳ 等待部分任务完成..."
-            wait ${PIDS[0]}
-            PIDS=("${PIDS[@]:1}")
+            # 等待第一个进程完成
+            if [ ${#PIDS[@]} -gt 0 ] && [ -n "${PIDS[0]}" ]; then
+                wait ${PIDS[0]} 2>/dev/null || true
+                # 移除已完成的进程ID
+                PIDS=("${PIDS[@]:1}")
+            fi
         fi
     done
 
@@ -160,11 +165,13 @@ main() {
     # 等待所有任务完成
     echo "⏳ 等待所有同步任务完成..."
     for pid in "${PIDS[@]}"; do
-        wait "$pid"
+        if [ -n "$pid" ]; then
+            wait "$pid" 2>/dev/null || true
+        fi
     done
 
     # 停止进度显示
-    kill $progress_pid 2>/dev/null
+    kill $progress_pid 2>/dev/null || true
 
     # 收集结果
     local success_count=0
@@ -216,7 +223,9 @@ cleanup() {
     echo
     echo "🛑 收到中断信号，正在清理..."
     for pid in "${PIDS[@]}"; do
-        kill "$pid" 2>/dev/null
+        if [ -n "$pid" ]; then
+            kill "$pid" 2>/dev/null || true
+        fi
     done
     rm -f /tmp/sync_*_$$.log
     exit 130

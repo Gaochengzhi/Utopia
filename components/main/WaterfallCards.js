@@ -37,10 +37,10 @@ export default function WaterfallCards({ initialPosts, totalPosts }) {
 
         if (hoveredCard === cardKey && !isMobile) {
             // 减少倾斜角度，提高流畅度
-            const tiltX = mousePosition.y * 8  // 从15度减少到8度
-            const tiltY = mousePosition.x * -8
-            const translateZ = 20  // 从30px减少到20px
-            const scale = 1.03  // 从1.05减少到1.03
+            const tiltX = mousePosition.y * 15  // 从15度减少到8度
+            const tiltY = mousePosition.x * -15
+            const translateZ = 30  // 从30px减少到20px
+            const scale = 1.06  // 从1.05减少到1.03
             return `perspective(1000px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) scale(${scale}) translateZ(${translateZ}px)`
         }
 
@@ -51,7 +51,7 @@ export default function WaterfallCards({ initialPosts, totalPosts }) {
 
         // 给每个卡片添加轻微的随机旋转角度（仅桌面端）
         const rotationSeed = cardKey.length + columnIndex + index
-        const baseRotationZ = (Math.sin(rotationSeed) * 1.5) * (rotationSeed % 2 === 0 ? 1 : -1) // 减少旋转角度
+        const baseRotationZ = (Math.sin(rotationSeed) * 1.5) * (rotationSeed % 2 === 0 ? 2 : -2)
         return `perspective(1000px) rotateZ(${baseRotationZ}deg)`
     }
 
@@ -108,11 +108,11 @@ export default function WaterfallCards({ initialPosts, totalPosts }) {
         const updateColumnCount = () => {
             if (window.innerWidth <= 600) {
                 setColumnCount(1)
-            } else if (window.innerWidth <= 1200) {
+            } else if (window.innerWidth <= 1700) {
                 setColumnCount(2)
-            } else if (window.innerWidth <= 1800) {
+            } else if (window.innerWidth <= 2000) {
                 setColumnCount(3)
-            } else if (window.innerWidth <= 2400) {
+            } else if (window.innerWidth <= 2500) {
                 setColumnCount(4)
             } else {
                 setColumnCount(5)
@@ -135,7 +135,7 @@ export default function WaterfallCards({ initialPosts, totalPosts }) {
         } else if (width <= 1024) {
             return '0 2rem'  // 平板：32px边距
         } else {
-            return '0 3rem'  // 桌面端：48px边距，增加更多空间
+            return '0 5rem'  // 桌面端：48px边距，增加更多空间
         }
     }
 
@@ -162,7 +162,7 @@ export default function WaterfallCards({ initialPosts, totalPosts }) {
                 style={{
                     display: 'grid',
                     gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))`,
-                    gap: columnCount === 1 ? '2rem' : '3rem',  // 增加卡片间距
+                    gap: '2rem',  // 增加卡片间距
                     maxWidth: columnCount * 600 + (columnCount - 1) * 32 + 'px', // 每列600px，间距32px
                     margin: '0 auto',
                     padding: getPadding(),
@@ -173,7 +173,7 @@ export default function WaterfallCards({ initialPosts, totalPosts }) {
                     <div key={columnIndex} className="waterfall-column">
                         {column.map((post, index) => {
                             // 为每个卡片生成随机的最大长度（1倍到1.5倍之间）
-                            const randomHeightMultiplier = 1 + (Math.sin(post.key.length + columnIndex + index) * 0.5 + 0.5) * 0.5; // 1-1.5倍
+                            const randomHeightMultiplier = 1 + (Math.sin(post.key.length + columnIndex + index) * 0.9 + 0.9) * 0.6; // 1-1.5倍
                             const maxContentHeight = `${20 * randomHeightMultiplier}rem`; // 内容区域基础高度20rem
 
                             return (
@@ -243,7 +243,7 @@ export default function WaterfallCards({ initialPosts, totalPosts }) {
                                                                     {String(children).replace(/\n$/, "")}
                                                                 </SyntaxHighlighter>
                                                             ) : (
-                                                                <code className="inline-code" {...props}>
+                                                                <code className="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-1 py-0.5 rounded" {...props}>
                                                                     {children}
                                                                 </code>
                                                             )
@@ -261,7 +261,7 @@ export default function WaterfallCards({ initialPosts, totalPosts }) {
                                                     {post.content}
                                                 </ReactMarkdown>
                                                 {/* 渐变遮罩，确保底部有淡出效果 */}
-                                                <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-white dark:from-gray-800 to-transparent pointer-events-none" />
+                                                <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-white dark:from-gray-800 to-transparent pointer-events-none" />
                                             </div>
 
                                             {/* 卡片底部 */}

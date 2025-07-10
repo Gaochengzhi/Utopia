@@ -37,7 +37,7 @@ export default function Index({ path, categories }) {
                 </div>
 
                 {/* 图片墙 - 全宽度显示 */}
-                <div className="w-full px-4 lg:px-8 xl:px-12">
+                <div className="w-full  xl:px-12">
                     <Walls path={path} />
                 </div>
 

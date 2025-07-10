@@ -43,13 +43,23 @@ export default function PostList({ posts, rest }) {
                               style={vscDarkPlus}
                               language={match[1]}
                               PreTag="div"
+                              wrapLines={false}
+                              showLineNumbers={false}
+                              customStyle={{
+                                background: 'transparent',
+                                padding: '1rem',
+                                margin: 0,
+                                borderRadius: '0.5rem',
+                                fontSize: '0.875rem',
+                                lineHeight: '1.6'
+                              }}
                               {...props}
                             >
                               {String(children).replace(/\n$/, "")}
                             </SyntaxHighlighter>
                           ) : (
                             <code
-                              className={className + "text-white p-2"}
+                              className="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-1 py-0.5 rounded"
                               {...props}
                             >
                               {children}
