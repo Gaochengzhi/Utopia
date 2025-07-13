@@ -21,7 +21,7 @@ export default function Wall({ paths, title, categories }) {
       <Pnav select={title} categories={categories} />
       <div className="max-w-5xl md:mx-auto">
         <img
-          src={paths[0].path}
+          src={paths[0].path.replace('/.pic/', '/.pic/full/')}
           alt=""
           className="md:max-h-[60vh] max-h-[40vh]  w-[97%] object-cover mx-auto"
         />

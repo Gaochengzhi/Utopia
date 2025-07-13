@@ -37,7 +37,7 @@ export function Banner({ }) {
         return () => observer.disconnect()
     }, [])
 
-    // 图片预加载
+    // 图片预加载 - 使用缩略图
     useEffect(() => {
         const bannerImages = [1, 2, 3, 4, 5]
         bannerImages.forEach((i) => {
@@ -45,9 +45,19 @@ export function Banner({ }) {
             img.onload = () => {
                 setLoadedImages(prev => new Set([...prev, i]))
             }
-            img.src = `/photography/banner/${i}.jpg`
+            img.src = `/.pic/thumb/photography/banner/${i}.jpg`
         })
     }, [])
+
+    // 获取全尺寸压缩图URL
+    const getFullSizeUrl = (imagePath) => {
+        return `/.pic/full${imagePath}`
+    }
+
+    // 获取缩略图URL
+    const getThumbnailUrl = (imagePath) => {
+        return `/.pic/thumb${imagePath}`
+    }
 
     // 文字动画效果
     const getTextAnimation = (delay = 0) => ({
@@ -181,7 +191,7 @@ export function Banner({ }) {
                                 beforeChange={(from, to) => setCurrentSlide(to)}
                             >
                                 {[1, 2, 3, 4, 5].map((i) => (
-                                    <PhotoView key={i} src={`/photography/banner/${i}.jpg`}>
+                                    <PhotoView key={i} src={getFullSizeUrl(`/photography/banner/${i}.jpg`)}>
                                         <div className="picon relative group cursor-pointer" key={i}>
                                             {/* 加载状态 */}
                                             {!loadedImages.has(i) && (
@@ -191,7 +201,7 @@ export function Banner({ }) {
                                             )}
 
                                             <img
-                                                src={`/photography/banner/${i}.jpg`}
+                                                src={getThumbnailUrl(`/photography/banner/${i}.jpg`)}
                                                 className={`picinside h-full object-cover w-full transition-all duration-1000 group-hover:scale-105 ${loadedImages.has(i)
                                                     ? 'opacity-100 filter-none'
                                                     : 'opacity-0 blur-md'

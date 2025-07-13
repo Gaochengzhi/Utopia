@@ -13,16 +13,27 @@ export function Walls({ path, scrollDirection = 'horizontal' }) {
     const currentOffset = useRef(0)
     const animationId = useRef(null)
 
-    // 图片预加载
+    // 缩略图预加载
     useEffect(() => {
         path.forEach((item, index) => {
             const img = new Image()
             img.onload = () => {
                 setLoadedImages(prev => new Set([...prev, index]))
             }
-            img.src = item.path
+            // 加载缩略图而不是原图
+            img.src = item.path.replace('/.pic/', '/.pic/thumb/')
         })
     }, [path])
+
+    // 为PhotoView生成全尺寸压缩图URL
+    const getFullSizeUrl = (originalPath) => {
+        return originalPath.replace('/.pic/', '/.pic/full/')
+    }
+
+    // 获取缩略图URL
+    const getThumbnailUrl = (originalPath) => {
+        return originalPath.replace('/.pic/', '/.pic/thumb/')
+    }
 
     // 应用内容变换 - 正确拖拽内容而不是容器
     const applyContentTransform = useCallback((offset) => {
@@ -290,7 +301,7 @@ export function Walls({ path, scrollDirection = 'horizontal' }) {
                                         const isLoaded = loadedImages.has(item.originalIndex)
 
                                         return (
-                                            <PhotoView key={`${item.key}-${index}`} src={item.path}>
+                                            <PhotoView key={`${item.key}-${index}`} src={getFullSizeUrl(item.path)}>
                                                 <div
                                                     className={`flex-shrink-0 group cursor-pointer relative overflow-hidden rounded-lg responsive-photo-item hover:z-10 ${isDraggingActive ? '' : 'transition-all duration-300'
                                                         }`}
@@ -342,7 +353,7 @@ export function Walls({ path, scrollDirection = 'horizontal' }) {
                                                     )}
 
                                                     <img
-                                                        src={item.path}
+                                                        src={getThumbnailUrl(item.path)}
                                                         className={`w-full h-full object-cover rounded-lg ${isLoaded
                                                             ? 'opacity-100 filter-none'
                                                             : 'opacity-0 blur-sm'
@@ -400,7 +411,7 @@ export function Walls({ path, scrollDirection = 'horizontal' }) {
                                     const sizeOptions = getImageSize(index)
 
                                     return (
-                                        <PhotoView key={item.key} src={item.path}>
+                                        <PhotoView key={item.key} src={getFullSizeUrl(item.path)}>
                                             <div
                                                 className={`group cursor-pointer relative overflow-hidden rounded-lg responsive-photo-item hover:z-10 ${isDraggingActive ? '' : 'transition-all duration-300'
                                                     }`}
@@ -452,7 +463,7 @@ export function Walls({ path, scrollDirection = 'horizontal' }) {
                                                 )}
 
                                                 <img
-                                                    src={item.path}
+                                                    src={getThumbnailUrl(item.path)}
                                                     className={`w-full h-full object-cover rounded-lg ${isLoaded
                                                         ? 'opacity-100 filter-none'
                                                         : 'opacity-0 blur-sm'

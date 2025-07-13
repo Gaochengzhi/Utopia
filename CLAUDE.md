@@ -31,6 +31,9 @@ npm run lint
 npm run analyze
 npm run analyze:server  # Server bundle
 npm run analyze:browser # Browser bundle
+
+# Image compression
+npm run compress-images  # Pre-generate compressed images
 ```
 
 ## Core Architecture
@@ -72,17 +75,31 @@ npm run analyze:browser # Browser bundle
 
 ## Development Notes
 
-### Image Handling
-- Images are automatically compressed via `imgUpload.sh` script
-- Development images reference local paths that get replaced with production URLs during build
-- Photography images are organized by category and auto-discovered
+### Image Handling & Compression System
+- **Original Images**: Stored in `public/photography/` directory structure, uncompressed
+- **Automatic Compression**: Two-tier compression system using Sharp:
+  - **Thumbnails**: 400x300px max, 60% quality WebP for initial page loads
+  - **Full Compressed**: Original dimensions, 85% quality WebP for lightbox viewing
+- **Progressive Loading Strategy**: 
+  - Photography gallery initially loads thumbnails for fast rendering
+  - Clicking an image loads the full compressed version in PhotoView lightbox
+  - Never serves original uncompressed images to users
+- **Bandwidth Optimization**: Significantly reduces data transfer compared to original images
+- **Pre-generation Script**: `npm run compress-images` can pre-generate all compressed variants
+- **Photography images are organized by category and auto-discovered**
 
 ### Cookie-Based Refresh System
 The app uses a cookie-based system to handle refresh scenarios across different page types (`refreshed`, `refreshed_slug`, `refreshedP`).
 
 ### Image Serving System
-- **Dynamic Image API**: `/api/images/[...path].js` serves images from `public/.pic/` with caching and security
-- **URL Rewrites**: `/.pic/*` automatically redirects to `/api/images/*` via next.config.js
+- **Dynamic Image API**: `/api/images/[...path].js` serves original images from `public/.pic/` with caching and security
+- **Compression API**: `/api/thumbnails/[...path].js` generates and serves compressed images with Sharp
+- **URL Rewrites**: Multiple rewrite rules in next.config.js:
+  - `/.pic/*` → `/api/images/*` (original images)
+  - `/.pic/thumb/*` → `/api/thumbnails/*?type=thumbnail` (thumbnails: 400x300, 60% quality)
+  - `/.pic/full/*` → `/api/thumbnails/*?type=fullsize` (compressed: original size, 85% quality)
+- **Progressive Loading**: Photography pages load thumbnails first, then full compressed images when viewed
+- **Automatic Caching**: Compressed images are cached in `public/.pic/compressed/` with timestamp validation
 - **Hot Reload Support**: New images uploaded via `imgUpload.sh` are immediately available without rebuild
 - **Unified Configuration**: All environments use `/.pic/` paths, eliminating external server dependency
 

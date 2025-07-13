@@ -13,7 +13,8 @@
         "upload": "./upload.sh",
         "deploy": "./deploy.sh",
         "quick-deploy": "./quick-deploy.sh",
-        "simple-deploy": "./simple-deploy.sh"
+        "simple-deploy": "./simple-deploy.sh",
+        "compress-images": "node scripts/generateCompressedImages.js"
     },
     "dependencies": {
         "@ant-design/icons": "^4.7.0",
@@ -34,7 +35,8 @@
         "rehype-katex": "^6.0.2",
         "rehype-raw": "^6.1.1",
         "remark-gfm": "^3.0.1",
-        "remark-math": "^5.1.1"
+        "remark-math": "^5.1.1",
+        "sharp": "^0.34.3"
     },
     "devDependencies": {
         "autoprefixer": "^10.4.8",
