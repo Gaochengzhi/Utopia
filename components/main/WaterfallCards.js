@@ -238,6 +238,14 @@ export default function WaterfallCards({ initialPosts, totalPosts }) {
                                                                     style={vscDarkPlus}
                                                                     language={match[1]}
                                                                     PreTag="div"
+                                                                    customStyle={{
+                                                                        background: '#1e1e1e',
+                                                                        padding: '1rem',
+                                                                        margin: 0,
+                                                                        borderRadius: '0.5rem',
+                                                                        fontSize: '0.875rem',
+                                                                        lineHeight: '1.6'
+                                                                    }}
                                                                     {...props}
                                                                 >
                                                                     {String(children).replace(/\n$/, "")}

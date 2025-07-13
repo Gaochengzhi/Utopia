@@ -16,48 +16,63 @@
 
 /* 摄影页面专用动画效果 */
 @layer utilities {
+
     /* 隐藏滚动条 */
     .scrollbar-hide {
         -ms-overflow-style: none;
         scrollbar-width: none;
     }
-    
+
     .scrollbar-hide::-webkit-scrollbar {
         display: none;
     }
+
     /* 浮动动画 */
     @keyframes float {
-        0%, 100% { 
-            transform: translateY(0px) rotate(0deg); 
+
+        0%,
+        100% {
+            transform: translateY(0px) rotate(0deg);
             opacity: 0.6;
         }
-        25% { 
-            transform: translateY(-20px) rotate(90deg); 
+
+        25% {
+            transform: translateY(-20px) rotate(90deg);
             opacity: 1;
         }
-        50% { 
-            transform: translateY(-10px) rotate(180deg); 
+
+        50% {
+            transform: translateY(-10px) rotate(180deg);
             opacity: 0.8;
         }
-        75% { 
-            transform: translateY(-15px) rotate(270deg); 
+
+        75% {
+            transform: translateY(-15px) rotate(270deg);
             opacity: 0.9;
         }
     }
 
     /* 闪烁动画 */
     @keyframes shimmer {
-        0% { transform: translateX(-100%); }
-        100% { transform: translateX(100%); }
+        0% {
+            transform: translateX(-100%);
+        }
+
+        100% {
+            transform: translateX(100%);
+        }
     }
 
     /* 脉冲发光 */
     @keyframes pulse-glow {
-        0%, 100% { 
+
+        0%,
+        100% {
             box-shadow: 0 0 5px rgba(255, 255, 255, 0.2);
             transform: scale(1);
         }
-        50% { 
+
+        50% {
             box-shadow: 0 0 20px rgba(255, 255, 255, 0.4), 0 0 30px rgba(255, 255, 255, 0.2);
             transform: scale(1.02);
         }
@@ -69,6 +84,7 @@
             transform: scale(0);
             opacity: 1;
         }
+
         100% {
             transform: scale(4);
             opacity: 0;
@@ -77,60 +93,94 @@
 
     /* 旋转渐变 */
     @keyframes rotate-gradient {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
     }
 
     /* 3D卡片浮动动画 */
     @keyframes card-float {
-        0%, 100% { 
-            transform: translateY(0px) rotateX(0deg) rotateY(0deg); 
+
+        0%,
+        100% {
+            transform: translateY(0px) rotateX(0deg) rotateY(0deg);
         }
-        50% { 
-            transform: translateY(-5px) rotateX(1deg) rotateY(0.5deg); 
+
+        50% {
+            transform: translateY(-5px) rotateX(1deg) rotateY(0.5deg);
         }
     }
 
     /* 3D卡片摆动动画 */
     @keyframes card-wiggle {
-        0%, 100% { 
-            transform: rotateZ(0deg); 
+
+        0%,
+        100% {
+            transform: rotateZ(0deg);
         }
-        25% { 
-            transform: rotateZ(0.5deg); 
+
+        25% {
+            transform: rotateZ(0.5deg);
         }
-        75% { 
-            transform: rotateZ(-0.5deg); 
+
+        75% {
+            transform: rotateZ(-0.5deg);
         }
     }
 
     /* 文字打字机效果 */
     @keyframes typewriter {
-        from { width: 0; }
-        to { width: 100%; }
+        from {
+            width: 0;
+        }
+
+        to {
+            width: 100%;
+        }
     }
 
     /* 无限滚动效果 */
     @keyframes infinite-scroll {
-        0% { transform: translateX(0); }
-        100% { transform: translateX(-50%); }
+        0% {
+            transform: translateX(0);
+        }
+
+        100% {
+            transform: translateX(-50%);
+        }
     }
 
     /* 3D翻转 */
     @keyframes flip-3d {
-        0% { transform: perspective(400px) rotateY(0); }
-        100% { transform: perspective(400px) rotateY(360deg); }
+        0% {
+            transform: perspective(400px) rotateY(0);
+        }
+
+        100% {
+            transform: perspective(400px) rotateY(360deg);
+        }
     }
 
     /* 粒子流动 */
     @keyframes particle-flow {
-        0% { 
+        0% {
             transform: translateY(100vh) translateX(-50px);
             opacity: 0;
         }
-        10% { opacity: 1; }
-        90% { opacity: 1; }
-        100% { 
+
+        10% {
+            opacity: 1;
+        }
+
+        90% {
+            opacity: 1;
+        }
+
+        100% {
             transform: translateY(-100px) translateX(50px);
             opacity: 0;
         }
@@ -138,10 +188,11 @@
 
     /* 照片墙自动向右滚动动画 - 优化无缝循环 */
     @keyframes autoScrollRight {
-        0% { 
+        0% {
             transform: translateX(0);
         }
-        100% { 
+
+        100% {
             transform: translateX(-50%);
         }
     }
@@ -253,7 +304,7 @@
     }
 
     .waterfall-card:hover {
-        box-shadow: 
+        box-shadow:
             0 25px 50px -12px rgba(0, 0, 0, 0.25),
             0 0 0 1px rgba(255, 255, 255, 0.1),
             0 0 30px rgba(99, 102, 241, 0.15);
@@ -261,7 +312,7 @@
     }
 
     .dark .waterfall-card:hover {
-        box-shadow: 
+        box-shadow:
             0 25px 50px -12px rgba(0, 0, 0, 0.5),
             0 0 0 1px rgba(255, 255, 255, 0.1);
     }
@@ -277,7 +328,7 @@
     }
 
     .card-title {
-        font-size: 1.25rem;
+        font-size: 1.375rem; /* 从1.25rem增加到1.375rem */
         font-weight: 600;
         line-height: 1.4;
         color: #1f2937;
@@ -310,10 +361,10 @@
     .card-overlay {
         position: absolute;
         inset: 0;
-        background: linear-gradient(135deg, 
-            rgba(168, 85, 247, 0.1) 0%, 
-            rgba(59, 130, 246, 0.1) 50%, 
-            rgba(16, 185, 129, 0.1) 100%);
+        background: linear-gradient(135deg,
+                rgba(168, 85, 247, 0.1) 0%,
+                rgba(59, 130, 246, 0.1) 50%,
+                rgba(16, 185, 129, 0.1) 100%);
         opacity: 0;
         transition: opacity 0.3s ease;
         pointer-events: none;
@@ -336,21 +387,22 @@
     .markdown-preview {
         line-height: 1.6;
         color: #6b7280;
+        font-size: 1.1rem; /* 增加markdown预览的字体大小 */
     }
 
     .dark .markdown-preview {
         color: #d1d5db;
     }
 
-    .markdown-preview h1, 
-    .markdown-preview h2, 
+    .markdown-preview h1,
+    .markdown-preview h2,
     .markdown-preview h3 {
         margin: 0.5rem 0;
         font-weight: 600;
     }
 
     .markdown-preview .card-h1 {
-        font-size: 1.125rem;
+        font-size: 1.25rem; /* 从1.125rem增加到1.25rem */
         color: #1f2937;
     }
 
@@ -359,7 +411,7 @@
     }
 
     .markdown-preview .card-h2 {
-        font-size: 1rem;
+        font-size: 1.125rem; /* 从1rem增加到1.125rem */
         color: #374151;
     }
 
@@ -368,7 +420,7 @@
     }
 
     .markdown-preview .card-h3 {
-        font-size: 0.875rem;
+        font-size: 1rem; /* 从0.875rem增加到1rem */
         color: #4b5563;
     }
 
@@ -458,6 +510,10 @@
 }
 
 /* Markdown content dark mode styles */
+.markdown-body {
+    font-size: 1.1rem !important; /* 增加markdown内容字体大小 */
+}
+
 .dark .markdown-body {
     background-color: #111827 !important;
     color: #f9fafb !important;
@@ -471,6 +527,13 @@
 .dark .markdown-body h6 {
     color: #f9fafb !important;
     border-bottom-color: #4b5563 !important;
+}
+
+.markdown-body p,
+.markdown-body li,
+.markdown-body td,
+.markdown-body th {
+    font-size: 1.1rem !important; /* 增加段落和列表项字体大小 */
 }
 
 .dark .markdown-body p,
@@ -547,7 +610,7 @@ h3 {
 
 } */
 .hidetoc {
-    @apply fixed right-2 top-[6rem] w-[19rem] py-4 px-3 h-[60vh] overflow-scroll lg:mt-5 z-50;
+    @apply fixed right-2 top-[6rem] w-[19rem] py-4 px-3 overflow-scroll lg:mt-5 z-50;
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.2);
@@ -599,7 +662,7 @@ h3 {
 }
 
 .ant-tree-node-content-wrapper {
-    font-size: 1.05rem
+    font-size: 1.15rem /* 从1.05rem增加到1.15rem */
         /* 18px */
     ;
     line-height: 1.75rem
@@ -679,10 +742,20 @@ h3 {
     top: 0;
 }
 
+/* 增加文章内容字体大小 */
+.mylist {
+    font-size: 1.1rem; /* 整体增加mylist内容字体大小 */
+}
+
+.mylist p {
+    font-size: 1.1rem; /* 段落字体大小 */
+}
+
 .mylist ul {
     list-style: initial;
     margin: initial;
     padding: 0 0 0 40px;
+    font-size: 1.1rem; /* 增加列表字体大小 */
 }
 
 .mylist ul li {
@@ -693,6 +766,7 @@ h3 {
     list-style-type: decimal;
     margin: initial;
     padding: 0 0 0 40px;
+    font-size: 1.1rem; /* 增加有序列表字体大小 */
 }
 
 .mylist ol li {
@@ -898,7 +972,7 @@ pre .token-line,
 }
 
 .card-title {
-    font-size: 1.25rem;
+    font-size: 1.375rem; /* 从1.25rem增加到1.375rem */
     font-weight: 600;
     color: #1f2937;
     margin: 0;
@@ -918,7 +992,7 @@ pre .token-line,
 }
 
 .markdown-preview {
-    font-size: 0.9rem;
+    font-size: 1rem; /* 从0.9rem增加到1rem */
     line-height: 1.6;
     color: #4b5563;
     overflow: hidden;
@@ -951,19 +1025,19 @@ pre .token-line,
 }
 
 .card-h1 {
-    font-size: 1.1rem;
+    font-size: 1.25rem; /* 从1.1rem增加到1.25rem */
     font-weight: 600;
     margin: 0.5rem 0;
 }
 
 .card-h2 {
-    font-size: 1rem;
+    font-size: 1.125rem; /* 从1rem增加到1.125rem */
     font-weight: 500;
     margin: 0.5rem 0;
 }
 
 .card-h3 {
-    font-size: 0.9rem;
+    font-size: 1rem; /* 从0.9rem增加到1rem */
     font-weight: 500;
     margin: 0.5rem 0;
 }
@@ -1050,4 +1124,3 @@ pre .token-line,
 .scrollbar-hide::-webkit-scrollbar {
     display: none;
 }
-

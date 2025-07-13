@@ -44,13 +44,13 @@ export default function SearchIcon() {
             setShow(false)
             return
         }
-        
+
         // 限制搜索词长度
         if (searchText.length > 100) {
             alert('搜索词过长，请输入100字符以内的关键词')
             return
         }
-        
+
         fetch(`http://${config.API_DOMAIN}/api/search?query=` + encodeURIComponent(searchText.trim()))
             .then((response) => response.json())
             .then((data) => {
@@ -60,7 +60,7 @@ export default function SearchIcon() {
                     setShow(false)
                     return
                 }
-                
+
                 setReslist(data.results || [])
                 setShow(data.results && data.results.length > 0)
             })
@@ -89,7 +89,7 @@ export default function SearchIcon() {
     return (
         <>
             {/* 搜索图标 */}
-            <div 
+            <div
                 className="clickable flex justify-center items-center text-2xl cursor-pointer text-gray-900 dark:text-gray-100"
                 onClick={handleOpenSearch}
             >
@@ -98,12 +98,12 @@ export default function SearchIcon() {
 
             {/* 搜索框 */}
             {searchVisible && (
-                <div 
+                <div
                     className="fixed inset-0 z-50"
                     onClick={handleCloseSearch}
                 >
                     <div className="flex justify-center pt-20">
-                        <div 
+                        <div
                             className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-300 dark:border-gray-600 p-4 w-full max-w-2xl mx-4 animate-fade-in"
                             onClick={(e) => e.stopPropagation()}
                         >
@@ -133,16 +133,16 @@ export default function SearchIcon() {
                                     {reslist.map((item, index) => {
                                         const queText = searchText.trim()
                                         const resList = item.split(":")
-                                        
+
                                         // 安全检查：确保有足够的分割结果
                                         if (resList.length < 3) return null
-                                        
+
                                         const url = resList[0].slice(7, -3)
                                         const lineNumber = resList[1]
                                         const content = resList.slice(2).join(':')
                                         const contentList = content.split(queText)
                                         const keyword = queText + (contentList[1] || '')
-                                        
+
                                         return (
                                             <div
                                                 key={`${item}-${index}`}

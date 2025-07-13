@@ -46,7 +46,7 @@ export default function PostList({ posts, rest }) {
                               wrapLines={false}
                               showLineNumbers={false}
                               customStyle={{
-                                background: 'transparent',
+                                background: '#1e1e1e',
                                 padding: '1rem',
                                 margin: 0,
                                 borderRadius: '0.5rem',

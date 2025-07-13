@@ -144,6 +144,7 @@ restart_service() {
             echo "❌ 无法找到可用的Next.js启动方式"
             echo "尝试直接使用node启动..."
             if [ -f "./node_modules/next/dist/bin/next" ]; then
+                nohup npx next build > "$HOME/web-server.log" 2>&1 &
                 nohup node ./node_modules/next/dist/bin/next start > "$HOME/web-server.log" 2>&1 &
             else
                 echo "❌ 所有启动方式都失败"
