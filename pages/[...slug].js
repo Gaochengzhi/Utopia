@@ -26,7 +26,23 @@ export default function Post({ contents, filename, status }) {
     const [path, setPath] = useState({})
     const router = useRouter()
     useEffect(() => {
-        setPath(JSON.parse(localStorage.getItem("paths")))
+        // Try to get paths from localStorage first
+        const cachedPaths = localStorage.getItem("paths")
+        if (cachedPaths) {
+            setPath(JSON.parse(cachedPaths))
+        } else {
+            // If no cached data, fetch from API
+            fetch('/api/paths')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.paths) {
+                        setPath(data.paths)
+                        localStorage.setItem("paths", JSON.stringify(data.paths))
+                    }
+                })
+                .catch(err => console.error('Failed to fetch paths:', err))
+        }
+        
         obseverImg(document.body)
         if (status !== "md" && status !== "api") {
             router.push("/")

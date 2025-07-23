@@ -60,25 +60,36 @@ export default function FileTree({ paths }) {
         }
     }
 
-    const renderTreeMode = () => (
-        <div
-            className="overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent"
-            style={{ maxHeight: '350px' }}
-            onWheel={(e) => {
-                // 阻止事件冒泡，确保滚动只在这个容器内生效
-                e.stopPropagation()
-            }}
-        >
-            <DirectoryTree
-                className="transition-all duration-150 ease-in min-w-[16rem] text-gray-900 dark:text-gray-100"
-                multiple
-                selectable={false}
-                onClick={onSelect}
-                defaultExpandedKeys={["myrootkey"]}
-                treeData={[processTreeData(paths)]}
-            />
-        </div>
-    )
+    const renderTreeMode = () => {
+        // Check if paths data is available
+        if (!paths) {
+            return (
+                <div className="flex items-center justify-center p-4 text-gray-500 dark:text-gray-400">
+                    <p>目录数据加载中...</p>
+                </div>
+            )
+        }
+
+        return (
+            <div
+                className="overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent"
+                style={{ maxHeight: '350px' }}
+                onWheel={(e) => {
+                    // 阻止事件冒泡，确保滚动只在这个容器内生效
+                    e.stopPropagation()
+                }}
+            >
+                <DirectoryTree
+                    className="transition-all duration-150 ease-in min-w-[16rem] text-gray-900 dark:text-gray-100"
+                    multiple
+                    selectable={false}
+                    onClick={onSelect}
+                    defaultExpandedKeys={["myrootkey"]}
+                    treeData={[processTreeData(paths)]}
+                />
+            </div>
+        )
+    }
 
     const renderFlatMode = () => {
         return (

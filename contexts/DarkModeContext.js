@@ -19,9 +19,8 @@ export const DarkModeProvider = ({ children }) => {
     if (savedTheme !== null) {
       setIsDarkMode(JSON.parse(savedTheme))
     } else {
-      // Check system preference
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-      setIsDarkMode(prefersDark)
+      // Default to light mode for new users
+      setIsDarkMode(false)
     }
   }, [])
 
