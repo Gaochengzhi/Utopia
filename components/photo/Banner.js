@@ -45,18 +45,18 @@ export function Banner({ }) {
             img.onload = () => {
                 setLoadedImages(prev => new Set([...prev, i]))
             }
-            img.src = `/.pic/thumb/photography/banner/${i}.jpg`
+            img.src = `/photography/banner/${i}.jpg`
         })
     }, [])
 
     // 获取全尺寸压缩图URL
     const getFullSizeUrl = (imagePath) => {
-        return `/.pic/full${imagePath}`
+        return imagePath
     }
 
     // 获取缩略图URL
     const getThumbnailUrl = (imagePath) => {
-        return `/.pic/thumb${imagePath}`
+        return imagePath
     }
 
     // 文字动画效果
@@ -164,19 +164,7 @@ export function Banner({ }) {
                 <PhotoProvider
                     maskOpacity={0.9}
                     pullClosable={true}
-                    toolbarRender={({ rotate, onRotate, onScale, scale }) => (
-                        <div className="flex space-x-2 text-white bg-black/70 rounded-lg p-3">
-                            <button onClick={() => onRotate(rotate + 90)} className="p-2 hover:bg-white/20 rounded transition-all">
-                                ↻
-                            </button>
-                            <button onClick={() => onScale(scale + 0.5)} className="p-2 hover:bg-white/20 rounded transition-all">
-                                🔍+
-                            </button>
-                            <button onClick={() => onScale(scale - 0.5)} className="p-2 hover:bg-white/20 rounded transition-all">
-                                🔍-
-                            </button>
-                        </div>
-                    )}
+                    toolbarRender={() => null}
                 >
                     <div className="relative overflow-hidden rounded-2xl shadow-2xl">
                         {/* 渐变边框 */}

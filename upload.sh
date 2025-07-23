@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 从config.local.js读取服务器配置
-SERVER_IP=$(node -e "console.log(require('./config.local.js').SERVER_IP)")
+SERVER_IP="74.48.115.131"
 REMOTE_USER="kounarushi"
 REMOTE_PATH="~/web/"
 

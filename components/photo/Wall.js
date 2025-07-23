@@ -249,13 +249,7 @@ export function Walls({ path, scrollDirection = 'horizontal' }) {
             <PhotoProvider
                 maskOpacity={0.5}
                 pullClosable={true}
-                toolbarRender={({ rotate, onRotate, onScale, scale }) => (
-                    <div className="flex space-x-4 text-white bg-black/70 rounded-lg p-3">
-                        <button onClick={() => onRotate(rotate + 90)} className="p-2 hover:bg-white/20 rounded transition-all">
-                            ↻
-                        </button>
-                    </div>
-                )}
+                toolbarRender={() => null}
             >
                 {/* 根据滚动方向显示不同布局 */}
                 {scrollDirection === 'horizontal' ? (
@@ -382,141 +376,37 @@ export function Walls({ path, scrollDirection = 'horizontal' }) {
                         </div>
                     </div>
                 ) : (
-                    /* 分类页面垂直滚动布局 - 保持原有多样化尺寸 */
-                    <div
-                        ref={containerRef}
-                        className="overflow-y-auto max-h-[80vh] cursor-grab p-4 scrollbar-hide"
-                        style={{
-                            cursor: isDragging.current ? 'grabbing' : 'grab',
-                            scrollBehavior: 'smooth'
-                        }}
-                        onMouseDown={handleMouseDown}
-                        onMouseMove={handleMouseMove}
-                        onMouseUp={handleMouseUp}
-                        onMouseLeave={handleMouseUp}
-                        onTouchStart={handleTouchStart}
-                        onTouchMove={handleTouchMove}
-                        onTouchEnd={handleTouchEnd}
-                    >
-                        <div ref={contentRef} style={{ perspective: '1000px' }}>
-                            <div
-                                className="flex flex-wrap justify-center"
-                                style={{
-                                    alignItems: 'flex-start',
-                                    gap: '0.75rem'
-                                }}
-                            >
-                                {path.map((item, index) => {
-                                    const isLoaded = loadedImages.has(index)
-                                    const sizeOptions = getImageSize(index)
+                    /* 分类页面3列网格布局 */
+                    <div className="w-full p-4">
+                        <div className="grid grid-cols-3 gap-4 max-w-none">
+                            {path.map((item, index) => {
+                                const isLoaded = loadedImages.has(index)
+                                
+                                return (
+                                    <PhotoView key={item.key} src={getFullSizeUrl(item.path)}>
+                                        <div className="aspect-square group cursor-pointer relative overflow-hidden rounded-lg hover:scale-105 transition-transform duration-300">
+                                            {/* 加载状态 */}
+                                            {!isLoaded && (
+                                                <div className="absolute inset-0 bg-gray-800 flex items-center justify-center rounded-lg">
+                                                    <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                                </div>
+                                            )}
 
-                                    return (
-                                        <PhotoView key={item.key} src={getFullSizeUrl(item.path)}>
-                                            <div
-                                                className={`group cursor-pointer relative overflow-hidden rounded-lg responsive-photo-item hover:z-10 ${isDraggingActive ? '' : 'transition-all duration-300'
-                                                    }`}
-                                                onClick={(e) => {
-                                                    e.stopPropagation() // 阻止事件冒泡
-                                                }}
-                                                onMouseDown={(e) => {
-                                                    e.stopPropagation() // 阻止拖拽事件
-                                                }}
-                                                style={{
-                                                    // 使用原来的多样化尺寸
-                                                    width: sizeOptions.mobile.width,
-                                                    height: sizeOptions.mobile.height,
-                                                    // 恢复完整的旋转效果
-                                                    transform: isDraggingActive
-                                                        ? `rotate(${(index % 7 - 3) * 0.9}deg)`
-                                                        : `rotate(${(index % 7 - 3) * 2}deg)`,
-                                                    // 桌面端尺寸
-                                                    '--desktop-width': sizeOptions.desktop.width,
-                                                    '--desktop-height': sizeOptions.desktop.height,
-                                                    // 添加随机间距
-                                                    ...getRandomSpacing(index),
-                                                    flexShrink: 0,
-                                                    willChange: isDraggingActive ? 'transform' : 'auto',
-                                                    backfaceVisibility: 'hidden',
-                                                }}
-                                                onMouseEnter={(e) => {
-                                                    if (!isDraggingActive) {
-                                                        e.currentTarget.style.transform = `scale(1.2) rotateX(3deg) rotateY(5deg) rotateZ(2deg) translateY(-15px) translateZ(30px)`
-                                                        e.currentTarget.style.transformStyle = 'preserve-3d'
-                                                        e.currentTarget.style.perspective = '1000px'
-                                                        e.currentTarget.style.zIndex = '50' // 确保在最上层
-                                                    }
-                                                }}
-                                                onMouseLeave={(e) => {
-                                                    if (!isDraggingActive) {
-                                                        e.currentTarget.style.transform = `rotate(${(index % 7 - 3) * 0.5}deg)`
-                                                        e.currentTarget.style.transformStyle = ''
-                                                        e.currentTarget.style.perspective = ''
-                                                        e.currentTarget.style.zIndex = ''
-                                                    }
-                                                }}
-                                            >
-                                                {/* 加载状态 */}
-                                                {!isLoaded && (
-                                                    <div className="absolute inset-0 bg-gray-800 flex items-center justify-center rounded-lg">
-                                                        <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                                    </div>
-                                                )}
+                                            <img
+                                                src={getThumbnailUrl(item.path)}
+                                                className={`w-full h-full object-cover rounded-lg transition-all duration-300 ${
+                                                    isLoaded ? 'opacity-100' : 'opacity-0'
+                                                }`}
+                                                alt=""
+                                                loading="lazy"
+                                            />
 
-                                                <img
-                                                    src={getThumbnailUrl(item.path)}
-                                                    className={`w-full h-full object-cover rounded-lg ${isLoaded
-                                                        ? 'opacity-100 filter-none'
-                                                        : 'opacity-0 blur-sm'
-                                                        } ${isDraggingActive
-                                                            ? 'transition-none'
-                                                            : 'transition-all duration-500 group-hover:scale-110 group-hover:rotate-0'
-                                                        }`}
-                                                    alt=""
-                                                    loading="lazy"
-                                                    style={{
-                                                        backfaceVisibility: 'hidden',
-                                                    }}
-                                                />
-
-                                                {/* 增强的白色阴影效果 - 拖拽时保留但简化 */}
-                                                <div className="absolute inset-0 shadow-xl rounded-lg" />
-                                                {!isDraggingActive && (
-                                                    <>
-                                                        <div
-                                                            className="absolute -inset-6 bg-white/60 rounded-lg -z-20 opacity-95"
-                                                            style={{
-                                                                filter: 'blur(24px)',
-                                                            }}
-                                                        />
-                                                        <div
-                                                            className="absolute -inset-3 bg-white/80 rounded-lg -z-10 opacity-90"
-                                                            style={{
-                                                                filter: 'blur(16px)',
-                                                            }}
-                                                        />
-                                                    </>
-                                                )}
-                                                {/* 拖拽时的白色简化阴影 */}
-                                                {isDraggingActive && (
-                                                    <div
-                                                        className="absolute -inset-2 bg-white/50 rounded-lg -z-10"
-                                                        style={{
-                                                            filter: 'blur(8px)',
-                                                        }}
-                                                    />
-                                                )}
-
-
-                                                {/* 光影效果 - 拖拽时简化但保留 */}
-                                                <div className={`absolute inset-0 rounded-lg pointer-events-none ${isDraggingActive
-                                                    ? 'bg-gradient-to-br from-white/5 via-transparent to-black/10'
-                                                    : 'bg-gradient-to-br from-white/10 via-transparent to-black/20'
-                                                    }`} />
-                                            </div>
-                                        </PhotoView>
-                                    )
-                                })}
-                            </div>
+                                            {/* 简单的悬停遮罩 */}
+                                            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg" />
+                                        </div>
+                                    </PhotoView>
+                                )
+                            })}
                         </div>
                     </div>
                 )}
