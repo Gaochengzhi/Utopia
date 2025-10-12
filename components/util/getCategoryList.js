@@ -39,7 +39,7 @@ export function getCategoryList() {
         
         return {
             index: index.toString(),
-            title: category,
+            title: category.toLowerCase(), // 统一转为小写
             url: `/photographer/${category.toLowerCase()}`,
             coverImage
         }

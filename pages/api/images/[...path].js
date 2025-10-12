@@ -9,18 +9,30 @@ export default function handler(req, res) {
       return res.status(400).json({ error: 'Image path is required' })
     }
 
-    // 构建完整的文件路径
-    const fullPath = path.join(process.cwd(), 'public', '.pic', ...imagePath)
+    // 尝试多个可能的路径
+    const possiblePaths = [
+      path.join(process.cwd(), 'public', '.pic', ...imagePath),
+      path.join(process.cwd(), 'public', 'photography', ...imagePath)
+    ]
+    
+    let fullPath = null
+    for (const testPath of possiblePaths) {
+      if (fs.existsSync(testPath)) {
+        fullPath = testPath
+        break
+      }
+    }
+    
+    if (!fullPath) {
+      return res.status(404).json({ error: 'Image not found' })
+    }
     
     // 安全检查：确保路径在允许的目录内
     const publicPicDir = path.join(process.cwd(), 'public', '.pic')
-    if (!fullPath.startsWith(publicPicDir)) {
-      return res.status(403).json({ error: 'Access denied' })
-    }
+    const publicPhotoDir = path.join(process.cwd(), 'public', 'photography')
     
-    // 检查文件是否存在
-    if (!fs.existsSync(fullPath)) {
-      return res.status(404).json({ error: 'Image not found' })
+    if (!fullPath.startsWith(publicPicDir) && !fullPath.startsWith(publicPhotoDir)) {
+      return res.status(403).json({ error: 'Access denied' })
     }
     
     // 检查是否是文件而不是目录

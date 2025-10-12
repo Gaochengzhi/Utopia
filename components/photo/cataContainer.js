@@ -17,7 +17,8 @@ export function CataContainer({ categories }) {
             img.onload = () => {
                 setLoadedImages(prev => new Set([...prev, item.index]))
             }
-            img.src = item.coverImage || `/photography/cata/${item.index}.jpg`
+            const imagePath = item.coverImage || `/photography/cata/${item.index}.jpg`
+            img.src = imagePath.replace('/photography/', '/.pic/thumb/photography/')
         })
     }, [categoryData])
 
@@ -39,7 +40,10 @@ export function CataContainer({ categories }) {
 
                                 <ParallaxBanner
                                     layers={[
-                                        { image: item.coverImage || `/photography/cata/${item.index}.jpg`, speed: -20 },
+                                        { 
+                                            image: (item.coverImage || `/photography/cata/${item.index}.jpg`).replace('/photography/', '/.pic/full/photography/'), 
+                                            speed: -20 
+                                        },
                                     ]}
                                     className="aspect-[2/1] w-full transition-transform duration-500 group-hover:scale-105"
                                 >

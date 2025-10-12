@@ -1,30 +1,87 @@
 import { cataList } from "/components/photo/cataList"
-import { readAllFile } from "/components/util/readAllfile"
 import { getCategoryList } from "/components/util/getCategoryList"
 import { Footer } from "/components/footer"
 import { Pnav } from "/components/photo/Pnav"
 import { Walls } from "/components/photo/Wall"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { firstUpperCase } from "/components/util/treeSort"
 import Cookies from "js-cookie"
-export default function Wall({ paths, title, categories }) {
-    // newpaths = paths.pop()
+const config = require('../../config.local.js')
+export default function Wall({ title, categories }) {
+    const [paths, setPaths] = useState([])
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState(null)
+
+    // 动态获取最新图片列表
+    const loadImages = async () => {
+        try {
+            setLoading(true)
+            setError(null)
+
+            // 将slug映射到实际的目录名
+            const actualTitle = firstUpperCase(title)
+            const response = await fetch(`/api/photography/${actualTitle}`)
+            const data = await response.json()
+
+            if (data.success && data.images) {
+                // 处理图片路径，根据环境配置替换
+                const processedImages = data.images.map(item => ({
+                    ...item,
+                    path: item.path.replace(/^\/photography\//, config.IMAGE_SERVER_URL)
+                }))
+                setPaths(processedImages)
+            } else {
+                setError(data.error || 'Failed to load images')
+            }
+        } catch (err) {
+            console.error('Error loading images:', err)
+            setError('Failed to load images')
+        } finally {
+            setLoading(false)
+        }
+    }
+
     useEffect(() => {
         Cookies.set("refreshed_pp", "true", { expires: 1 })
         if (!Cookies.get("refreshed_pp")) {
             localStorage.setItem("refreshed_pp", "true")
             setTimeout(() => window.location.reload(), 3000)
         }
-    }, [])
+
+        // 加载图片
+        if (title) {
+            loadImages()
+        }
+    }, [title])
+    // 加载状态
+    if (loading) {
+        return (
+            <div className="bg-black min-h-screen flex items-center justify-center">
+                <div className="text-white text-xl">Loading images...</div>
+            </div>
+        )
+    }
+
+    // 错误状态
+    if (error) {
+        return (
+            <div className="bg-black min-h-screen flex items-center justify-center">
+                <div className="text-red-400 text-xl">Error: {error}</div>
+            </div>
+        )
+    }
+
     return (
         <div className="bg-black">
             <Pnav select={title} categories={categories} />
             <div className="w-full px-4">
-                <img
-                    src={paths[0].path.replace('/.pic/', '/.pic/full/')}
-                    alt=""
-                    className="md:max-h-[60vh] max-h-[40vh]  w-[97%] object-cover mx-auto"
-                />
+                {paths && paths.length > 0 && (
+                    <img
+                        src={paths[0].path.replace(config.IMAGE_SERVER_URL, config.IMAGE_SERVER_URL + 'full/')}
+                        alt=""
+                        className="md:max-h-[60vh] max-h-[40vh]  w-[97%] object-cover mx-auto"
+                    />
+                )}
                 <div className=" text-white p-3 text-6xl">{firstUpperCase(title)}</div>
                 <div></div>
                 <Walls path={paths} scrollDirection="vertical" />
@@ -49,26 +106,30 @@ export async function getStaticPaths() {
                 slug: i.title.toLowerCase(),
             },
         })),
-        fallback: false, // can also be true or 'blocking'
+        fallback: 'blocking', // 支持新增分类的动态生成
     }
 }
 
 export async function getStaticProps({ params: { slug } }) {
-    let infoArray = await readAllFile(
-        "public/photography" + "/content/" + firstUpperCase(slug),
-        (i) => i.replace("public", "")
-    )
-    const infoArrays = infoArray.SortedInfoArray
-
     // 获取动态分类列表
     const categories = getCategoryList()
 
+    // 验证分类是否存在
+    const categoryExists = categories.find(cat =>
+        cat.title.toLowerCase() === slug.toLowerCase()
+    )
+
+    if (!categoryExists) {
+        return {
+            notFound: true
+        }
+    }
+
     return {
         props: {
-            paths: infoArrays,
             title: slug,
             categories,
-        }, // will be passed to the page component as props
-        revalidate: 1,
+        }, // 图片列表通过客户端动态加载，不在这里返回
+        revalidate: 1, // 1秒，快速响应新文件夹
     }
 }

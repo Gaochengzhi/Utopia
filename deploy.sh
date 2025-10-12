@@ -225,7 +225,6 @@ main() {
     upload_files
 
     # 步骤3: 重启服务
-    restart_service
 
     # 步骤4: 检查状态
     check_service_status

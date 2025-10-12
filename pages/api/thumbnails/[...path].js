@@ -15,8 +15,15 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid type parameter' })
     }
 
-    // Build original image path
-    const originalPath = path.join(process.cwd(), 'public', ...imagePath)
+    // Build original image path - handle photography content paths
+    let originalPath
+    if (imagePath[0] === 'content') {
+      // Path like ['content', 'City', 'image.jpg'] should map to public/photography/content/City/image.jpg
+      originalPath = path.join(process.cwd(), 'public', 'photography', ...imagePath)
+    } else {
+      // Regular paths like ['photography', 'content', 'City', 'image.jpg']
+      originalPath = path.join(process.cwd(), 'public', ...imagePath)
+    }
     
     // Security check - ensure path is within public directory
     const publicDir = path.join(process.cwd(), 'public')
