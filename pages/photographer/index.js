@@ -2,20 +2,11 @@ import { CataContainer } from "/components/photo/cataContainer"
 import { Walls } from "/components/photo/Wall"
 import { Banner } from "/components/photo/Banner"
 import { Pnav } from "/components/photo/Pnav"
-import { useEffect } from "react"
 import { Footer } from "/components/footer"
 import { formateTime } from "/components/util/treeSort"
 import { readAllFile } from "/components/util/readAllfile"
 import { getCategoryList } from "/components/util/getCategoryList"
-import Cookies from "js-cookie"
 export default function Index({ path, categories }) {
-    useEffect(() => {
-        Cookies.set("refreshedP", "true", { expires: 1 })
-        if (!Cookies.get("refreshedP")) {
-            localStorage.setItem("refreshedP", "true")
-            setTimeout(() => window.location.reload(), 3000)
-        }
-    }, [])
 
     return (
         <div className="bg-black min-h-screen">

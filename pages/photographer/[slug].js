@@ -5,7 +5,6 @@ import { Pnav } from "/components/photo/Pnav"
 import { Walls } from "/components/photo/Wall"
 import { useEffect, useState } from "react"
 import { firstUpperCase } from "/components/util/treeSort"
-import Cookies from "js-cookie"
 const config = require('../../config.local.js')
 export default function Wall({ title, categories }) {
     const [paths, setPaths] = useState([])
@@ -42,12 +41,6 @@ export default function Wall({ title, categories }) {
     }
 
     useEffect(() => {
-        Cookies.set("refreshed_pp", "true", { expires: 1 })
-        if (!Cookies.get("refreshed_pp")) {
-            localStorage.setItem("refreshed_pp", "true")
-            setTimeout(() => window.location.reload(), 3000)
-        }
-
         // 加载图片
         if (title) {
             loadImages()
