@@ -10,22 +10,14 @@ export default function Navbar({ paths, state, folderPath }) {
       {folderPath ? (
         <Breadcrumb folderPath={folderPath} isNavbar={true} />
       ) : (
-        <div className="flex items-center space-x-2">
-          <Link href="/">
-            <a className="text-black dark:text-white linkable">
-              Utopi
-              <div className="inline font-extrabold font-sans text-slate-400 dark:text-slate-500">
-                a
-              </div>
-            </a>
-          </Link>
-          <span className="text-gray-400 dark:text-gray-600">·</span>
-          <Link href="/post">
-            <a className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors text-xl">
-              ☰
-            </a>
-          </Link>
-        </div>
+        <Link href="/">
+          <a className="text-black dark:text-white linkable">
+            Utopi
+            <div className="inline font-extrabold font-sans text-slate-400 dark:text-slate-500">
+              a
+            </div>
+          </a>
+        </Link>
       )}
       {/* right side */}
       <div className="flex space-x-4 items-center">

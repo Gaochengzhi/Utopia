@@ -1,18 +1,16 @@
 import WaterfallCards from "/components/main/WaterfallCards"
 import FileTree from "/components/main/FileTree"
+import FolderList from "/components/FolderList"
 import { Info } from "/components/Info"
 import ShareLInk from "/components/ShareLInk"
 import matter from "gray-matter"
 import Head from "next/head"
 import Navbar from "/components/Navbar"
-import fs from "fs"
 import { useEffect } from "react"
-import { readAllFile } from "/components/util/readAllfile"
 import Link from "next/link"
 import Cookies from "js-cookie"
-const config = require('../config.local.js')
 
-export default function Home({ paths, initialPosts, totalPosts }) {
+export default function Home({ paths, initialPosts, totalPosts, folders }) {
     useEffect(() => {
         localStorage.setItem("paths", JSON.stringify(paths))
         Cookies.set("refreshed", "true", { expires: 1 })
@@ -29,7 +27,7 @@ export default function Home({ paths, initialPosts, totalPosts }) {
                 <meta name="viewport" content="initial-scale=1.0, width=device-width" />
             </Head>
             <Navbar paths={paths} state={"index"} />
-            
+
             {/* 全新的布局：侧边栏 + 瀑布流卡片 */}
             <div className="relative pt-8">
                 {/* 左侧边栏 - 固定定位 */}
@@ -38,7 +36,7 @@ export default function Home({ paths, initialPosts, totalPosts }) {
                         <div className="flex flex-col items-center space-y-6 mb-8">
                             <Info />
                         </div>
-                        <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 max-h-[calc(100vh-20rem)] overflow-y-auto border border-gray-200 dark:border-gray-600">
+                        <div className="bg-white dark:bg-gray-800 p-4 h-[calc((100vh-10rem)/2)] overflow-y-auto overflow-x-hidden border border-gray-200 dark:border-gray-600 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent">
                             <FileTree paths={paths} />
                         </div>
                     </div>
@@ -62,7 +60,7 @@ export default function Home({ paths, initialPosts, totalPosts }) {
                                     </div>
                                     <div className="flex flex-col">
                                         <div className="text-xl font-light text-gray-900 dark:text-gray-100">@Taitan_Pascal</div>
-                                        
+
                                         {/* 彩色点击提示 */}
                                         <div className="text-base font-serif flex items-center mt-1">
                                             <div className="inline m-[-1px] text-purple-600 text-sm">C</div>
@@ -104,7 +102,7 @@ export default function Home({ paths, initialPosts, totalPosts }) {
                     <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
                         <div className="flex justify-center p-4">
                             <div className="w-full max-w-lg">
-                                <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600 p-3 max-h-60 overflow-y-auto">
+                                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 p-3 h-60 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent">
                                     <FileTree paths={paths} />
                                 </div>
                             </div>
@@ -114,9 +112,14 @@ export default function Home({ paths, initialPosts, totalPosts }) {
 
                 {/* 主内容区域 - 瀑布流卡片 */}
                 <div className="lg:ml-80 pt-8">
-                    <WaterfallCards 
-                        initialPosts={initialPosts} 
-                        totalPosts={totalPosts} 
+                    {/* 一级目录列表 */}
+                    <FolderList folders={folders} />
+
+
+                    {/* 瀑布流卡片 */}
+                    <WaterfallCards
+                        initialPosts={initialPosts}
+                        totalPosts={totalPosts}
                     />
                 </div>
             </div>
@@ -125,13 +128,18 @@ export default function Home({ paths, initialPosts, totalPosts }) {
 }
 
 export const getStaticProps = async () => {
+    const fs = require('fs')
+    const path = require('path')
+    const config = require('../config.local.js')
+    const { readAllFile } = require('/components/util/readAllfile')
+
     let infoArray = await readAllFile("post", (i) => i)
-    
+
     // 按时间排序，最新的在前
-    const sortedPosts = infoArray.SortedInfoArray.sort((a, b) => 
+    const sortedPosts = infoArray.SortedInfoArray.sort((a, b) =>
         new Date(b.time) - new Date(a.time)
     )
-    
+
     // 只加载第一页数据 (前10篇文章)
     const initialPosts = sortedPosts.slice(0, 10).map((o) => {
         const fullpath = o.path
@@ -154,11 +162,29 @@ export const getStaticProps = async () => {
         return o
     })
 
+    // 读取 post 文件夹的一级子目录（只显示文件夹）
+    const postPath = path.join(process.cwd(), "post")
+    const items = fs.readdirSync(postPath)
+    const folders = items
+        .filter(item => !item.startsWith('.')) // 过滤隐藏文件
+        .map(item => {
+            const itemPath = path.join(postPath, item)
+            const itemStats = fs.statSync(itemPath)
+            return {
+                name: item,
+                path: `/post/${item}`,
+                isFolder: itemStats.isDirectory()
+            }
+        })
+        .filter(item => item.isFolder) // 只保留文件夹
+        .sort((a, b) => a.name.localeCompare(b.name)) // 按字母排序
+
     return {
         props: {
             paths: infoArray.InfoArray,
             initialPosts,
             totalPosts: sortedPosts.length,
+            folders,
         },
         revalidate: 1,
     }

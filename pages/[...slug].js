@@ -155,7 +155,7 @@ export default function Post({ contents, filename, status, folderContents, folde
                             <div className="lg:max-w-6xl mx-auto mt-10">
                                 <Breadcrumb folderPath={folderPath} isNavbar={false} />
                                 <div className="flex flex-wrap gap-3">
-                                    {folderContents.map((item) => (
+                                    {folderContents && folderContents.map((item) => (
                                         <Link
                                             key={item.path}
                                             href={item.path}
@@ -279,11 +279,10 @@ export const getStaticProps = async ({ params: { slug } }) => {
                 }
             }
         } catch (err) {
-            // If path doesn't exist or error occurs, return folder status
+            console.error('Error reading directory:', err)
+            // If path doesn't exist or error occurs, return 404
             return {
-                props: {
-                    status: "folder",
-                },
+                notFound: true,
             }
         }
     }
@@ -296,28 +295,46 @@ export const getStaticProps = async ({ params: { slug } }) => {
         }
     }
 
-    let rawMarkdown = fs
-        .readFileSync(path.join(slug.join("/")))
-        .toString()
-        .replace(
-            new RegExp(
-                "(file://)?/Users/kounarushi/mycode/web-blog/public/.pic/",
-                "gm"
-            ),
-            config.IMAGE_SERVER_URL
-        )
+    // Safely read markdown file with error handling
+    try {
+        const filePath = path.join(slug.join("/"))
 
-    const markDownWithoutYarm = matter(rawMarkdown)
-    const filename = slug[slug.length - 1]
-    const articleFolderPath = slug.slice(0, -1).join('/')
+        // Check if file exists before reading
+        if (!fs.existsSync(filePath)) {
+            console.error('File not found:', filePath)
+            return {
+                notFound: true,
+            }
+        }
 
-    return {
-        props: {
-            filename,
-            contents: markDownWithoutYarm.content,
-            status: "md",
-            folderPath: articleFolderPath,
-        },
-        revalidate: 1,
+        let rawMarkdown = fs
+            .readFileSync(filePath)
+            .toString()
+            .replace(
+                new RegExp(
+                    "(file://)?/Users/kounarushi/mycode/web-blog/public/.pic/",
+                    "gm"
+                ),
+                config.IMAGE_SERVER_URL
+            )
+
+        const markDownWithoutYarm = matter(rawMarkdown)
+        const filename = slug[slug.length - 1]
+        const articleFolderPath = slug.slice(0, -1).join('/')
+
+        return {
+            props: {
+                filename,
+                contents: markDownWithoutYarm.content,
+                status: "md",
+                folderPath: articleFolderPath,
+            },
+            revalidate: 1,
+        }
+    } catch (err) {
+        console.error('Error reading markdown file:', err)
+        return {
+            notFound: true,
+        }
     }
 }

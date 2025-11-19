@@ -16,17 +16,6 @@ export default function Breadcrumb({ folderPath, isNavbar = false }) {
         </a>
       </Link>
 
-      {segments.length > 0 && (
-        <>
-          <span className="text-gray-400 dark:text-gray-600">·</span>
-          <Link href="/post">
-            <a className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors text-xl">
-              ☰
-            </a>
-          </Link>
-        </>
-      )}
-
       {segments.map((segment, index, arr) => {
         const path = '/post/' + arr.slice(0, index + 1).join('/')
         const isLast = index === arr.length - 1

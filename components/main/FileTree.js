@@ -71,48 +71,30 @@ export default function FileTree({ paths }) {
         }
 
         return (
-            <div
-                className="overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent"
-                style={{ maxHeight: '350px' }}
-                onWheel={(e) => {
-                    // 阻止事件冒泡，确保滚动只在这个容器内生效
-                    e.stopPropagation()
-                }}
-            >
-                <DirectoryTree
-                    className="transition-all duration-150 ease-in min-w-[16rem] text-gray-900 dark:text-gray-100"
-                    multiple
-                    selectable={false}
-                    onClick={onSelect}
-                    defaultExpandedKeys={["myrootkey"]}
-                    treeData={[processTreeData(paths)]}
-                />
-            </div>
+            <DirectoryTree
+                className="transition-all duration-150 ease-in min-w-[16rem] text-gray-900 dark:text-gray-100"
+                multiple
+                selectable={false}
+                onClick={onSelect}
+                defaultExpandedKeys={["myrootkey"]}
+                treeData={[processTreeData(paths)]}
+            />
         )
     }
 
     const renderFlatMode = () => {
         return (
-            <div
-                className="overflow-y-auto overflow-x-hidden max-h-36 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent"
-                style={{ maxHeight: '350px' }}
-                onWheel={(e) => {
-                    // 阻止事件冒泡，确保滚动只在这个容器内生效
-                    e.stopPropagation()
-                }}
-            >
-                <div className="min-w-[16rem] text-gray-900 dark:text-gray-100">
-                    {posts.map((post) => (
-                        <div
-                            key={post.path}
-                            onClick={() => handleFileClick(post.path)}
-                            className="flex items-center text-sm mt-1 overflow-ellipsis transition-all ease-in cursor-pointer py-1 px-3 rounded-md hover:bg-gray-200/60 dark:hover:bg-gray-700/60 text-gray-700 dark:text-gray-200"
-                        >
-                            <FileTextOutlined className="mr-2 text-gray-500 dark:text-gray-400" />
-                            <div className="truncate text-left leading-5">{removeFileExtension(post.title)}</div>
-                        </div>
-                    ))}
-                </div>
+            <div className="min-w-[16rem] text-gray-900 dark:text-gray-100">
+                {posts.map((post) => (
+                    <div
+                        key={post.path}
+                        onClick={() => handleFileClick(post.path)}
+                        className="flex items-center text-sm mt-1 overflow-ellipsis transition-all ease-in cursor-pointer py-1 px-3 hover:bg-gray-200/60 dark:hover:bg-gray-600/80 text-gray-700 dark:text-gray-200"
+                    >
+                        <FileTextOutlined className="mr-2 text-gray-500 dark:text-gray-400" />
+                        <div className="truncate text-left leading-5">{removeFileExtension(post.title)}</div>
+                    </div>
+                ))}
             </div>
         )
     }
@@ -122,14 +104,14 @@ export default function FileTree({ paths }) {
     }
 
     return (
-        <div className="bg-white dark:bg-gray-900">
+        <>
             <div className="flex items-center justify-between mb-2 pb-2 border-b border-gray-200/60 dark:border-gray-700/60 px-3">
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     {isTreeMode ? '树状目录' : '文章列表'}
                 </span>
                 <button
                     onClick={toggleViewMode}
-                    className="p-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-200"
+                    className="p-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-200"
                     aria-label={isTreeMode ? '切换到列表视图' : '切换到树状视图'}
                 >
                     {isTreeMode ? (
@@ -174,6 +156,6 @@ export default function FileTree({ paths }) {
                 </button>
             </div>
             {isTreeMode ? renderTreeMode() : renderFlatMode()}
-        </div>
+        </>
     )
 }
