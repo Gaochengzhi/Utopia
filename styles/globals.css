@@ -567,8 +567,15 @@
     color: #f9fafb !important;
 }
 
-.dark .markdown-body pre {
-    background-color: #1f2937 !important;
+/* Force dark theme for code blocks in both light and dark modes */
+.markdown-body pre,
+.markdown-body pre > div {
+    background-color: #1e1e1e !important;
+}
+
+.dark .markdown-body pre,
+.dark .markdown-body pre > div {
+    background-color: #1e1e1e !important;
 }
 
 .dark .markdown-body a {
@@ -594,7 +601,8 @@
 }
 
 .myblur {
-    backdrop-filter: blur(50px);
+    backdrop-filter: blur(8px) saturate(120%);
+    -webkit-backdrop-filter: blur(8px) saturate(120%);
 }
 
 h2,
@@ -780,14 +788,13 @@ h3 {
     border-radius: 3px !important;
 }
 
-/* 亮色模式下的代码块背景 */
+/* 强制所有模式下代码块都使用暗色背景 */
 .mylist pre {
-    background: #f8f9fa !important;
+    background: #1e1e1e !important;
 }
 
-/* 暗色模式下的代码块背景 */
 .dark .mylist pre {
-    background: rgb(30, 30, 30) !important;
+    background: #1e1e1e !important;
 }
 
 /* 修复暗色模式下的代码块行高亮问题 */
@@ -863,7 +870,26 @@ pre .token-line,
 }
 
 .mynav {
-    background: rgba(255, 255, 255, 0.587);
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-top: none;
+    border-radius: 0 0 16px 16px;
+    margin: 0 12px;
+    width: calc(100% - 24px) !important;
+    box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.04),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.2);
+}
+
+:is(.dark) .mynav {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: none;
+    box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.03);
 }
 
 .search_bar {
@@ -1123,4 +1149,85 @@ pre .token-line,
 
 .scrollbar-hide::-webkit-scrollbar {
     display: none;
+}/* Rich Tag Styles */
+@layer components {
+    .tag-rich {
+        @apply relative px-4 py-1.5 rounded-2xl text-sm font-medium transition-all duration-300 overflow-hidden backdrop-blur-md;
+        /* Default fallback */
+        --tag-color: 100, 116, 139; /* Slate-500 */
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(var(--tag-color), 0.1) 100%);
+        border: 1px solid rgba(var(--tag-color), 0.2);
+        color: rgb(var(--tag-color));
+        box-shadow: 
+            0 2px 4px rgba(var(--tag-color), 0.05),
+            inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    }
+
+    .dark .tag-rich {
+        background: linear-gradient(135deg, rgba(var(--tag-color), 0.15) 0%, rgba(var(--tag-color), 0.05) 100%);
+        border: 1px solid rgba(var(--tag-color), 0.3);
+        color: rgba(var(--tag-color), 0.9); /* Slightly lighter text for contrast */
+        box-shadow: 
+            0 4px 12px rgba(var(--tag-color), 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        text-shadow: 0 0 10px rgba(var(--tag-color), 0.4);
+    }
+
+    /* Hover Effects */
+    .tag-rich:hover {
+        transform: translateY(-1px);
+        box-shadow: 
+            0 4px 12px rgba(var(--tag-color), 0.15),
+            inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    }
+
+    .dark .tag-rich:hover {
+        background: linear-gradient(135deg, rgba(var(--tag-color), 0.25) 0%, rgba(var(--tag-color), 0.1) 100%);
+        box-shadow: 
+            0 0 20px rgba(var(--tag-color), 0.4),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        border-color: rgba(var(--tag-color), 0.5);
+    }
+
+    /* Active/Click Effects */
+    .tag-rich:active {
+        transform: translateY(0);
+        box-shadow: none;
+    }
+
+    /* Color Variants */
+    .tag-orange { --tag-color: 249, 115, 22; } /* Orange-500 */
+    .tag-purple { --tag-color: 168, 85, 247; } /* Purple-500 */
+    .tag-sky    { --tag-color: 14, 165, 233; } /* Sky-500 */
+    .tag-gray   { --tag-color: 107, 114, 128; } /* Gray-500 */
+    .tag-green  { --tag-color: 34, 197, 94; } /* Green-500 */
+    
+    /* Shimmer Animation for Light Mode richness */
+    .tag-rich::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 50%;
+        height: 100%;
+        background: linear-gradient(
+            to right,
+            transparent,
+            rgba(255, 255, 255, 0.4),
+            transparent
+        );
+        transform: skewX(-25deg);
+        transition: 0.5s;
+        pointer-events: none;
+    }
+    
+    .tag-rich:hover::before {
+        animation: shimmer-tag 1.5s infinite;
+    }
+
+    @keyframes shimmer-tag {
+        100% {
+            left: 200%;
+        }
+    }
 }

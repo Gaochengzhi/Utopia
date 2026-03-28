@@ -4,7 +4,6 @@
 /node_modules
 /.pnp
 .pnp.js
-/post
 /public/.pic
 /public/photography
 # testing
@@ -37,3 +36,4 @@ config.local.js
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+.env.local

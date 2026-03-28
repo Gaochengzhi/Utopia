@@ -1,0 +1,9 @@
+# Security Policy for gaochengzhi.com
+# https://securitytxt.org/
+
+Contact: mailto:security@gaochengzhi.com
+Preferred-Languages: en, zh
+Canonical: https://gaochengzhi.com/.well-known/security.txt
+
+# This is a personal blog. No bug bounty program.
+# Unauthorized scanning and probing is prohibited.

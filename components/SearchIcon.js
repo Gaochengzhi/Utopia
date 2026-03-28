@@ -51,7 +51,7 @@ export default function SearchIcon() {
             return
         }
 
-        fetch(`http://${config.API_DOMAIN}/api/search?query=` + encodeURIComponent(searchText.trim()))
+        fetch(`/api/search?query=` + encodeURIComponent(searchText.trim()))
             .then((response) => response.json())
             .then((data) => {
                 if (data.error) {
@@ -104,12 +104,12 @@ export default function SearchIcon() {
                 >
                     <div className="flex justify-center pt-20">
                         <div
-                            className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-300 dark:border-gray-600 p-4 w-full max-w-2xl mx-4 animate-fade-in"
+                            className="bg-white dark:bg-gray-600 rounded-lg shadow-lg border border-gray-300 dark:border-gray-600 p-4 w-full max-w-2xl mx-4 animate-fade-in"
                             onClick={(e) => e.stopPropagation()}
                         >
                             {/* 搜索输入框 */}
                             <div className="relative">
-                                <div className="rounded-md border border-gray-400 dark:border-gray-500 flex justify-around items-center bg-white dark:bg-gray-700 text-base">
+                                <div className="rounded-md border border-gray-100 dark:border-gray-600 flex justify-around items-center bg-white dark:bg-gray-700 text-base">
                                     <input
                                         type="text"
                                         id="search_input"

@@ -21,6 +21,7 @@ export default function MarkdownArticle({ content }) {
                 code({ node, inline, className, children, ...props }) {
                     const match = /language-(\w+)/.exec(className || "")
                     return !inline && match ? (
+                        // Always use dark theme for code blocks regardless of light/dark mode
                         <SyntaxHighlighter
                             style={vscDarkPlus}
                             language={match[1]}
@@ -28,12 +29,17 @@ export default function MarkdownArticle({ content }) {
                             wrapLines={false}
                             showLineNumbers={false}
                             customStyle={{
-                                background: '#1e1e1e',
+                                background: '#1e1e1e !important',
                                 padding: '1rem',
                                 margin: 0,
                                 borderRadius: '0.5rem',
                                 fontSize: '0.875rem',
                                 lineHeight: '1.6'
+                            }}
+                            codeTagProps={{
+                                style: {
+                                    background: '#1e1e1e !important'
+                                }
                             }}
                             {...props}
                         >

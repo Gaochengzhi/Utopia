@@ -45,7 +45,7 @@ export default function SearchBar({ }) {
             return
         }
         
-        fetch(`http://${config.API_DOMAIN}/api/search?query=` + encodeURIComponent(searchText.trim()))
+        fetch(`/api/search?query=` + encodeURIComponent(searchText.trim()))
             .then((response) => response.json())
             .then((data) => {
                 if (data.error) {

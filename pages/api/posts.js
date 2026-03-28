@@ -1,6 +1,7 @@
 import fs from "fs"
 import matter from "gray-matter"
 import { readAllFile } from "../../components/util/readAllfile"
+import { isProtectedPath, maskContent, verifyAuthCookie } from "../../lib/auth"
 const config = require('../../config.local.js')
 
 export default async function handler(req, res) {
@@ -8,19 +9,22 @@ export default async function handler(req, res) {
         const { page = 1, limit = 10 } = req.query
         const pageNum = parseInt(page)
         const limitNum = parseInt(limit)
-        
+
         // 参数验证
         if (pageNum < 1 || limitNum < 1 || limitNum > 50) {
-            return res.status(400).json({ 
-                error: 'Invalid parameters', 
-                message: 'page must be >= 1, limit must be between 1 and 50' 
+            return res.status(400).json({
+                error: 'Invalid parameters',
+                message: 'page must be >= 1, limit must be between 1 and 50'
             })
         }
 
+        // Check authentication status
+        const isAuthenticated = verifyAuthCookie(req.cookies)
+
         let infoArray = await readAllFile("post", (i) => i)
-        
+
         // 按时间排序，最新的在前
-        const sortedPosts = infoArray.SortedInfoArray.sort((a, b) => 
+        const sortedPosts = infoArray.SortedInfoArray.sort((a, b) =>
             new Date(b.time) - new Date(a.time)
         )
 
@@ -43,12 +47,21 @@ export default async function handler(req, res) {
                     config.IMAGE_SERVER_URL
                 )
             const markDownWithoutYarm = matter(rawMarkdown)
-            
+
             // 增加预览内容长度以适应卡片显示
-            o.content =
+            let content =
                 markDownWithoutYarm.content.length > 1500
                     ? markDownWithoutYarm.content.slice(0, 1500) + "..."
                     : markDownWithoutYarm.content
+
+            // Check if protected and mask content if not authenticated
+            const isProtected = isProtectedPath(fullpath)
+            if (isProtected && !isAuthenticated) {
+                content = maskContent(content)
+                o.isProtected = true
+            }
+
+            o.content = content
             return o
         })
 

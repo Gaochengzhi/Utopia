@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { FolderOpenOutlined } from '@ant-design/icons'
 
 export default function FolderList({ folders }) {
     if (!folders || folders.length === 0) {
@@ -14,9 +15,11 @@ export default function FolderList({ folders }) {
                             key={folder.path}
                             href={folder.path}
                         >
-                            <div className="cursor-pointer inline-flex items-center space-x-2 px-4 py-2.5 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-lg hover:scale-105  transition-all duration-200">
-                                <span className="text-lg">📁</span>
-                                <span className="text-base font-medium text-gray-900 dark:text-gray-100 whitespace-nowrap">
+                            <div className="group cursor-pointer inline-flex items-center space-x-3 px-5 py-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 ease-out">
+                                <span className="text-xl text-black-800 group-hover:text-blue-600 transition-colors duration-300 flex items-center">
+                                    <FolderOpenOutlined />
+                                </span>
+                                <span className="text-base font-medium text-gray-700 dark:text-gray-200 group-hover:text-gray-900 dark:group-hover:text-white transition-colors duration-300 whitespace-nowrap">
                                     {folder.name}
                                 </span>
                             </div>

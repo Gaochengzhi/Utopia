@@ -2,16 +2,40 @@ import WaterfallCards from "/components/main/WaterfallCards"
 import FileTree from "/components/main/FileTree"
 import FolderList from "/components/FolderList"
 import { Info } from "/components/Info"
-import ProfileCard from "/components/ProfileCard"
 import SkillsTags from "/components/SkillsTags"
 import matter from "gray-matter"
 import Head from "next/head"
 import Navbar from "/components/Navbar"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 
 export default function Home({ paths, initialPosts, totalPosts, folders }) {
+    const [posts, setPosts] = useState(initialPosts)
+    const [isAuthenticated, setIsAuthenticated] = useState(false)
+
     useEffect(() => {
         localStorage.setItem("paths", JSON.stringify(paths))
+
+        // Check authentication status
+        const checkAuth = async () => {
+            try {
+                const response = await fetch('/api/auth/check-diary')
+                const data = await response.json()
+                setIsAuthenticated(data.authenticated)
+
+                // If authenticated, refresh posts to show unmasked content
+                if (data.authenticated) {
+                    const postsResponse = await fetch('/api/posts?page=1&limit=10')
+                    const postsData = await postsResponse.json()
+                    if (postsData.posts) {
+                        setPosts(postsData.posts)
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to check auth:', error)
+            }
+        }
+
+        checkAuth()
     }, [])
 
     return (
@@ -26,45 +50,34 @@ export default function Home({ paths, initialPosts, totalPosts, folders }) {
             <div className="relative pt-8">
                 {/* 左侧边栏 - 固定定位 */}
                 <div className="fixed left-0 top-16 h-[calc(100vh-4rem)] w-80 z-30 hidden lg:block">
-                    <div className="h-full p-6 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 shadow-lg">
+                    <div className="h-full p-6 bg-white dark:bg-gray-900 shadow-lg">
                         <div className="flex flex-col items-center space-y-6 mb-8">
                             <Info />
                         </div>
-                        <div className="bg-white dark:bg-gray-800 p-4 h-[calc((100vh-10rem)/2)] overflow-y-auto overflow-x-hidden border border-gray-200 dark:border-gray-600 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent">
+                        <div className="bg-white dark:bg-gray-800 p-4 h-[calc((100vh-10rem)/2)] overflow-y-auto overflow-x-hidden  scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent">
                             <FileTree paths={paths} />
                         </div>
                     </div>
                 </div>
 
-                {/* 移动端布局 */}
-                <div className="lg:hidden mt-16">
-                    {/* 个人信息容器 */}
-                    <ProfileCard />
-
+                {/* Mobile layout */}
+                <div className="lg:hidden mt-16 -mb-16">
+                    {/* Profile info with mobile variant */}
+                    <Info variant="mobile" showSkills={false} />
                     {/* 标签胶囊 */}
                     <SkillsTags />
-
                     {/* 目录 */}
-                    <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
-                        <div className="flex justify-center p-4">
-                            <div className="w-full max-w-lg">
-                                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 p-3 h-60 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent">
-                                    <FileTree paths={paths} />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
                 {/* 主内容区域 - 瀑布流卡片 */}
-                <div className="lg:ml-80 pt-8">
+                <div className="lg:ml-80">
                     {/* 一级目录列表 */}
                     <FolderList folders={folders} />
 
 
                     {/* 瀑布流卡片 */}
                     <WaterfallCards
-                        initialPosts={initialPosts}
+                        initialPosts={posts}
                         totalPosts={totalPosts}
                     />
                 </div>
@@ -78,6 +91,7 @@ export const getStaticProps = async () => {
     const path = require('path')
     const { readAllFile } = require('/components/util/readAllfile')
     const { normalizeImagePath } = require('/components/util/imageUtils')
+    const { isProtectedPath, maskContent } = require('/lib/auth')
 
     let infoArray = await readAllFile("post", (i) => i)
 
@@ -92,11 +106,21 @@ export const getStaticProps = async () => {
         const rawMarkdown = fs.readFileSync(fullpath).toString()
         const normalizedMarkdown = normalizeImagePath(rawMarkdown)
         const markDownWithoutYarm = matter(normalizedMarkdown)
+
         // 增加预览内容长度以适应卡片显示
-        o.content =
+        let content =
             markDownWithoutYarm.content.length > 1500
                 ? markDownWithoutYarm.content.slice(0, 1500) + "..."
                 : markDownWithoutYarm.content
+
+        // 如果是受保护的文章，标记为加密并遮罩内容
+        const isProtected = isProtectedPath(fullpath)
+        if (isProtected) {
+            content = maskContent(content)
+            o.isProtected = true
+        }
+
+        o.content = content
         return o
     })
 

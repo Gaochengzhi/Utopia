@@ -5,20 +5,59 @@ import { Toc } from "/components/Toc"
 import Navbar from "/components/Navbar"
 import MarkdownArticle from "/components/MarkdownArticle"
 import FolderView from "/components/FolderView"
+import PageView from "/components/PageView"
 import fs from "fs"
 import path from "path"
 import matter from "gray-matter"
 import Head from "next/head"
 import { useEffect, useState } from "react"
+import { useRouter } from "next/router"
+import { Spin } from "antd"
 import { obseverImg } from "/components/util/handleErrorPic"
 import { normalizeImagePath } from "/components/util/imageUtils"
-import { buildDirectoryTree } from "/components/util/readAllfile"
 const config = require('../config.local.js')
-export default function Post({ contents, filename, status, folderContents, folderPath }) {
+
+export default function Post({ contents, filename, status, folderContents, folderPath, isProtected }) {
+    const router = useRouter()
     const [showToc, setShowToc] = useState(false)
     const [path, setPath] = useState({})
+    const [isAuthenticated, setIsAuthenticated] = useState(false)
+    const [checking, setChecking] = useState(true)
 
     useEffect(() => {
+        // Check authentication for protected content
+        if (isProtected) {
+            // Check if user has valid auth cookie
+            const checkAuth = async () => {
+                try {
+                    const response = await fetch('/api/auth/check-diary')
+                    const data = await response.json()
+
+                    if (data.authenticated) {
+                        setIsAuthenticated(true)
+                        setChecking(false)
+                    } else {
+                        // Redirect to auth page
+                        const returnUrl = encodeURIComponent(router.asPath)
+                        router.push(`/auth/diary?return=${returnUrl}`)
+                    }
+                } catch (error) {
+                    // If check fails, redirect to auth page
+                    const returnUrl = encodeURIComponent(router.asPath)
+                    router.push(`/auth/diary?return=${returnUrl}`)
+                }
+            }
+
+            checkAuth()
+        } else {
+            setChecking(false)
+        }
+    }, [isProtected, router])
+
+    useEffect(() => {
+        // Skip if page is still being generated
+        if (router.isFallback) return
+
         // Try to get paths from localStorage first
         const cachedPaths = localStorage.getItem("paths")
         if (cachedPaths) {
@@ -37,7 +76,25 @@ export default function Post({ contents, filename, status, folderContents, folde
         }
 
         obseverImg(document.body)
-    }, [])
+    }, [router.isFallback])
+
+    // Show loading spinner when page is being generated or checking auth
+    if (router.isFallback || (isProtected && checking)) {
+        return (
+            <div className="flex items-center justify-center h-screen bg-white dark:bg-gray-900">
+                <Spin size="large" />
+            </div>
+        )
+    }
+
+    // Don't render protected content if not authenticated
+    if (isProtected && !isAuthenticated) {
+        return (
+            <div className="flex items-center justify-center h-screen bg-white dark:bg-gray-900">
+                <Spin size="large" />
+            </div>
+        )
+    }
     return (
         <>
             {status === "md" ? (
@@ -64,6 +121,7 @@ export default function Post({ contents, filename, status, folderContents, folde
                         <div className="flex-1 max-w-4xl mx-auto">
                             <div className="lg:flex flex-col items-center justify-center text-3xl mt-10"></div>
                             <MarkdownArticle content={contents} />
+                            <PageView slug={folderPath + '/' + filename} />
                             <div className="pb-10">
                                 <Footer />
                             </div>
@@ -100,35 +158,38 @@ export default function Post({ contents, filename, status, folderContents, folde
 }
 
 export async function getStaticPaths() {
-    const pathsList = []
-
-    // Use the shared buildDirectoryTree function
-    const treeNode = buildDirectoryTree("post", (fullFilename) => fullFilename, false)
-
-    // Collect all paths from the tree
-    function collectPaths(node) {
-        if (node.title !== "x") {
-            pathsList.push(node.path)
-        }
-        if (node.children) {
-            node.children.forEach(collectPaths)
-        }
-    }
-    collectPaths(treeNode)
-
-    const paths = pathsList.map((fullfilename) => ({
-        params: {
-            slug: fullfilename.split("/"),
-        },
-    }))
-
+    // Don't pre-build any pages at build time
+    // Pages will be generated on-demand and cached with ISR (revalidate: 1)
     return {
-        paths,
+        paths: [],
         fallback: true,
     }
 }
 
 export const getStaticProps = async ({ params: { slug } }) => {
+    // Early return for missing or invalid slug
+    if (!slug || !Array.isArray(slug) || slug.length === 0) {
+        return { notFound: true }
+    }
+
+    // Security: Block suspicious paths (common scanner targets)
+    const suspiciousPatterns = [
+        /\.php$/i, /\.asp$/i, /\.aspx$/i, /\.jsp$/i, /\.cgi$/i,
+        /wp-/i, /wordpress/i, /xmlrpc/i, /phpmyadmin/i,
+        /\.env$/i, /\.git/i, /\.svn/i, /\.htaccess/i,
+        /\.sql$/i, /\.bak$/i, /\.backup$/i, /\.old$/i,
+        /admin/i, /config\./i, /setup\./i, /install\./i,
+    ]
+    const fullPath = slug.join("/")
+    if (suspiciousPatterns.some(p => p.test(fullPath))) {
+        return { notFound: true }
+    }
+
+    // Security: Ensure path stays within allowed directories
+    if (!fullPath.startsWith('post/') && !fullPath.startsWith('post')) {
+        return { notFound: true }
+    }
+
     let reg = /(?:\.([^.]+))?$/
     const folderPath = slug.join("/")
 
@@ -199,6 +260,10 @@ export const getStaticProps = async ({ params: { slug } }) => {
             }
         }
 
+        // Check if this is protected content
+        const { isProtectedPath } = require('/lib/auth')
+        const isProtected = isProtectedPath(filePath)
+
         let rawMarkdown = fs.readFileSync(filePath).toString()
         const normalizedMarkdown = normalizeImagePath(rawMarkdown)
 
@@ -212,6 +277,7 @@ export const getStaticProps = async ({ params: { slug } }) => {
                 contents: markDownWithoutYarm.content,
                 status: "md",
                 folderPath: articleFolderPath,
+                isProtected: isProtected || false,
             },
             revalidate: 1,
         }

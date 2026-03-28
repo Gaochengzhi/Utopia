@@ -5,7 +5,7 @@ import Breadcrumb from "./Breadcrumb"
 
 export default function Navbar({ paths, state, folderPath }) {
   return (
-    <div className="flex justify-between p-[0.60rem] text-2xl border shadow-sm md:py-3 fixed top-0 w-full myblur mynav z-40 bg-white/80 dark:bg-gray-900/80 border-gray-200 dark:border-gray-700">
+    <div className="flex justify-between p-[0.60rem] text-2xl md:py-3 fixed top-0 w-full myblur mynav z-40">
       {/* left logo with breadcrumb */}
       {folderPath ? (
         <Breadcrumb folderPath={folderPath} isNavbar={true} />
@@ -21,17 +21,8 @@ export default function Navbar({ paths, state, folderPath }) {
       )}
       {/* right side */}
       <div className="flex space-x-4 items-center">
-        {/* link */}
-        <div className="hidden md:flex space-x-4 items-center text-2xl">
-          {/* Search icon*/}
-          <SearchIcon />
-          {/* Dark mode toggle */}
-          <DarkModeToggle />
-        </div>
-        <div className="lg:hidden flex items-center space-x-2">
-          <SearchIcon />
-          <DarkModeToggle />
-        </div>
+        <SearchIcon />
+        <DarkModeToggle />
       </div>
     </div>
   )

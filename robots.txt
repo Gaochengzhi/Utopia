@@ -1,0 +1,27 @@
+# robots.txt for Utopia Blog
+
+# Default: block everything, only allow specific paths
+User-agent: *
+Disallow: /
+Allow: /post/
+Allow: /$
+
+# Block aggressive scrapers and scanners
+User-agent: AhrefsBot
+User-agent: SemrushBot
+User-agent: DotBot
+User-agent: MJ12bot
+User-agent: BLEXBot
+Disallow: /
+
+# Block malicious bots
+User-agent: SiteSnagger
+User-agent: WebCopier
+User-agent: WebStripper
+User-agent: HTTrack
+User-agent: WebReaper
+User-agent: Teleport
+Disallow: /
+
+# Sitemap location (if you have one)
+# Sitemap: https://gaochengzhi.com/sitemap.xml

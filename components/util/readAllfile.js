@@ -22,6 +22,19 @@ export function buildDirectoryTree(fullFilename, pathCallback = (i) => i, includ
     }
   }
 
+  // Only allow supported file formats
+  const allowedExtensions = ['.md', '.mdx', '.txt']
+  if (!stats.isDirectory()) {
+    const ext = path.extname(filename).toLowerCase()
+    if (!allowedExtensions.includes(ext)) {
+      return {
+        title: "x",
+        key: Math.floor(Math.random() * 9e9).toString(),
+        isLeaf: true,
+      }
+    }
+  }
+
   let info = {
     path: pathCallback(fullFilename),
     title: path.basename(fullFilename),

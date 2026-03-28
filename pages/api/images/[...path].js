@@ -42,6 +42,8 @@ export default function handler(req, res) {
     // Set response headers
     const contentType = getImageContentType(fullPath)
     res.setHeader('Content-Type', contentType)
+    res.setHeader('Referrer-Policy', 'no-referrer')
+    res.setHeader('Access-Control-Allow-Origin', '*')
     setCacheHeaders(res, stat.mtime, 86400) // 24 hour cache
 
     // Read and send file

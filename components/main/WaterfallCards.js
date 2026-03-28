@@ -1,14 +1,72 @@
 import Link from "next/link"
-import { useEffect, useRef, useState, useCallback } from "react"
+import { useEffect, useState, useCallback } from "react"
+import { useRouter } from "next/router"
+import ViewBadge from "/components/ViewBadge"
 
 export default function WaterfallCards({ initialPosts, totalPosts }) {
+    const router = useRouter()
     const [posts, setPosts] = useState(initialPosts || [])
     const [loading, setLoading] = useState(false)
     const [hasMore, setHasMore] = useState(initialPosts?.length < totalPosts)
     const [page, setPage] = useState(1)
     const [error, setError] = useState(null)
+    const [viewCounts, setViewCounts] = useState({})
     // 小于等于平板宽度（此处按 1024px）时，卡片单列显示
     const [isTabletOrBelow, setIsTabletOrBelow] = useState(false)
+
+    // Update posts when initialPosts changes (e.g., after authentication)
+    useEffect(() => {
+        setPosts(initialPosts || [])
+    }, [initialPosts])
+
+    // Handle protected post click
+    const handlePostClick = async (e, post) => {
+        if (post.isProtected) {
+            e.preventDefault()
+
+            // Check authentication before navigating
+            try {
+                const response = await fetch('/api/auth/check-diary')
+                const data = await response.json()
+
+                if (data.authenticated) {
+                    // User is authenticated, navigate normally
+                    router.push(post.path)
+                } else {
+                    // Redirect to auth page
+                    const returnUrl = encodeURIComponent(post.path)
+                    router.push(`/auth/diary?return=${returnUrl}`)
+                }
+            } catch (error) {
+                // If check fails, redirect to auth page
+                const returnUrl = encodeURIComponent(post.path)
+                router.push(`/auth/diary?return=${returnUrl}`)
+            }
+        }
+    }
+
+    // Fetch view counts for posts
+    const fetchViewCounts = useCallback(async (postsToFetch) => {
+        if (!postsToFetch || postsToFetch.length === 0) return
+
+        const slugs = postsToFetch.map(p => p.path.replace(/^\//, '')).join(',')
+
+        try {
+            const response = await fetch(`/api/pageviews?type=batch&slugs=${encodeURIComponent(slugs)}`)
+            const data = await response.json()
+
+            setViewCounts(prev => ({ ...prev, ...data }))
+        } catch (err) {
+            console.error('Error fetching view counts:', err)
+        }
+    }, [])
+
+    // Fetch initial view counts
+    useEffect(() => {
+        if (posts.length > 0) {
+            fetchViewCounts(posts)
+        }
+    }, [posts.length])
 
     // 加载更多文章
     const loadMorePosts = useCallback(async () => {
@@ -26,6 +84,9 @@ export default function WaterfallCards({ initialPosts, totalPosts }) {
                     setPosts(prev => [...prev, ...data.posts])
                     setPage(prev => prev + 1)
                     setHasMore(data.pagination.hasNextPage)
+
+                    // Fetch view counts for new posts
+                    fetchViewCounts(data.posts)
                 } else {
                     setHasMore(false)
                 }
@@ -67,10 +128,31 @@ export default function WaterfallCards({ initialPosts, totalPosts }) {
         return () => window.removeEventListener('resize', checkWidth)
     }, [])
 
-    // 提取标题（第一个#标题）
+    // 提取标题（优先级：H1 > 前5行H2 > 第一行非空非图片文本）
     const extractTitle = (content) => {
-        const titleMatch = content.match(/^#\s+(.+)$/m)
-        return titleMatch ? titleMatch[1] : '无标题'
+        const h1Match = content.match(/^#\s+(.+)$/m)
+        if (h1Match) return h1Match[1]
+
+        const lines = content.split('\n').slice(0, 5)
+        for (const line of lines) {
+            const h2Match = line.match(/^##\s+(.+)$/)
+            if (h2Match) return h2Match[1]
+        }
+
+        for (const line of lines) {
+            const trimmed = line.trim()
+            if (trimmed && !trimmed.startsWith('!')) {
+                return trimmed.replace(/[#*_~`\[\]]/g, '').trim()
+            }
+        }
+
+        return '无标题'
+    }
+
+    // 提取第一张图片URL
+    const extractFirstImage = (content) => {
+        const imgMatch = content.match(/!\[[^\]]*\]\(([^\)]+)\)/)
+        return imgMatch ? imgMatch[1] : null
     }
 
     // 提取纯文本内容（去除markdown标记和标题）
@@ -153,18 +235,28 @@ export default function WaterfallCards({ initialPosts, totalPosts }) {
                     {posts.map((post, index) => {
                         const title = extractTitle(post.content)
                         const plainText = extractPlainText(post.content)
+                        const firstImage = extractFirstImage(post.content)
+                        // Convert /.pic/xxx to thumbnail URL: /.pic/thumb/.pic/xxx
+                        // so rewrite rule strips /.pic/thumb/ prefix and API receives .pic/xxx
+                        const thumbUrl = firstImage && firstImage.startsWith('/.pic/')
+                            ? firstImage.replace('/.pic/', '/.pic/thumb/.pic/')
+                            : null
 
                         // 使用预先计算好的宽度
                         const widthRatio = cardWidths[index]
+                        // For image cards, cap width at 50% (1.5x of min 33.3%) to avoid overly wide images
+                        const effectiveRatio = thumbUrl && !isTabletOrBelow && widthRatio > 1 / 2
+                            ? 1 / 2
+                            : widthRatio
                         let flexBasis
                         if (isTabletOrBelow) {
                             // 平板及以下强制单列
                             flexBasis = '100%'
-                        } else if (widthRatio === 1 / 3) {
+                        } else if (effectiveRatio === 1 / 3) {
                             flexBasis = 'calc(33.333% - 1rem)'
-                        } else if (widthRatio === 1 / 2) {
+                        } else if (effectiveRatio === 1 / 2) {
                             flexBasis = 'calc(50% - 0.75rem)'
-                        } else if (widthRatio === 2 / 3) {
+                        } else if (effectiveRatio === 2 / 3) {
                             flexBasis = 'calc(66.666% - 0.5rem)'
                         } else {
                             flexBasis = '100%'
@@ -173,19 +265,49 @@ export default function WaterfallCards({ initialPosts, totalPosts }) {
                         return (
                             <div key={post.key} style={{ flexBasis, width: flexBasis, flexShrink: 0 }}>
                                 <Link href={post.path}>
-                                    <a className="block">
-                                        <div className="bg-white dark:bg-gray-800 border border-black dark:border-gray-600 rounded-none pb-4 hover:shadow-xl hover:border-gray-400 dark:hover:border-gray-500 transition-all duration-300 cursor-pointer">
-                                            <div className="p-6 overflow-hidden" style={{ height: '200px' }}>
-                                                {/* 标题 */}
-                                                <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3 line-clamp-2">
-                                                    {title}
-                                                </h2>
+                                    <a className="block" onClick={(e) => handlePostClick(e, post)}>
+                                        <div className="relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg pb-4 hover:shadow-xl hover:border-gray-400 dark:hover:border-gray-500 transition-all duration-300 cursor-pointer">
+                                            <ViewBadge views={viewCounts[post.path.replace(/^\//, '')]} />
+                                            {thumbUrl ? (
+                                                <>
+                                                    {/* Image card */}
+                                                    <div className="overflow-hidden rounded-t-lg" style={{ height: '140px' }}>
+                                                        <img
+                                                            src={thumbUrl}
+                                                            alt={title}
+                                                            className="w-full h-full object-cover"
+                                                            loading="lazy"
+                                                        />
+                                                    </div>
+                                                    <div className="px-6 pt-3 overflow-hidden" style={{ height: '60px' }}>
+                                                        <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 line-clamp-2 flex items-center gap-2">
+                                                            {title}
+                                                            {post.isProtected && (
+                                                                <svg className="w-5 h-5 text-blue-500 dark:text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                                                </svg>
+                                                            )}
+                                                        </h2>
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <div className="p-6 overflow-hidden" style={{ height: '200px' }}>
+                                                    {/* 标题 */}
+                                                    <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3 line-clamp-2 flex items-center gap-2">
+                                                        {title}
+                                                        {post.isProtected && (
+                                                            <svg className="w-5 h-5 text-blue-500 dark:text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                                            </svg>
+                                                        )}
+                                                    </h2>
 
-                                                {/* 文本内容 - 固定显示行数 */}
-                                                <p className="text-gray-600 dark:text-gray-400 leading-relaxed line-clamp-4">
-                                                    {plainText}
-                                                </p>
-                                            </div>
+                                                    {/* 文本内容 - 固定显示行数 */}
+                                                    <p className="text-gray-600 dark:text-gray-400 leading-relaxed line-clamp-4">
+                                                        {plainText}
+                                                    </p>
+                                                </div>
+                                            )}
                                         </div>
                                     </a>
                                 </Link>

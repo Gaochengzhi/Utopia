@@ -66,6 +66,8 @@ export default async function handler(req, res) {
       const compressedStats = fs.statSync(compressedPath)
       if (compressedStats.mtime >= stat.mtime) {
         res.setHeader('Content-Type', 'image/webp')
+        res.setHeader('Referrer-Policy', 'no-referrer')
+        res.setHeader('Access-Control-Allow-Origin', '*')
         setCacheHeaders(res, compressedStats.mtime, 31536000) // 1 year cache
 
         const cachedBuffer = fs.readFileSync(compressedPath)
@@ -97,6 +99,8 @@ export default async function handler(req, res) {
 
       // Serve compressed image
       res.setHeader('Content-Type', 'image/webp')
+      res.setHeader('Referrer-Policy', 'no-referrer')
+      res.setHeader('Access-Control-Allow-Origin', '*')
       setCacheHeaders(res, new Date(), 31536000) // 1 year cache
 
       res.send(compressedBuffer)
@@ -107,6 +111,8 @@ export default async function handler(req, res) {
       // Fallback: serve original image
       const contentType = getImageContentType(originalPath)
       res.setHeader('Content-Type', contentType)
+      res.setHeader('Referrer-Policy', 'no-referrer')
+      res.setHeader('Access-Control-Allow-Origin', '*')
       setCacheHeaders(res, stat.mtime, 86400) // 24 hours
 
       const originalBuffer = fs.readFileSync(originalPath)

@@ -13,12 +13,14 @@ SYNC_ITEMS=(
     "post"
     "public"
     "pages"
+    "lib"
     "components"
     "contexts"
     "styles"
     "next.config.js"
     "config.local.js"
     "tailwind.config.js"
+    ".env.local"
 )
 
 # 自动检测系统配置
@@ -66,15 +68,18 @@ get_rsync_opts() {
     local item="$1"
     local base_opts="--timeout=600 --delete --compress --partial --inplace"
 
+    # Exclude server-side generated files
+    local exclude_opts="--exclude=pageviews.json"
+
     # 根据文件类型自动优化
     if [[ "$item" == *.js ]] || [[ "$item" == *.json ]] || [[ "$item" == *.css ]]; then
-        echo "-av $base_opts --compress-level=9"
+        echo "-av $base_opts $exclude_opts --compress-level=9"
     elif [[ "$item" == "public" ]] || [[ "$item" == "post" ]]; then
         # 静态资源，可能包含图片等，适度压缩
-        echo "-avt $base_opts --compress-level=6"
+        echo "-avt $base_opts $exclude_opts --compress-level=6"
     else
         # 代码文件，高压缩比
-        echo "-avt $base_opts --compress-level=9"
+        echo "-avt $base_opts $exclude_opts --compress-level=9"
     fi
 }
 
