@@ -1,10 +1,57 @@
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import ShareLInk from "/components/ShareLInk"
-import { CodeOutlined, CameraOutlined, BankOutlined } from "@ant-design/icons"
-import { Carousel } from "antd"
 import { PhotoProvider, PhotoView } from "react-photo-view"
 import "react-photo-view/dist/react-photo-view.css"
 import Link from "next/link"
+
+// Inline SVG icons
+const BankIcon = ({ className }) => (
+    <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M4 10v7h3v-7H4zm6 0v7h3v-7h-3zM2 22h19v-3H2v3zm14-12v7h3v-7h-3zm-4.5-9L2 6v2h19V6l-9.5-5z" />
+    </svg>
+)
+
+// Simple CSS Carousel component
+function SimpleCarousel({ children, autoplaySpeed = 4000, onSlideChange }) {
+    const [currentIndex, setCurrentIndex] = useState(0)
+    const [isTransitioning, setIsTransitioning] = useState(false)
+    const timerRef = useRef(null)
+    const count = children.length
+
+    const goTo = useCallback((index) => {
+        if (isTransitioning) return
+        setIsTransitioning(true)
+        setCurrentIndex(index)
+        onSlideChange?.(index)
+        setTimeout(() => setIsTransitioning(false), 500)
+    }, [isTransitioning, onSlideChange])
+
+    // Auto play
+    useEffect(() => {
+        timerRef.current = setInterval(() => {
+            goTo((currentIndex + 1) % count)
+        }, autoplaySpeed)
+        return () => clearInterval(timerRef.current)
+    }, [currentIndex, count, autoplaySpeed, goTo])
+
+    return (
+        <div className="relative w-full overflow-hidden">
+            {children.map((child, index) => (
+                <div
+                    key={index}
+                    className="absolute inset-0 transition-opacity duration-500"
+                    style={{
+                        opacity: index === currentIndex ? 1 : 0,
+                        zIndex: index === currentIndex ? 1 : 0,
+                        position: index === 0 ? 'relative' : 'absolute',
+                    }}
+                >
+                    {child}
+                </div>
+            ))}
+        </div>
+    )
+}
 
 export function Banner({ }) {
     const [scrollY, setScrollY] = useState(0)
@@ -149,7 +196,7 @@ export function Banner({ }) {
                     className="mt-6 mb-2 p-4 flex items-center border-2 border-gradient-to-r from-purple-500 to-blue-500 rounded-lg border-dashed backdrop-blur-sm bg-white/5 hover:bg-white/10 transition-all duration-300 group"
                     style={getTextAnimation(400)}
                 >
-                    <BankOutlined className="text-green-400 group-hover:animate-pulse" />
+                    <BankIcon className="text-green-400 group-hover:animate-pulse" />
                     <div className="inline px-2 text-gray-300">常驻 seu.edu.cn 接受</div>
                     <Link className="cursor-pointer" href="/photographer/order">
                         <div className="inline text-sky-400 cursor-pointer hover:text-sky-300 transition-colors duration-200 font-medium">
@@ -172,7 +219,7 @@ export function Banner({ }) {
                                 title="向左旋转 90°"
                             >
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M7.11 8.53L5.7 7.11C4.8 8.27 4.24 9.61 4.07 11h2.02c.14-.87.49-1.72 1.02-2.47zM6.09 13H4.07c.17 1.39.72 2.73 1.62 3.89l1.41-1.42c-.52-.75-.87-1.59-1.01-2.47zm1.01 5.32c1.16.9 2.51 1.44 3.9 1.61V17.91c-.87-.15-1.71-.49-2.46-1.03L7.1 18.32zM13 4.07V1L8.45 5.55 13 10V6.09c2.84.48 5 2.94 5 5.91s-2.16 5.43-5 5.91v2.02c3.95-.49 7-3.85 7-7.93s-3.05-7.44-7-7.93z"/>
+                                    <path d="M7.11 8.53L5.7 7.11C4.8 8.27 4.24 9.61 4.07 11h2.02c.14-.87.49-1.72 1.02-2.47zM6.09 13H4.07c.17 1.39.72 2.73 1.62 3.89l1.41-1.42c-.52-.75-.87-1.59-1.01-2.47zm1.01 5.32c1.16.9 2.51 1.44 3.9 1.61V17.91c-.87-.15-1.71-.49-2.46-1.03L7.1 18.32zM13 4.07V1L8.45 5.55 13 10V6.09c2.84.48 5 2.94 5 5.91s-2.16 5.43-5 5.91v2.02c3.95-.49 7-3.85 7-7.93s-3.05-7.44-7-7.93z" />
                                 </svg>
                             </button>
                             
@@ -182,7 +229,7 @@ export function Banner({ }) {
                                 title="向右旋转 90°"
                             >
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M15.55 5.55L11 1v3.07C7.06 4.56 4 7.92 4 12s3.05 7.44 7 7.93v-2.02c-2.84-.48-5-2.94-5-5.91s2.16-5.43 5-5.91V10l4.55-4.45zM19.93 11c-.17-1.39-.72-2.73-1.62-3.89l-1.42 1.42c.54.75.88 1.6 1.02 2.47h2.02zM13 17.9v2.02c1.39-.17 2.74-.71 3.9-1.61l-1.44-1.44c-.75.54-1.59.89-2.46 1.03zm3.89-2.42l1.42 1.41c.9-1.16 1.45-2.5 1.62-3.89h-2.02c-.14.87-.48 1.72-1.02 2.48z"/>
+                                    <path d="M15.55 5.55L11 1v3.07C7.06 4.56 4 7.92 4 12s3.05 7.44 7 7.93v-2.02c-2.84-.48-5-2.94-5-5.91s2.16-5.43 5-5.91V10l4.55-4.45zM19.93 11c-.17-1.39-.72-2.73-1.62-3.89l-1.42 1.42c.54.75.88 1.6 1.02 2.47h2.02zM13 17.9v2.02c1.39-.17 2.74-.71 3.9-1.61l-1.44-1.44c-.75.54-1.59.89-2.46 1.03zm3.89-2.42l1.42 1.41c.9-1.16 1.45-2.5 1.62-3.89h-2.02c-.14.87-.48 1.72-1.02 2.48z" />
                                 </svg>
                             </button>
 
@@ -192,7 +239,7 @@ export function Banner({ }) {
                                 title="重置旋转"
                             >
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/>
+                                    <path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z" />
                                 </svg>
                             </button>
                         </div>
@@ -203,12 +250,9 @@ export function Banner({ }) {
                         <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 rounded-2xl opacity-75 blur-sm"></div>
 
                         <div className="relative bg-black rounded-2xl overflow-hidden">
-                            <Carousel
-                                className="w-full overflow-hidden"
-                                effect="fade"
-                                autoplay
+                            <SimpleCarousel
                                 autoplaySpeed={4000}
-                                beforeChange={(from, to) => setCurrentSlide(to)}
+                                onSlideChange={setCurrentSlide}
                             >
                                 {[1, 2, 3, 4, 5].map((i) => (
                                     <PhotoView key={i} src={getFullSizeUrl(`/photography/banner/${i}.jpg`)}>
@@ -247,7 +291,7 @@ export function Banner({ }) {
                                         </div>
                                     </PhotoView>
                                 ))}
-                            </Carousel>
+                            </SimpleCarousel>
 
                         </div>
                     </div>
@@ -256,8 +300,3 @@ export function Banner({ }) {
         </div>
     )
 }
-// You should use getStaticProps when:
-//- The data required to render the page is available at build time ahead of a user’s request.
-//- The data comes from a headless CMS.
-//- The data can be publicly cached (not user-specific).
-//- The page must be pre-rendered (for SEO) and be very fast — getStaticProps generates HTML and JSON files, both of which can be cached by a CDN for performance.

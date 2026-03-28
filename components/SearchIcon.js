@@ -1,7 +1,12 @@
-import { SearchOutlined } from "@ant-design/icons"
 import { useState } from "react"
 import { useRouter } from "next/router"
-const config = require('../config.local.js')
+
+const SearchOutlinedSvg = ({ className }) => (
+    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="11" cy="11" r="8" />
+        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+    </svg>
+)
 
 export default function SearchIcon() {
     const router = useRouter()
@@ -93,7 +98,7 @@ export default function SearchIcon() {
                 className="clickable flex justify-center items-center text-2xl cursor-pointer text-gray-900 dark:text-gray-100"
                 onClick={handleOpenSearch}
             >
-                <SearchOutlined />
+                <SearchOutlinedSvg />
             </div>
 
             {/* 搜索框 */}
@@ -124,7 +129,7 @@ export default function SearchIcon() {
                                         className="text-gray-400 dark:text-gray-300 flex items-center px-3 cursor-pointer hover:text-gray-600 dark:hover:text-gray-100"
                                         onClick={handleSubmit}
                                     >
-                                        <SearchOutlined />
+                                        <SearchOutlinedSvg />
                                     </div>
                                 </div>
 

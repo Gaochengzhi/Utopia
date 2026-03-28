@@ -2,7 +2,8 @@ import fs from "fs"
 import matter from "gray-matter"
 import { readAllFile } from "../../components/util/readAllfile"
 import { isProtectedPath, maskContent, verifyAuthCookie } from "../../lib/auth"
-const config = require('../../config.local.js')
+
+const IMAGE_SERVER_URL = '/.pic/'
 
 export default async function handler(req, res) {
     try {
@@ -44,7 +45,7 @@ export default async function handler(req, res) {
                         "(file://)?/Users/kounarushi/mycode/web-blog/public/.pic/",
                         "gm"
                     ),
-                    config.IMAGE_SERVER_URL
+                    IMAGE_SERVER_URL
                 )
             const markDownWithoutYarm = matter(rawMarkdown)
 

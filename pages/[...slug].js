@@ -12,10 +12,15 @@ import matter from "gray-matter"
 import Head from "next/head"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/router"
-import { Spin } from "antd"
 import { obseverImg } from "/components/util/handleErrorPic"
 import { normalizeImagePath } from "/components/util/imageUtils"
-const config = require('../config.local.js')
+
+// Custom loading spinner to replace antd Spin
+const LoadingSpinner = () => (
+    <div className="flex items-center justify-center h-screen bg-white dark:bg-gray-900">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div>
+    </div>
+)
 
 export default function Post({ contents, filename, status, folderContents, folderPath, isProtected }) {
     const router = useRouter()
@@ -80,20 +85,12 @@ export default function Post({ contents, filename, status, folderContents, folde
 
     // Show loading spinner when page is being generated or checking auth
     if (router.isFallback || (isProtected && checking)) {
-        return (
-            <div className="flex items-center justify-center h-screen bg-white dark:bg-gray-900">
-                <Spin size="large" />
-            </div>
-        )
+        return <LoadingSpinner />
     }
 
     // Don't render protected content if not authenticated
     if (isProtected && !isAuthenticated) {
-        return (
-            <div className="flex items-center justify-center h-screen bg-white dark:bg-gray-900">
-                <Spin size="large" />
-            </div>
-        )
+        return <LoadingSpinner />
     }
     return (
         <>

@@ -1,38 +1,106 @@
-import { Tree } from "antd"
 import { useRouter } from "next/router"
 import { useState, useEffect } from "react"
-import { FileTextOutlined } from "@ant-design/icons"
-import { tree2list } from "../util/treeSort"
-const { DirectoryTree } = Tree
+
+// Inline SVG icons to replace @ant-design/icons
+const FileTextIcon = ({ className }) => (
+    <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+        <polyline points="14 2 14 8 20 8" />
+        <line x1="16" y1="13" x2="8" y2="13" />
+        <line x1="16" y1="17" x2="8" y2="17" />
+        <polyline points="10 9 9 9 8 9" />
+    </svg>
+)
+
+const FolderIcon = ({ open, className }) => (
+    <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        {open ? (
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2v11z" />
+        ) : (
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+        )}
+    </svg>
+)
+
+const ChevronIcon = ({ expanded, className }) => (
+    <svg
+        className={`${className} transition-transform duration-200 ${expanded ? 'rotate-90' : ''}`}
+        width="12"
+        height="12"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+    >
+        <polyline points="9 18 15 12 9 6" />
+    </svg>
+)
+
+// Recursive tree node component
+function TreeNode({ node, depth = 0, onFileClick, expandedKeys, toggleExpand }) {
+    if (!node || node.title === "x") return null
+
+    const isFolder = !node.isLeaf
+    const isExpanded = expandedKeys.has(node.key)
+    const displayTitle = node.isLeaf
+        ? node.title?.replace(/\.[^/.]+$/, "")
+        : node.title
+
+    const handleClick = () => {
+        if (isFolder) {
+            toggleExpand(node.key)
+        } else {
+            onFileClick(node)
+        }
+    }
+
+    return (
+        <div>
+            <div
+                className="flex items-center text-sm py-1 px-2 cursor-pointer rounded-md hover:bg-gray-200/60 dark:hover:bg-gray-600/80 text-gray-700 dark:text-gray-200 transition-colors duration-150"
+                style={{ paddingLeft: `${depth * 16 + 4}px` }}
+                onClick={handleClick}
+            >
+                {isFolder && (
+                    <ChevronIcon expanded={isExpanded} className="mr-1 text-gray-400 dark:text-gray-500 flex-shrink-0" />
+                )}
+                {isFolder ? (
+                    <FolderIcon open={isExpanded} className="mr-2 text-yellow-500 dark:text-yellow-400 flex-shrink-0" />
+                ) : (
+                    <span className="w-3 mr-1 flex-shrink-0" />
+                )}
+                {!isFolder && (
+                    <FileTextIcon className="mr-2 text-gray-400 dark:text-gray-500 flex-shrink-0" />
+                )}
+                <span className="truncate text-left leading-5">{displayTitle}</span>
+            </div>
+            {isFolder && isExpanded && node.children && (
+                <div>
+                    {node.children
+                        .filter(child => child && child.title !== "x")
+                        .map(child => (
+                            <TreeNode
+                                key={child.key}
+                                node={child}
+                                depth={depth + 1}
+                                onFileClick={onFileClick}
+                                expandedKeys={expandedKeys}
+                                toggleExpand={toggleExpand}
+                            />
+                        ))}
+                </div>
+            )}
+        </div>
+    )
+}
 
 export default function FileTree({ paths }) {
     const [isTreeMode, setIsTreeMode] = useState(true)
     const [posts, setPosts] = useState([])
+    const [expandedKeys, setExpandedKeys] = useState(new Set(["myrootkey"]))
     const router = useRouter()
-
-    // 处理文件名，去掉扩展名
-    const removeFileExtension = (filename) => {
-        return filename ? filename.replace(/\.[^/.]+$/, "") : filename
-    }
-
-    // 递归处理树形数据，去掉文件名后缀
-    const processTreeData = (node) => {
-        if (!node) return node
-
-        const processed = { ...node }
-
-        // 如果是文件（有isLeaf属性且为true），处理title
-        if (processed.isLeaf && processed.title) {
-            processed.title = removeFileExtension(processed.title)
-        }
-
-        // 递归处理子节点
-        if (processed.children && Array.isArray(processed.children)) {
-            processed.children = processed.children.map(processTreeData)
-        }
-
-        return processed
-    }
 
     useEffect(() => {
         if (!isTreeMode) {
@@ -43,25 +111,36 @@ export default function FileTree({ paths }) {
         }
     }, [isTreeMode])
 
-    const onSelect = (_, info) => {
-        const fullpath = info.path ?? ""
-        const filname = fullpath.split("/").pop()
+    const toggleExpand = (key) => {
+        setExpandedKeys(prev => {
+            const next = new Set(prev)
+            if (next.has(key)) {
+                next.delete(key)
+            } else {
+                next.add(key)
+            }
+            return next
+        })
+    }
+
+    const onFileClick = (node) => {
+        const fullpath = node.path ?? ""
+        const filename = fullpath.split("/").pop()
         let reg = /(?:\.([^.]+))?$/
-        if (reg.exec(filname)[1] === "md") {
+        if (reg.exec(filename)[1] === "md") {
             router.push(fullpath)
         }
     }
 
     const handleFileClick = (path) => {
-        const filname = path.split("/").pop()
+        const filename = path.split("/").pop()
         let reg = /(?:\.([^.]+))?$/
-        if (reg.exec(filname)[1] === "md") {
+        if (reg.exec(filename)[1] === "md") {
             router.push(path)
         }
     }
 
     const renderTreeMode = () => {
-        // Check if paths data is available
         if (!paths) {
             return (
                 <div className="flex items-center justify-center p-4 text-gray-500 dark:text-gray-400">
@@ -71,14 +150,15 @@ export default function FileTree({ paths }) {
         }
 
         return (
-            <DirectoryTree
-                className="transition-all duration-150 ease-in min-w-[16rem] text-gray-900 dark:text-gray-100"
-                multiple
-                selectable={false}
-                onClick={onSelect}
-                defaultExpandedKeys={["myrootkey"]}
-                treeData={[processTreeData(paths)]}
-            />
+            <div className="min-w-[16rem] text-gray-900 dark:text-gray-100">
+                <TreeNode
+                    node={paths}
+                    depth={0}
+                    onFileClick={onFileClick}
+                    expandedKeys={expandedKeys}
+                    toggleExpand={toggleExpand}
+                />
+            </div>
         )
     }
 
@@ -91,8 +171,8 @@ export default function FileTree({ paths }) {
                         onClick={() => handleFileClick(post.path)}
                         className="flex items-center text-sm mt-1 overflow-ellipsis transition-all ease-in cursor-pointer py-1 px-3 hover:bg-gray-200/60 dark:hover:bg-gray-600/80 text-gray-700 dark:text-gray-200"
                     >
-                        <FileTextOutlined className="mr-2 text-gray-500 dark:text-gray-400" />
-                        <div className="truncate text-left leading-5">{removeFileExtension(post.title)}</div>
+                        <FileTextIcon className="mr-2 text-gray-500 dark:text-gray-400 flex-shrink-0" />
+                        <div className="truncate text-left leading-5">{post.title?.replace(/\.[^/.]+$/, "")}</div>
                     </div>
                 ))}
             </div>
@@ -115,7 +195,6 @@ export default function FileTree({ paths }) {
                     aria-label={isTreeMode ? '切换到列表视图' : '切换到树状视图'}
                 >
                     {isTreeMode ? (
-                        // List icon for flat mode
                         <svg
                             className="w-4 h-4"
                             fill="none"
@@ -131,7 +210,6 @@ export default function FileTree({ paths }) {
                             />
                         </svg>
                     ) : (
-                        // Tree icon for tree mode
                         <svg
                             className="w-4 h-4"
                             fill="none"

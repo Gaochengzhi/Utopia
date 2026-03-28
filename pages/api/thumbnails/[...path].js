@@ -1,10 +1,17 @@
 import fs from 'fs'
 import path from 'path'
-import sharp from 'sharp'
 import {
   getImageContentType,
   setCacheHeaders
 } from '../../../lib/imageApiUtils'
+
+// Try to import sharp, fallback gracefully if not available
+let sharp = null
+try {
+  sharp = require('sharp')
+} catch (e) {
+  console.warn('sharp not available, serving original images without compression')
+}
 
 export default async function handler(req, res) {
   try {
@@ -41,6 +48,17 @@ export default async function handler(req, res) {
     const stat = fs.statSync(originalPath)
     if (!stat.isFile()) {
       return res.status(404).json({ error: 'Not a file' })
+    }
+
+    // If sharp is not available, serve original image
+    if (!sharp) {
+      const contentType = getImageContentType(originalPath)
+      res.setHeader('Content-Type', contentType)
+      res.setHeader('Referrer-Policy', 'no-referrer')
+      res.setHeader('Access-Control-Allow-Origin', '*')
+      setCacheHeaders(res, stat.mtime, 86400)
+      const imageBuffer = fs.readFileSync(originalPath)
+      return res.send(imageBuffer)
     }
 
     // Compressed image paths
@@ -80,7 +98,6 @@ export default async function handler(req, res) {
       let sharpInstance = sharp(originalPath)
 
       if (type === 'thumbnail') {
-        // Thumbnail: resize to max 400x300, quality 60%
         sharpInstance = sharpInstance
           .resize(400, 300, {
             fit: 'inside',
@@ -88,7 +105,6 @@ export default async function handler(req, res) {
           })
           .webp({ quality: 60 })
       } else {
-        // Fullsize: keep original dimensions, quality 85%
         sharpInstance = sharpInstance.webp({ quality: 85 })
       }
 

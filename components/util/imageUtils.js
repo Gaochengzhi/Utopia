@@ -1,4 +1,5 @@
-const config = require('../../config.local.js')
+// Image path constants
+const IMAGE_SERVER_URL = '/.pic/'
 
 /**
  * Normalize image paths in markdown content
@@ -12,7 +13,7 @@ export function normalizeImagePath(content) {
       "(file://)?/Users/kounarushi/mycode/web-blog/public/.pic/",
       "gm"
     ),
-    config.IMAGE_SERVER_URL
+    IMAGE_SERVER_URL
   )
 }
 
@@ -23,5 +24,5 @@ export function normalizeImagePath(content) {
 export function processPhotographyPath(path) {
   if (!path) return path
 
-  return path.replace(/^\/photography\//, config.IMAGE_SERVER_URL)
+  return path.replace(/^\/photography\//, IMAGE_SERVER_URL)
 }

@@ -17,19 +17,14 @@
         "compress-images": "node scripts/generateCompressedImages.js"
     },
     "dependencies": {
-        "@ant-design/icons": "^4.7.0",
-        "@mdx-js/loader": "^3.1.1",
-        "@next/bundle-analyzer": "^12.2.5",
-        "@next/mdx": "^16.0.5",
-        "antd": "^4.22.4",
+        "@next/bundle-analyzer": "^15.5.14",
         "cross-env": "^7.0.3",
         "github-markdown-css": "^5.1.0",
         "gray-matter": "^4.0.3",
         "js-cookie": "^3.0.1",
-        "next": "12.2.4",
-        "next-images": "^1.8.4",
-        "react": "18.2.0",
-        "react-dom": "18.2.0",
+        "next": "^15.5.14",
+        "react": "^19.2.4",
+        "react-dom": "^19.2.4",
         "react-markdown": "^8.0.3",
         "react-photo-view": "^1.2.2",
         "react-scroll-parallax": "^3.3.1",
@@ -37,14 +32,12 @@
         "rehype-katex": "^6.0.2",
         "rehype-raw": "^6.1.1",
         "remark-gfm": "^3.0.1",
-        "remark-math": "^5.1.1",
-        "sharp": "^0.34.3"
+        "remark-math": "^5.1.1"
     },
     "devDependencies": {
         "autoprefixer": "^10.4.8",
         "eslint": "8.21.0",
-        "eslint-config-next": "12.2.4",
-        "next-bundle-analyzer": "^0.6.4",
+        "eslint-config-next": "^15.5.14",
         "postcss": "^8.4.16",
         "tailwindcss": "^3.1.8"
     }

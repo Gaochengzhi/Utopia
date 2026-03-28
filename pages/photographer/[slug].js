@@ -5,7 +5,9 @@ import { Pnav } from "/components/photo/Pnav"
 import { Walls } from "/components/photo/Wall"
 import { useEffect, useState } from "react"
 import { firstUpperCase } from "/components/util/treeSort"
-const config = require('../../config.local.js')
+
+const IMAGE_SERVER_URL = '/.pic/'
+
 export default function Wall({ title, categories }) {
     const [paths, setPaths] = useState([])
     const [loading, setLoading] = useState(true)
@@ -26,7 +28,7 @@ export default function Wall({ title, categories }) {
                 // 处理图片路径，根据环境配置替换
                 const processedImages = data.images.map(item => ({
                     ...item,
-                    path: item.path.replace(/^\/photography\//, config.IMAGE_SERVER_URL)
+                    path: item.path.replace(/^\/photography\//, IMAGE_SERVER_URL)
                 }))
                 setPaths(processedImages)
             } else {
@@ -70,7 +72,7 @@ export default function Wall({ title, categories }) {
             <div className="w-full px-4">
                 {paths && paths.length > 0 && (
                     <img
-                        src={paths[0].path.replace(config.IMAGE_SERVER_URL, config.IMAGE_SERVER_URL + 'full/')}
+                        src={paths[0].path.replace(IMAGE_SERVER_URL, IMAGE_SERVER_URL + 'full/')}
                         alt=""
                         className="md:max-h-[60vh] max-h-[40vh]  w-[97%] object-cover mx-auto"
                     />

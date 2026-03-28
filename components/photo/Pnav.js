@@ -1,6 +1,11 @@
-import { HomeFilled, BarsOutlined } from "@ant-design/icons"
 import { cataList } from "./cataList"
 import Link from "next/link"
+
+const HomeIcon = ({ className }) => (
+    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+    </svg>
+)
 
 export function Pnav({ select, categories }) {
   return (
@@ -22,7 +27,7 @@ export function Pnav({ select, categories }) {
                 : "flex pr-2 pclick pb-2 whitespace-nowrap"
             }
           >
-            <HomeFilled />
+            <HomeIcon />
           </div>
         </Link>
 
@@ -42,7 +47,7 @@ export function Pnav({ select, categories }) {
       </div>
 
       {/* Right section */}
-      <div className="flex text-2xl text-white">{/* <BarsOutlined /> */}</div>
+      <div className="flex text-2xl text-white"></div>
     </div>
   )
 }
