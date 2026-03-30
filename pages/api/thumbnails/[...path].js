@@ -88,17 +88,22 @@ function buildCandidateKeys(imagePath, type) {
     suffix = cleanPath.slice('photography/content/'.length)
     if (type === 'thumbnail') candidates.push(`photography/thumb/${suffix}`)
     candidates.push(`photography/content/${suffix}`)
+    candidates.push(`photography/${suffix}`)
   } else if (cleanPath.startsWith('photography/thumb/')) {
     suffix = cleanPath.slice('photography/thumb/'.length)
     candidates.push(`photography/thumb/${suffix}`)
     candidates.push(`photography/content/${suffix}`)
+    candidates.push(`photography/${suffix}`)
   } else if (cleanPath.startsWith('photography/full/')) {
     suffix = cleanPath.slice('photography/full/'.length)
+    candidates.push(`photography/full/${suffix}`)
     candidates.push(`photography/content/${suffix}`)
+    candidates.push(`photography/${suffix}`)
     if (type === 'thumbnail') candidates.push(`photography/thumb/${suffix}`)
   } else {
     suffix = cleanPath.slice('photography/'.length)
     if (type === 'thumbnail') candidates.push(`photography/thumb/${suffix}`)
+    candidates.push(`photography/${suffix}`)
     candidates.push(`photography/content/${suffix}`)
   }
 
