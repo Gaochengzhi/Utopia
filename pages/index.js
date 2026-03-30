@@ -7,6 +7,7 @@ import Head from "next/head"
 import Navbar from "/components/Navbar"
 import { useEffect, useState } from "react"
 import { getCfEnv } from "/lib/cfContext"
+import { normalizeImageUrl } from "/components/util/imageUtils"
 
 export default function Home({ paths: staticPaths, initialPosts, totalPosts: staticTotalPosts, folders: staticFolders }) {
     const [posts, setPosts] = useState(initialPosts || [])
