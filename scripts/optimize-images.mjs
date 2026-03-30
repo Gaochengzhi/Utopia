@@ -452,6 +452,13 @@ async function main() {
 
   saveManifest(manifest)
 
+  // ============================================
+  // Ensure ALL photography/content/ files have thumbnails
+  // ============================================
+  if ((TARGET_SCOPE === 'all' || TARGET_SCOPE === 'photography') && !DRY_RUN) {
+    await ensureThumbnails()
+  }
+
   const finalMessage = [
     '',
     '✅ Optimization complete!',
@@ -473,4 +480,65 @@ async function main() {
   }
 }
 
+/**
+ * Ensure every file in photography/content/ has a corresponding thumbnail
+ * in photography/thumb/. Generates missing thumbnails in parallel.
+ */
+async function ensureThumbnails() {
+  const contentDir = path.join(PUBLIC_DIR, 'photography', 'content')
+  if (!fs.existsSync(contentDir)) return
+
+  const imageRegex = /\.(jpg|jpeg|png|gif|webp|bmp)$/i
+  const contentFiles = scanFiles(contentDir, imageRegex)
+
+  let generated = 0
+  let skipped = 0
+  let errors = 0
+
+  const limit = pLimit(os.cpus().length)
+  const tasks = contentFiles.map(filePath => limit(async () => {
+    // Derive thumb path: photography/content/Category/img.webp → photography/thumb/Category/img.webp
+    const relative = path.relative(contentDir, filePath)
+    const parsed = path.parse(relative)
+    // relative is like "Category/filename.webp"
+    const thumbDir = path.join(PUBLIC_DIR, 'photography', 'thumb', parsed.dir)
+    const thumbPath = path.join(thumbDir, parsed.name + '.webp')
+
+    // Skip if thumbnail already exists and is non-empty
+    if (fs.existsSync(thumbPath)) {
+      const thumbStat = fs.statSync(thumbPath)
+      if (thumbStat.size > 0) {
+        skipped++
+        return
+      }
+    }
+
+    // Create directory if needed
+    if (!fs.existsSync(thumbDir)) {
+      fs.mkdirSync(thumbDir, { recursive: true })
+    }
+
+    try {
+      const thumbBuffer = await sharp(filePath)
+        .resize({ width: THUMB_WIDTH, withoutEnlargement: true })
+        .webp({ quality: THUMB_QUALITY })
+        .toBuffer()
+      fs.writeFileSync(thumbPath, thumbBuffer)
+      generated++
+    } catch (err) {
+      console.error(`   ❌ Thumb failed: ${relative}: ${err.message}`)
+      errors++
+    }
+  }))
+
+  await Promise.all(tasks)
+
+  if (generated > 0 || errors > 0) {
+    console.log(`\n🖼️  Thumbnails: generated ${generated}, skipped ${skipped}, errors ${errors}`)
+  } else {
+    console.log(`\n🖼️  Thumbnails: all ${skipped} already exist`)
+  }
+}
+
 main().catch(console.error)
+
