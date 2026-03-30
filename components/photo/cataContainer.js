@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import Link from "next/link"
+import { getCdnCataThumbUrl, handleCdnError } from "/lib/cdnUrl"
 
 /**
  * Lightweight parallax image banner — no external library needed.
@@ -64,14 +65,7 @@ function ParallaxImage({ src, speed = -0.3, className, onLoad, onError, loadingS
     )
 }
 
-function toThumbPath(rawPath) {
-    if (!rawPath) return rawPath
-    if (rawPath.includes('/photography/cata/')) return rawPath
-    if (rawPath.includes('/photography/content/')) {
-        return rawPath.replace('/photography/content/', '/photography/thumb/')
-    }
-    return rawPath.replace('/photography/', '/photography/thumb/')
-}
+
 
 export function CataContainer({ categories, eagerCount = 2 }) {
     const [loadedImages, setLoadedImages] = useState(new Set())
@@ -110,7 +104,7 @@ export function CataContainer({ categories, eagerCount = 2 }) {
 
             {categoryData.map((item, index) => {
                 const isLoaded = loadedImages.has(item.index)
-                const imageSrc = toThumbPath(item.coverImage || `/photography/cata/${item.index}.jpg`)
+                const imageSrc = getCdnCataThumbUrl(item.coverImage || `/photography/cata/${item.index}.jpg`)
 
                 return (
                     <Link key={`${item.index}-${item.title}`} href={"/photographer/" + item.title} className="block w-full">
@@ -128,7 +122,7 @@ export function CataContainer({ categories, eagerCount = 2 }) {
                                 loadingStrategy={index < eagerCount ? 'eager' : 'lazy'}
                                 className="w-full h-full transition-transform duration-500 group-hover:scale-105"
                                 onLoad={() => markLoaded(item.index)}
-                                onError={() => markLoaded(item.index)}
+                                onError={(e) => { handleCdnError(e); markLoaded(item.index) }}
                             >
                                 {/* 渐变覆盖层 */}
                                 <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/40 group-hover:from-black/60 group-hover:to-black/60 transition-all duration-500"></div>

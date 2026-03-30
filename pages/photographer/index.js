@@ -4,7 +4,9 @@ import { Banner } from "/components/photo/Banner"
 import { Pnav } from "/components/photo/Pnav"
 import { Footer } from "/components/footer"
 import { getCfEnv } from "/lib/cfContext"
+import { CDN_BASE } from "/lib/cdnUrl"
 import { useState, useEffect } from "react"
+import Head from "next/head"
 
 function normalizePhotoKey(rawPath, category, filename) {
     const fallback = category && filename ? `photography/content/${category}/${filename}` : null
@@ -101,6 +103,12 @@ export default function Index({ path: initialPath, categories: initialCategories
 
     return (
         <div className="bg-black min-h-screen">
+            {CDN_BASE && (
+                <Head>
+                    <link rel="preconnect" href={CDN_BASE} />
+                    <link rel="dns-prefetch" href={CDN_BASE} />
+                </Head>
+            )}
             <Pnav select="index" categories={categories} />
 
             {/* Banner section - 限制宽度用于可读性 */}

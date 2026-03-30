@@ -205,11 +205,11 @@ curl -I "https://cdn.gaochengzhi.com/photography/thumb/City/some-photo.webp"
 
 ## Checklist
 
-- [ ] Step 1: 在 R2 bucket 绑定 `cdn.gaochengzhi.com`
-- [ ] Step 2: 创建 Cache Rule（Cache Everything + 1年 Edge TTL）
-- [ ] Step 2.3: 开启 Smart Tiered Cache
-- [ ] Step 3: 配置 R2 CORS
-- [ ] Step 4.1: 设置 `NEXT_PUBLIC_R2_CDN_URL` 环境变量
-- [ ] Step 5: 验证 `cf-cache-status: HIT`
+- [x] Step 1: 在 R2 bucket 绑定 `cdn.gaochengzhi.com` ✅ 已 Active
+- [x] Step 2: 创建 Cache Rule（Cache Everything + 1年 Edge TTL）✅ API 创建完成
+- [ ] Step 2.3: 开启 Smart Tiered Cache ⚠️ **需要手动操作**（API token 权限不够）
+- [x] Step 3: 配置 R2 CORS ✅ API 设置完成
+- [x] Step 4.1: 设置 `NEXT_PUBLIC_R2_CDN_URL` 环境变量 ✅ 已在 .env + wrangler.toml 启用
+- [x] Step 5: 验证 `cf-cache-status: HIT` ✅ 已验证缩略图和分类图都 HIT
 - [ ] Step 6.1: 禁用 r2.dev 公开 URL（可选）
 - [ ] Step 6.2: 设置防盗链 WAF 规则（可选）

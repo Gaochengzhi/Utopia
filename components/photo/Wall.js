@@ -1,12 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import { PhotoProvider, PhotoView } from "react-photo-view"
 import "react-photo-view/dist/react-photo-view.css"
-import Head from "next/head"
-
-// R2 CDN direct URL (set via env var after configuring R2 public custom domain)
-const R2_CDN_URL = typeof window !== 'undefined'
-    ? (window.__NEXT_DATA__?.props?.pageProps?.__r2CdnUrl || '')
-    : (process.env.NEXT_PUBLIC_R2_CDN_URL || '')
+import { getCdnThumbUrl, getCdnFullUrl, CDN_BASE, handleCdnError } from "/lib/cdnUrl"
 
 export function Walls({ path, scrollDirection = 'horizontal' }) {
     const [loadedImages, setLoadedImages] = useState(new Set())
@@ -19,35 +14,11 @@ export function Walls({ path, scrollDirection = 'horizontal' }) {
     const currentOffset = useRef(0)
     const animationId = useRef(null)
 
-    // 为PhotoView生成全尺寸压缩图URL
-    const getFullSizeUrl = (originalPath) => {
-        let url = originalPath
-        if (originalPath.startsWith('/photography/content/')) {
-            url = originalPath.replace('/photography/content/', '/photography/full/')
-        } else {
-            url = originalPath.replace('/.pic/', '/.pic/full/')
-        }
-        // Use CDN direct URL if configured
-        if (R2_CDN_URL && url.startsWith('/')) {
-            return R2_CDN_URL + url
-        }
-        return url
-    }
+    // 为PhotoView生成全尺寸压缩图URL — 直连 CDN
+    const getFullSizeUrl = (originalPath) => getCdnFullUrl(originalPath)
 
-    // 获取缩略图URL
-    const getThumbnailUrl = (originalPath) => {
-        let url = originalPath
-        if (originalPath.startsWith('/photography/content/')) {
-            url = originalPath.replace('/photography/content/', '/photography/thumb/')
-        } else {
-            url = originalPath.replace('/.pic/', '/.pic/thumb/')
-        }
-        // Use CDN direct URL if configured
-        if (R2_CDN_URL && url.startsWith('/')) {
-            return R2_CDN_URL + url
-        }
-        return url
-    }
+    // 获取缩略图URL — 直连 CDN
+    const getThumbnailUrl = (originalPath) => getCdnThumbUrl(originalPath)
 
     const markLoaded = useCallback((index) => {
         setLoadedImages(prev => {
@@ -269,13 +240,6 @@ export function Walls({ path, scrollDirection = 'horizontal' }) {
 
     return (
         <div className="w-full">
-            {/* Preconnect to CDN domain for faster image loading */}
-            {R2_CDN_URL && (
-                <Head>
-                    <link rel="preconnect" href={R2_CDN_URL} />
-                    <link rel="dns-prefetch" href={R2_CDN_URL} />
-                </Head>
-            )}
             <PhotoProvider
                 maskOpacity={0.5}
                 pullClosable={true}
@@ -417,9 +381,10 @@ export function Walls({ path, scrollDirection = 'horizontal' }) {
                                                                 : 'transition-opacity duration-300'
                                                             }`}
                                                         alt=""
-                                                        loading="eager"
+                                                        loading={index < 4 ? 'eager' : 'lazy'}
                                                         decoding="async"
                                                         onLoad={() => markLoaded(item.originalIndex)}
+                                                        onError={handleCdnError}
                                                     />
 
                                                     {/* 光影效果 - 拖拽时简化但保留 */}
@@ -462,6 +427,7 @@ export function Walls({ path, scrollDirection = 'horizontal' }) {
                                                 decoding="async"
                                                 fetchpriority={index < 8 ? 'high' : 'auto'}
                                                 onLoad={() => markLoaded(index)}
+                                                onError={handleCdnError}
                                             />
 
                                             {/* 简单的悬停遮罩 */}

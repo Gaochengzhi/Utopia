@@ -4,6 +4,7 @@ import { Walls } from "/components/photo/Wall"
 import { useCallback, useEffect, useState } from "react"
 import { firstUpperCase } from "/components/util/treeSort"
 import { getCfEnv } from "/lib/cfContext"
+import { getCdnFullUrl, handleCdnError } from "/lib/cdnUrl"
 
 // Photography images use /photography/content/... paths with rewrites
 // Thumbnails use /photography/thumb/... and full uses /photography/full/...
@@ -129,12 +130,13 @@ export default function Wall({ title, categories: initialCategories, initialImag
             <div className="w-full px-4">
                 {paths && paths.length > 0 && (
                     <img
-                        src={paths[0].path.replace('/photography/content/', '/photography/full/')}
+                        src={getCdnFullUrl(paths[0].path)}
                         alt=""
                         loading="eager"
                         decoding="async"
                         fetchpriority="high"
                         className="md:max-h-[60vh] max-h-[40vh]  w-[97%] object-cover mx-auto"
+                        onError={handleCdnError}
                     />
                 )}
                 <div className=" text-white p-3 text-6xl">{firstUpperCase(title)}</div>

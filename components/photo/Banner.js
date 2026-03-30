@@ -3,7 +3,7 @@ import ShareLInk from "/components/ShareLInk"
 import { PhotoProvider, PhotoView } from "react-photo-view"
 import "react-photo-view/dist/react-photo-view.css"
 import Link from "next/link"
-import NextImage from "next/image"
+import { getCdnUrl, handleCdnError } from "/lib/cdnUrl"
 
 // Inline SVG icons
 const BankIcon = ({ className }) => (
@@ -85,14 +85,16 @@ export function Banner({ }) {
         return () => observer.disconnect()
     }, [])
 
-    // 获取全尺寸压缩图URL
+    // 获取全尺寸压缩图URL — 直连 CDN
     const getFullSizeUrl = (imagePath) => {
-        return imagePath.replace('/photography/', '/.pic/full/photography/')
+        const fullPath = imagePath.replace('/photography/', '/photography/full/')
+        return getCdnUrl(fullPath)
     }
 
-    // 获取缩略图URL
+    // 获取缩略图URL — 直连 CDN
     const getThumbnailUrl = (imagePath) => {
-        return imagePath.replace('/photography/', '/.pic/thumb/photography/')
+        const thumbPath = imagePath.replace('/photography/', '/photography/thumb/')
+        return getCdnUrl(thumbPath)
     }
 
     // 文字动画效果
@@ -253,18 +255,15 @@ export function Banner({ }) {
                                                 </div>
                                             )}
 
-                                            <NextImage
+                                            <img
                                                 src={getThumbnailUrl(`/photography/banner/${i}.jpg`)}
                                                 className={`picinside h-full object-cover w-full transition-all duration-1000 group-hover:scale-105 ${loadedImages.has(i)
                                                     ? 'opacity-100 filter-none'
                                                     : 'opacity-0 blur-md'
                                                     }`}
                                                 alt={`Banner image ${i}`}
-                                                fill
-                                                sizes="(max-width: 768px) 100vw, 60vw"
-                                                unoptimized
-                                                priority={i === 1}
                                                 loading={i <= 2 ? 'eager' : 'lazy'}
+                                                decoding="async"
                                                 onLoad={() => {
                                                     setLoadedImages(prev => {
                                                         if (prev.has(i)) return prev
@@ -274,8 +273,14 @@ export function Banner({ }) {
                                                     })
                                                 }}
                                                 style={{
+                                                    position: 'absolute',
+                                                    top: 0,
+                                                    left: 0,
+                                                    width: '100%',
+                                                    height: '100%',
                                                     transform: `translateY(${scrollY * 0.05}px)`
                                                 }}
+                                                onError={handleCdnError}
                                             />
 
                                             {/* 悬停覆盖层 */}
