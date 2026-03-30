@@ -85,17 +85,8 @@ export function Banner({ }) {
         return () => observer.disconnect()
     }, [])
 
-    // 获取全尺寸压缩图URL — 直连 CDN
-    const getFullSizeUrl = (imagePath) => {
-        const fullPath = imagePath.replace('/photography/', '/photography/full/')
-        return getCdnUrl(fullPath)
-    }
-
-    // 获取缩略图URL — 直连 CDN
-    const getThumbnailUrl = (imagePath) => {
-        const thumbPath = imagePath.replace('/photography/', '/photography/thumb/')
-        return getCdnUrl(thumbPath)
-    }
+    // Banner images live at /photography/banner/N.jpg — use CDN directly, no path rewriting
+    const getImageUrl = (imagePath) => getCdnUrl(imagePath)
 
     // 文字动画效果
     const getTextAnimation = (delay = 0) => ({
@@ -246,7 +237,7 @@ export function Banner({ }) {
                                 onSlideChange={setCurrentSlide}
                             >
                                 {[1, 2, 3, 4, 5].map((i) => (
-                                    <PhotoView key={i} src={getFullSizeUrl(`/photography/banner/${i}.jpg`)}>
+                                    <PhotoView key={i} src={getImageUrl(`/photography/banner/${i}.jpg`)}>
                                         <div className="picon relative group cursor-pointer" key={i}>
                                             {/* 加载状态 */}
                                             {!loadedImages.has(i) && (
@@ -256,7 +247,7 @@ export function Banner({ }) {
                                             )}
 
                                             <img
-                                                src={getThumbnailUrl(`/photography/banner/${i}.jpg`)}
+                                                src={getImageUrl(`/photography/banner/${i}.jpg`)}
                                                 className={`picinside h-full object-cover w-full transition-all duration-1000 group-hover:scale-105 ${loadedImages.has(i)
                                                     ? 'opacity-100 filter-none'
                                                     : 'opacity-0 blur-md'
