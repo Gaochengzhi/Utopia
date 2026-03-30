@@ -85,18 +85,6 @@ export function Banner({ }) {
         return () => observer.disconnect()
     }, [])
 
-    // 图片预加载 - 使用缩略图
-    useEffect(() => {
-        const bannerImages = [1, 2, 3, 4, 5]
-        bannerImages.forEach((i) => {
-            const img = new Image()
-            img.onload = () => {
-                setLoadedImages(prev => new Set([...prev, i]))
-            }
-            img.src = `/.pic/thumb/photography/banner/${i}.jpg`
-        })
-    }, [])
-
     // 获取全尺寸压缩图URL
     const getFullSizeUrl = (imagePath) => {
         return imagePath.replace('/photography/', '/.pic/full/photography/')
@@ -275,6 +263,14 @@ export function Banner({ }) {
                                                 fill
                                                 sizes="(max-width: 768px) 100vw, 60vw"
                                                 unoptimized
+                                                onLoad={() => {
+                                                    setLoadedImages(prev => {
+                                                        if (prev.has(i)) return prev
+                                                        const next = new Set(prev)
+                                                        next.add(i)
+                                                        return next
+                                                    })
+                                                }}
                                                 style={{
                                                     transform: `translateY(${scrollY * 0.05}px)`
                                                 }}

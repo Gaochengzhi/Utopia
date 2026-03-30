@@ -42,23 +42,6 @@ export function EnhancedWaterfall({ path, columns = 3 }) {
         return () => document.removeEventListener('mousemove', handleMouseMove)
     }, [])
 
-    // 图片预加载
-    useEffect(() => {
-        const imagePromises = path.map((item, index) => {
-            return new Promise((resolve) => {
-                const img = new Image()
-                img.onload = () => {
-                    setLoadedImages(prev => new Set([...prev, index]))
-                    resolve()
-                }
-                img.onerror = resolve
-                img.src = item.path
-            })
-        })
-
-        Promise.all(imagePromises)
-    }, [path])
-
     // 瀑布流布局算法
     const createMasonryLayout = () => {
         const columns = Array(columnCount).fill().map(() => [])
@@ -177,6 +160,14 @@ export function EnhancedWaterfall({ path, columns = 3 }) {
                                                         : 'opacity-0 blur-sm'
                                                 }`}
                                                 unoptimized
+                                                onLoad={() => {
+                                                    setLoadedImages(prev => {
+                                                        if (prev.has(item.index)) return prev
+                                                        const next = new Set(prev)
+                                                        next.add(item.index)
+                                                        return next
+                                                    })
+                                                }}
                                                 style={{
                                                     aspectRatio: 'auto',
                                                     minHeight: '200px'

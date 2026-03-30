@@ -22,6 +22,9 @@ function getContentType(filePath) {
 
 const CACHE_CONTROL = 'public, max-age=3600, no-transform'
 
+const RETRY_TIMES = 2
+const RETRY_DELAY_MS = 60
+
 function dedupe(values) {
   return [...new Set(values.filter(Boolean))]
 }
@@ -29,6 +32,25 @@ function dedupe(values) {
 function withWebpFallback(key) {
   if (!key || key.toLowerCase().endsWith('.webp')) return [key]
   return [key, key.replace(/\.(jpe?g|png|gif|bmp)$/i, '.webp')]
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+async function getObjectWithRetry(r2, key) {
+  for (let attempt = 1; attempt <= RETRY_TIMES; attempt++) {
+    try {
+      return await r2.get(key)
+    } catch (err) {
+      if (attempt >= RETRY_TIMES) {
+        console.warn(`[thumbnails] R2 get failed after retries: ${key}`, err?.message || err)
+        return null
+      }
+      await sleep(RETRY_DELAY_MS * attempt)
+    }
+  }
+  return null
 }
 
 function buildCandidateKeys(imagePath, type) {
@@ -50,7 +72,19 @@ function buildCandidateKeys(imagePath, type) {
   const candidates = []
   let suffix = null
 
-  if (cleanPath.startsWith('photography/content/')) {
+  if (cleanPath.startsWith('photography/cata/')) {
+    suffix = cleanPath.slice('photography/cata/'.length)
+    if (type === 'thumbnail') candidates.push(`photography/thumb/cata/${suffix}`)
+    candidates.push(`photography/cata/${suffix}`)
+  } else if (cleanPath.startsWith('photography/thumb/cata/')) {
+    suffix = cleanPath.slice('photography/thumb/cata/'.length)
+    candidates.push(`photography/thumb/cata/${suffix}`)
+    candidates.push(`photography/cata/${suffix}`)
+  } else if (cleanPath.startsWith('photography/full/cata/')) {
+    suffix = cleanPath.slice('photography/full/cata/'.length)
+    candidates.push(`photography/cata/${suffix}`)
+    if (type === 'thumbnail') candidates.push(`photography/thumb/cata/${suffix}`)
+  } else if (cleanPath.startsWith('photography/content/')) {
     suffix = cleanPath.slice('photography/content/'.length)
     if (type === 'thumbnail') candidates.push(`photography/thumb/${suffix}`)
     candidates.push(`photography/content/${suffix}`)
@@ -108,7 +142,7 @@ export default async function handler(req, res) {
     if (r2) {
       for (const key of candidateKeys) {
         for (const tryKey of withWebpFallback(key)) {
-          const object = await r2.get(tryKey)
+          const object = await getObjectWithRetry(r2, tryKey)
           if (!object) continue
 
           const contentType = getContentType(tryKey)

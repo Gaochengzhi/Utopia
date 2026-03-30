@@ -69,14 +69,6 @@ function toThumbPath(rawPath) {
     return rawPath.replace('/photography/', '/photography/thumb/')
 }
 
-function toFullPath(rawPath) {
-    if (!rawPath) return rawPath
-    if (rawPath.includes('/photography/content/')) {
-        return rawPath.replace('/photography/content/', '/photography/full/')
-    }
-    return rawPath.replace('/photography/', '/photography/full/')
-}
-
 export function CataContainer({ categories }) {
     const [loadedImages, setLoadedImages] = useState(new Set())
     const [imageSrcs, setImageSrcs] = useState({})
@@ -85,38 +77,61 @@ export function CataContainer({ categories }) {
         return categories && categories.length > 0 ? categories : []
     }, [categories])
 
-    // 预加载图片 — 尝试主封面，失败则用 fallback
+    // 顺序预加载分类封面，避免一次性并发请求过多
     useEffect(() => {
-        categoryData.forEach((item) => {
-            const primaryPath = item.coverImage || `/photography/cata/${item.index}.jpg`
-            const thumbPath = toThumbPath(primaryPath)
-            const fullPath = toFullPath(primaryPath)
+        let cancelled = false
 
-            const fallbackPath = item.fallbackCover || primaryPath
-            const fallbackThumb = toThumbPath(fallbackPath)
-            const fallbackFull = toFullPath(fallbackPath)
+        const markLoaded = (index, src = '') => {
+            setLoadedImages(prev => {
+                if (prev.has(index)) return prev
+                const next = new Set(prev)
+                next.add(index)
+                return next
+            })
+            setImageSrcs(prev => ({ ...prev, [index]: src }))
+        }
 
+        const preloadOne = (src) => new Promise((resolve) => {
             const img = new Image()
-            img.onload = () => {
-                setLoadedImages(prev => new Set([...prev, item.index]))
-                setImageSrcs(prev => ({ ...prev, [item.index]: fullPath }))
-            }
-            img.onerror = () => {
-                // Primary cover failed, try fallback (first photo in category)
-                const fallbackImg = new Image()
-                fallbackImg.onload = () => {
-                    setLoadedImages(prev => new Set([...prev, item.index]))
-                    setImageSrcs(prev => ({ ...prev, [item.index]: fallbackFull }))
-                }
-                fallbackImg.onerror = () => {
-                    // Both failed, show placeholder
-                    setLoadedImages(prev => new Set([...prev, item.index]))
-                    setImageSrcs(prev => ({ ...prev, [item.index]: '' }))
-                }
-                fallbackImg.src = fallbackThumb
-            }
-            img.src = thumbPath
+            img.onload = () => resolve(true)
+            img.onerror = () => resolve(false)
+            img.src = src
         })
+
+        const preloadSequentially = async () => {
+            for (const item of categoryData) {
+                if (cancelled) break
+
+                const primaryPath = item.coverImage || `/photography/cata/${item.index}.jpg`
+                const thumbPath = toThumbPath(primaryPath)
+
+                const fallbackPath = item.fallbackCover || primaryPath
+                const fallbackThumb = toThumbPath(fallbackPath)
+
+                const primaryOk = await preloadOne(thumbPath)
+                if (cancelled) break
+
+                if (primaryOk) {
+                    markLoaded(item.index, thumbPath)
+                    continue
+                }
+
+                const fallbackOk = await preloadOne(fallbackThumb)
+                if (cancelled) break
+
+                if (fallbackOk) {
+                    markLoaded(item.index, fallbackThumb)
+                } else {
+                    markLoaded(item.index, '')
+                }
+            }
+        }
+
+        preloadSequentially()
+
+        return () => {
+            cancelled = true
+        }
     }, [categoryData])
 
     return (
@@ -124,7 +139,7 @@ export function CataContainer({ categories }) {
             {categoryData.map((item) => {
                 const isLoaded = loadedImages.has(item.index)
                 const imageSrc = imageSrcs[item.index] ||
-                    toFullPath(item.coverImage || `/photography/cata/${item.index}.jpg`)
+                    toThumbPath(item.coverImage || item.fallbackCover || `/photography/cata/${item.index}.jpg`)
 
                 return (
                     <Link key={item.index} href={"/photographer/" + item.title.toLowerCase()}>

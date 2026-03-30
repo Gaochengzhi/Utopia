@@ -12,10 +12,31 @@ const CONTENT_TYPE_MAP = {
 }
 
 const CACHE_CONTROL = 'public, max-age=3600, no-transform'
+const RETRY_TIMES = 2
+const RETRY_DELAY_MS = 60
 
 function getContentType(filePath) {
   const ext = '.' + filePath.split('.').pop().toLowerCase()
   return CONTENT_TYPE_MAP[ext] || 'application/octet-stream'
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+async function getObjectWithRetry(r2, key) {
+  for (let attempt = 1; attempt <= RETRY_TIMES; attempt++) {
+    try {
+      return await r2.get(key)
+    } catch (err) {
+      if (attempt >= RETRY_TIMES) {
+        console.warn(`[images] R2 get failed after retries: ${key}`, err?.message || err)
+        return null
+      }
+      await sleep(RETRY_DELAY_MS * attempt)
+    }
+  }
+  return null
 }
 
 export default async function handler(req, res) {
@@ -38,12 +59,12 @@ export default async function handler(req, res) {
     // Try R2 first (production)
     const r2 = await getR2()
     if (r2) {
-      let object = await r2.get(r2Key)
+      let object = await getObjectWithRetry(r2, r2Key)
       
       // Fallback to .webp if original not found
       if (!object && !r2Key.toLowerCase().endsWith('.webp')) {
         const webpKey = r2Key.replace(/\.(jpe?g|png|gif|bmp)$/i, '.webp')
-        const webpObject = await r2.get(webpKey)
+        const webpObject = await getObjectWithRetry(r2, webpKey)
         if (webpObject) {
           object = webpObject
           r2Key = webpKey

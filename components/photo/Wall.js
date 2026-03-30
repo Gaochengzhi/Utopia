@@ -14,18 +14,6 @@ export function Walls({ path, scrollDirection = 'horizontal' }) {
     const currentOffset = useRef(0)
     const animationId = useRef(null)
 
-    // 缩略图预加载
-    useEffect(() => {
-        path.forEach((item, index) => {
-            const img = new Image()
-            img.onload = () => {
-                setLoadedImages(prev => new Set([...prev, index]))
-            }
-            // 加载缩略图而不是原图
-            img.src = getThumbnailUrl(item.path)
-        })
-    }, [path])
-
     // 为PhotoView生成全尺寸压缩图URL
     const getFullSizeUrl = (originalPath) => {
         if (originalPath.startsWith('/photography/content/')) {
@@ -41,6 +29,15 @@ export function Walls({ path, scrollDirection = 'horizontal' }) {
         }
         return originalPath.replace('/.pic/', '/.pic/thumb/')
     }
+
+    const markLoaded = useCallback((index) => {
+        setLoadedImages(prev => {
+            if (prev.has(index)) return prev
+            const next = new Set(prev)
+            next.add(index)
+            return next
+        })
+    }, [])
 
     // 应用内容变换 - 正确拖拽内容而不是容器
     const applyContentTransform = useCallback((offset) => {
@@ -398,6 +395,7 @@ export function Walls({ path, scrollDirection = 'horizontal' }) {
                                                         fill
                                                         sizes="(max-width: 768px) 60vw, 30vw"
                                                         unoptimized
+                                                        onLoad={() => markLoaded(item.originalIndex)}
                                                         style={{
                                                             backfaceVisibility: 'hidden',
                                                         }}
@@ -442,6 +440,7 @@ export function Walls({ path, scrollDirection = 'horizontal' }) {
                                                 fill
                                                 sizes="(max-width: 768px) 50vw, 20vw"
                                                 unoptimized
+                                                onLoad={() => markLoaded(index)}
                                             />
 
                                             {/* 简单的悬停遮罩 */}
