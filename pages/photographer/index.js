@@ -4,8 +4,49 @@ import { Banner } from "/components/photo/Banner"
 import { Pnav } from "/components/photo/Pnav"
 import { Footer } from "/components/footer"
 import { getCfEnv } from "/lib/cfContext"
+import { useState, useEffect } from "react"
 
-export default function Index({ path, categories }) {
+export default function Index({ path: initialPath, categories: initialCategories }) {
+    const [path, setPath] = useState(initialPath || [])
+    const [categories, setCategories] = useState(initialCategories || [])
+    const [loading, setLoading] = useState(!initialPath || initialPath.length === 0)
+
+    // Client-side fallback: if getStaticProps returned empty data
+    // (happens when D1 is not available during build), fetch via API
+    useEffect(() => {
+        if (path.length > 0 && categories.length > 0) return
+
+        const fetchData = async () => {
+            try {
+                setLoading(true)
+
+                // Fetch photos
+                const photosRes = await fetch('/api/photography/latest')
+                if (photosRes.ok) {
+                    const photosData = await photosRes.json()
+                    if (photosData.images) {
+                        setPath(photosData.images)
+                    }
+                }
+
+                // Fetch categories
+                const catsRes = await fetch('/api/photography/categories')
+                if (catsRes.ok) {
+                    const catsData = await catsRes.json()
+                    if (catsData.categories) {
+                        setCategories(catsData.categories)
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to fetch photography data:', err)
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        fetchData()
+    }, [])
+
     return (
         <div className="bg-black min-h-screen">
             <Pnav select="index" categories={categories} />
@@ -27,7 +68,15 @@ export default function Index({ path, categories }) {
 
                 {/* 图片墙 - 全宽度显示 */}
                 <div className="w-full  xl:px-12">
-                    <Walls path={path} />
+                    {loading ? (
+                        <div className="flex items-center justify-center py-20">
+                            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-white"></div>
+                        </div>
+                    ) : path.length > 0 ? (
+                        <Walls path={path} />
+                    ) : (
+                        <div className="text-gray-500 text-center py-20">No photos available</div>
+                    )}
                 </div>
 
                 {/* More... 分割线 */}

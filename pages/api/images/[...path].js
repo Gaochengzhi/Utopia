@@ -51,7 +51,7 @@ export default async function handler(req, res) {
       if (object) {
         const contentType = getContentType(r2Key)
         res.setHeader('Content-Type', contentType)
-        res.setHeader('Cache-Control', 'public, max-age=86400')
+        res.setHeader('Cache-Control', 'public, max-age=3600')
         res.setHeader('Referrer-Policy', 'no-referrer')
         res.setHeader('Access-Control-Allow-Origin', '*')
         if (object.httpEtag) {

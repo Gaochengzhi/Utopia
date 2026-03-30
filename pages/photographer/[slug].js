@@ -8,10 +8,22 @@ import { getCfEnv } from "/lib/cfContext"
 // Photography images use /photography/content/... paths with rewrites
 // Thumbnails use /photography/thumb/content/... and full uses /photography/full/content/...
 
-export default function Wall({ title, categories }) {
+export default function Wall({ title, categories: initialCategories }) {
     const [paths, setPaths] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
+    const [categories, setCategories] = useState(initialCategories || [])
+
+    // Fetch categories client-side if getStaticProps returned empty (D1 unavailable at build)
+    useEffect(() => {
+        if (categories.length > 0) return
+        fetch('/api/photography/categories')
+            .then(r => r.json())
+            .then(data => {
+                if (data.categories) setCategories(data.categories)
+            })
+            .catch(err => console.error('Failed to fetch categories:', err))
+    }, [])
 
     const loadImages = async () => {
         try {

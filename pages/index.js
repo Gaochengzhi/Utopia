@@ -8,52 +8,58 @@ import Navbar from "/components/Navbar"
 import { useEffect, useState } from "react"
 import { getCfEnv } from "/lib/cfContext"
 
-export default function Home({ paths, initialPosts, totalPosts, folders }) {
-    const [posts, setPosts] = useState(() => {
-        // Try to restore cached posts from sessionStorage for instant display
-        if (typeof window !== 'undefined') {
-            const cached = sessionStorage.getItem('cachedPosts')
-            if (cached) {
-                try { return JSON.parse(cached) } catch (e) {}
-            }
-        }
-        return initialPosts
-    })
+export default function Home({ paths: staticPaths, initialPosts, totalPosts: staticTotalPosts, folders: staticFolders }) {
+    const [posts, setPosts] = useState(initialPosts || [])
+    const [totalPosts, setTotalPosts] = useState(staticTotalPosts || 0)
+    const [paths, setPaths] = useState(staticPaths || {})
+    const [folders, setFolders] = useState(staticFolders || [])
     const [isAuthenticated, setIsAuthenticated] = useState(false)
 
     useEffect(() => {
-        localStorage.setItem("paths", JSON.stringify(paths))
+        if (paths && Object.keys(paths).length > 0) {
+            localStorage.setItem("paths", JSON.stringify(paths))
+        }
 
-        // Check authentication status
-        const checkAuth = async () => {
+        const loadData = async () => {
             try {
-                const response = await fetch('/api/auth/check-diary')
-                const data = await response.json()
-                setIsAuthenticated(data.authenticated)
+                // Always fetch posts via API (getStaticProps may return empty when D1 unavailable at build)
+                const postsResponse = await fetch('/api/posts?page=1&limit=10')
+                const postsData = await postsResponse.json()
+                if (postsData.posts && postsData.posts.length > 0) {
+                    setPosts(postsData.posts)
+                    setTotalPosts(postsData.pagination?.totalPosts || postsData.posts.length)
+                }
+
+                // Fetch paths if static props didn't provide them
+                if (!paths || Object.keys(paths).length === 0) {
+                    const pathsRes = await fetch('/api/paths')
+                    const pathsData = await pathsRes.json()
+                    if (pathsData.paths) {
+                        setPaths(pathsData.paths)
+                        localStorage.setItem("paths", JSON.stringify(pathsData.paths))
+                    }
+                }
+
+                // Check authentication status
+                const authResponse = await fetch('/api/auth/check-diary')
+                const authData = await authResponse.json()
+                setIsAuthenticated(authData.authenticated)
 
                 // If authenticated, refresh posts to show unmasked content
-                if (data.authenticated) {
-                    const postsResponse = await fetch('/api/posts?page=1&limit=10')
-                    const postsData = await postsResponse.json()
-                    if (postsData.posts) {
-                        setPosts(postsData.posts)
-                        sessionStorage.setItem('cachedPosts', JSON.stringify(postsData.posts))
+                if (authData.authenticated) {
+                    const authPostsResponse = await fetch('/api/posts?page=1&limit=10')
+                    const authPostsData = await authPostsResponse.json()
+                    if (authPostsData.posts) {
+                        setPosts(authPostsData.posts)
                     }
                 }
             } catch (error) {
-                console.error('Failed to check auth:', error)
+                console.error('Failed to load data:', error)
             }
         }
 
-        checkAuth()
+        loadData()
     }, [])
-
-    // Cache posts whenever they change
-    useEffect(() => {
-        if (posts.length > 0) {
-            sessionStorage.setItem('cachedPosts', JSON.stringify(posts))
-        }
-    }, [posts])
 
     return (
         <>

@@ -18,6 +18,9 @@ if (process.env.NODE_ENV === 'development') {
 const nextConfig = {
   reactStrictMode: true,
   serverExternalPackages: ['@opennextjs/cloudflare'],
+  images: {
+    unoptimized: true,
+  },
   async rewrites() {
     return [
       // Photography images: thumb/full variants

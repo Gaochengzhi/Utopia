@@ -5,41 +5,49 @@ import ViewBadge from "/components/ViewBadge"
 
 export default function WaterfallCards({ initialPosts, totalPosts, isAuthenticated }) {
     const router = useRouter()
-    const [posts, setPosts] = useState(() => {
-        // Restore cached posts (including loaded-more) from sessionStorage
-        if (typeof window !== 'undefined') {
-            const cached = sessionStorage.getItem('waterfallPosts')
-            if (cached) {
-                try { return JSON.parse(cached) } catch (e) {}
-            }
-        }
-        return initialPosts || []
-    })
+    // Initialize with props only (no sessionStorage) to avoid hydration mismatch
+    const [posts, setPosts] = useState(initialPosts || [])
     const [loading, setLoading] = useState(false)
-    const [hasMore, setHasMore] = useState(() => {
-        if (typeof window !== 'undefined') {
-            const cachedHasMore = sessionStorage.getItem('waterfallHasMore')
-            if (cachedHasMore !== null) return cachedHasMore === 'true'
-        }
-        return initialPosts?.length < totalPosts
-    })
-    const [page, setPage] = useState(() => {
-        if (typeof window !== 'undefined') {
-            const cachedPage = sessionStorage.getItem('waterfallPage')
-            if (cachedPage) return parseInt(cachedPage) || 1
-        }
-        return 1
-    })
+    const [hasMore, setHasMore] = useState(initialPosts?.length < totalPosts)
+    const [page, setPage] = useState(1)
     const [error, setError] = useState(null)
     const [viewCounts, setViewCounts] = useState({})
     // 小于等于平板宽度（此处按 1024px）时，卡片单列显示
     const [isTabletOrBelow, setIsTabletOrBelow] = useState(false)
 
-    // Update posts when initialPosts changes (e.g., after authentication)
+    // Restore cached state from sessionStorage AFTER mount (avoids hydration error)
     useEffect(() => {
-        // Only update from initialPosts if no cached posts exist
-        if (!sessionStorage.getItem('waterfallPosts')) {
-            setPosts(initialPosts || [])
+        const cachedPosts = sessionStorage.getItem('waterfallPosts')
+        const cachedPage = sessionStorage.getItem('waterfallPage')
+        const cachedHasMore = sessionStorage.getItem('waterfallHasMore')
+
+        if (cachedPosts) {
+            try {
+                const parsed = JSON.parse(cachedPosts)
+                if (parsed.length > 0) {
+                    setPosts(parsed)
+                    if (cachedPage) setPage(parseInt(cachedPage) || 1)
+                    if (cachedHasMore !== null) setHasMore(cachedHasMore === 'true')
+                }
+            } catch (e) {}
+        }
+    }, [])
+
+    // Update posts when initialPosts changes (e.g., after authentication or API fetch)
+    useEffect(() => {
+        if (!initialPosts || initialPosts.length === 0) return
+
+        // Generate a fingerprint of the incoming posts to detect real changes
+        // (e.g., masked '****' content replaced with real content after auth)
+        const incomingFingerprint = initialPosts.map(p => p.path + ':' + (p.content || '').slice(0, 50)).join('|')
+        const currentFingerprint = posts.map(p => p.path + ':' + (p.content || '').slice(0, 50)).join('|')
+
+        if (incomingFingerprint !== currentFingerprint) {
+            setPosts(initialPosts)
+            // Clear stale cache so it gets rebuilt
+            sessionStorage.removeItem('waterfallPosts')
+            sessionStorage.removeItem('waterfallPage')
+            sessionStorage.removeItem('waterfallHasMore')
         }
     }, [initialPosts])
 

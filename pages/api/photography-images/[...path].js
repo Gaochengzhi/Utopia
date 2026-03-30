@@ -60,7 +60,7 @@ export default async function handler(req, res) {
       if (object) {
         const contentType = getContentType(r2Key)
         res.setHeader('Content-Type', contentType)
-        res.setHeader('Cache-Control', 'public, max-age=86400')
+        res.setHeader('Cache-Control', 'public, max-age=3600')
         res.setHeader('Access-Control-Allow-Origin', '*')
         if (object.httpEtag) res.setHeader('ETag', object.httpEtag)
         const arrayBuffer = await object.arrayBuffer()
@@ -71,13 +71,14 @@ export default async function handler(req, res) {
     // Fallback: local filesystem (dev mode)
     try {
       const fs = require('fs')
-      // Try local filesystem fallback
-      let localPath = path.join(process.cwd(), 'public', r2Key)
+      const nodePath = require('path')
+
+      let localPath = nodePath.join(process.cwd(), 'public', r2Key)
 
       // Fallback to .webp
       if (!fs.existsSync(localPath) && !r2Key.toLowerCase().endsWith('.webp')) {
         const webpKey = r2Key.replace(/\.(jpe?g|png|gif|bmp)$/i, '.webp')
-        const webpLocalPath = path.join(process.cwd(), 'public', webpKey)
+        const webpLocalPath = nodePath.join(process.cwd(), 'public', webpKey)
         if (fs.existsSync(webpLocalPath)) {
           localPath = webpLocalPath
           r2Key = webpKey
