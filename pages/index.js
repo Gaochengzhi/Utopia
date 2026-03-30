@@ -87,7 +87,7 @@ export default function Home({ paths: staticPaths, initialPosts, totalPosts: sta
                 </div>
 
                 {/* Mobile layout */}
-                <div className="lg:hidden mt-16 -mb-16">
+                <div className="lg:hidden mt-16">
                     {/* Profile info with mobile variant */}
                     <Info variant="mobile" showSkills={false} />
                     {/* 标签胶囊 */}

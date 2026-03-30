@@ -12,7 +12,7 @@ export default function FolderList({ folders }) {
     }
 
     return (
-        <div className="w-full mb-8 pt-20">
+        <div className="w-full mb-8 pt-6 lg:pt-20">
             <div className="max-w-7xl mx-auto px-8">
                 <div className="flex flex-wrap gap-3 justify-start items-center">
                     {folders.map((folder) => (
