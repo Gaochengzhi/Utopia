@@ -106,7 +106,7 @@ export function CataContainer({ categories }) {
                         <div className="text-gray-300 w-full lg:h-[29rem] sm:h-[13rem] md:h-[19rem] h-[12rem] lg:text-8xl text-5xl flex justify-center group relative overflow-hidden">
                             {/* 加载状态 */}
                             {!isLoaded && (
-                                <div className="absolute inset-0 bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 animate-pulse flex items-center justify-center">
+                                <div className="absolute inset-0 z-0 bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 animate-pulse flex items-center justify-center">
                                     <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                                 </div>
                             )}
@@ -146,7 +146,7 @@ export function CataContainer({ categories }) {
                                 <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/40 group-hover:from-black/60 group-hover:to-black/60 transition-all duration-500"></div>
 
                                 {/* 标题区域 */}
-                                <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="absolute inset-0 z-10 flex items-center justify-center">
                                     <div className="relative">
                                         <div className="text-white font-extralight tracking-wider group-hover:scale-110 transition-transform duration-500">
                                             {item.title}
@@ -160,7 +160,7 @@ export function CataContainer({ categories }) {
                                 </div>
 
                                 {/* 悬停指示器 */}
-                                <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                <div className="absolute bottom-4 right-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                                     <div className="flex items-center space-x-2 text-white text-sm bg-black/50 px-3 py-1 rounded-lg backdrop-blur-sm">
                                         <span>Enter Gallery</span>
                                         <span>→</span>
