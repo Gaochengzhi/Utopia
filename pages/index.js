@@ -5,6 +5,7 @@ import { Info } from "/components/Info"
 import SkillsTags from "/components/SkillsTags"
 import Head from "next/head"
 import Navbar from "/components/Navbar"
+import { normalizeImageUrl } from "/components/util/imageUtils"
 import { useEffect, useState } from "react"
 import { getCfEnv } from "/lib/cfContext"
 
@@ -182,7 +183,7 @@ export const getStaticProps = async () => {
                 key: String(Math.floor(Math.random() * 9e9)),
                 content: row.is_protected ? '****' : (row.content_preview || ''),
                 isProtected: !!row.is_protected,
-                firstImage: row.first_image || null,
+                firstImage: normalizeImageUrl(row.first_image) || null,
             }))
 
             // Get top-level folders from path_tree (preserves hierarchy)

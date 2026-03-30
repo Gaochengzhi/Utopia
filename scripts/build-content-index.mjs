@@ -77,10 +77,20 @@ function stripMarkdown(content) {
 // Normalize image paths
 function normalizeImagePath(content) {
   if (!content) return content
-  return content.replace(
-    new RegExp("(file://)?/Users/kounarushi/mycode/web-blog/public/.pic/", "gm"),
-    "/.pic/"
-  )
+  return content
+    .replace(
+      new RegExp("(file://)?/Users/kounarushi/mycode/web-blog/public/.pic/", "gm"),
+      "/.pic/"
+    )
+    .replace(
+      new RegExp("(file://)?/Users/[^/]+/[^/]+/web-blog/public/.pic/", "gm"),
+      "/.pic/"
+    )
+    .replace(
+      /(https?:\/\/(?:www\.)?gaochengzhi\.com)?\/api\/images\//gm,
+      "/.pic/"
+    )
+    .replace(/\/\.pic\/\.pic\//gm, "/.pic/")
 }
 
 // Extract first image URL from markdown

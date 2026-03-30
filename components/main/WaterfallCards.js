@@ -2,6 +2,7 @@ import Link from "next/link"
 import { useEffect, useState, useCallback } from "react"
 import { useRouter } from "next/router"
 import ViewBadge from "/components/ViewBadge"
+import { normalizeImageUrl } from "/components/util/imageUtils"
 
 export default function WaterfallCards({ initialPosts, totalPosts, isAuthenticated }) {
     const router = useRouter()
@@ -277,7 +278,7 @@ export default function WaterfallCards({ initialPosts, totalPosts, isAuthenticat
                         const title = extractTitle(post.content)
                         const plainText = extractPlainText(post.content)
                         // Prefer pre-extracted firstImage from D1, fallback to extracting from content
-                        const firstImage = post.firstImage || extractFirstImage(post.content)
+                        const firstImage = normalizeImageUrl(post.firstImage || extractFirstImage(post.content))
                         // Convert /.pic/xxx to thumbnail URL: /.pic/thumb/.pic/xxx
                         // so rewrite rule strips /.pic/thumb/ prefix and API receives .pic/xxx
                         const thumbUrl = firstImage && firstImage.startsWith('/.pic/')

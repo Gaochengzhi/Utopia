@@ -1,5 +1,33 @@
 import { getDB } from '../../../lib/cfContext'
 
+function normalizePhotoKey(rawPath, category, filename) {
+  const fallback = category && filename ? `photography/content/${category}/${filename}` : null
+  if (!rawPath) return fallback
+
+  let key = String(rawPath).trim()
+  if (!key) return fallback
+
+  key = key.replace(/^https?:\/\/(?:www\.)?gaochengzhi\.com\//i, '')
+  key = key.replace(/^\/+/, '')
+
+  if (key.startsWith('photography/')) return key
+  if (key.startsWith('content/')) return `photography/${key}`
+  if (key.startsWith('.pic/')) return key
+  if (key.startsWith('api/images/')) return `.pic/${key.slice('api/images/'.length)}`
+
+  if (category) {
+    if (key.includes('/')) return `photography/content/${key}`
+    return `photography/content/${category}/${key}`
+  }
+
+  return fallback || key
+}
+
+function toPublicPath(key) {
+  if (!key) return null
+  return `/${String(key).replace(/^\/+/, '')}`
+}
+
 export default async function handler(req, res) {
   try {
     const { category } = req.query
@@ -30,7 +58,7 @@ export default async function handler(req, res) {
     // Transform to match existing frontend contract
     // The frontend expects: { success, category, images: [{path, title, ...}] }
     const images = results.map(row => ({
-      path: '/' + row.path,  // e.g., '/photography/content/City/xxx.jpg'
+      path: toPublicPath(normalizePhotoKey(row.path, row.category, row.filename)),
       title: row.filename,
       isLeaf: true,
       type: 'file',

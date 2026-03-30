@@ -1,4 +1,5 @@
 import { getDB } from '../../lib/cfContext'
+import { normalizeImageUrl } from '../../components/util/imageUtils'
 
 // Protected content helpers (kept simple, no fs dependency)
 const PROTECTED_FOLDERS = ['我的日记']
@@ -78,7 +79,7 @@ export default async function handler(req, res) {
         key: String(Math.floor(Math.random() * 9e9)),
         content,
         isProtected: isProtected && !isAuthenticated,
-        firstImage: row.first_image || null,
+        firstImage: normalizeImageUrl(row.first_image) || null,
       }
     })
 
