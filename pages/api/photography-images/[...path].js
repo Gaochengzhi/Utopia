@@ -9,6 +9,8 @@ const CONTENT_TYPE_MAP = {
   '.svg': 'image/svg+xml',
 }
 
+const CACHE_CONTROL = 'public, max-age=3600, no-transform'
+
 function getContentType(filePath) {
   const ext = '.' + filePath.split('.').pop().toLowerCase()
   return CONTENT_TYPE_MAP[ext] || 'application/octet-stream'
@@ -60,8 +62,9 @@ export default async function handler(req, res) {
       if (object) {
         const contentType = getContentType(r2Key)
         res.setHeader('Content-Type', contentType)
-        res.setHeader('Cache-Control', 'public, max-age=3600')
+        res.setHeader('Cache-Control', CACHE_CONTROL)
         res.setHeader('Access-Control-Allow-Origin', '*')
+        res.setHeader('Referrer-Policy', 'no-referrer')
         if (object.httpEtag) res.setHeader('ETag', object.httpEtag)
         const arrayBuffer = await object.arrayBuffer()
         return res.send(Buffer.from(arrayBuffer))
@@ -91,7 +94,8 @@ export default async function handler(req, res) {
 
       const contentType = getContentType(r2Key)
       res.setHeader('Content-Type', contentType)
-      res.setHeader('Cache-Control', 'public, max-age=3600')
+      res.setHeader('Cache-Control', CACHE_CONTROL)
+      res.setHeader('Referrer-Policy', 'no-referrer')
       return res.send(fs.readFileSync(localPath))
     } catch (fsErr) {
       return res.status(404).json({ error: 'Image not found' })

@@ -22,6 +22,7 @@
         "build:content-index:incremental": "node scripts/build-content-index.mjs --incremental",
         "cf:build": "rm -rf .open-next && npx opennextjs-cloudflare build && rm -rf .open-next/assets/.pic .open-next/assets/photography",
         "cf:deploy": "npm run cf:build && npx wrangler deploy",
+        "cf:purge-cache": "node scripts/purge-cloudflare-cache.mjs",
         "sync-r2": "node scripts/sync-r2.mjs",
         "sync-r2:dry": "node scripts/sync-r2.mjs --dry-run",
         "d1:seed": "bash scripts/d1-seed-remote.sh",

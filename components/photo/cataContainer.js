@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import Link from "next/link"
 
 /**
@@ -61,22 +61,40 @@ function ParallaxImage({ src, speed = -0.3, className, children }) {
     )
 }
 
+function toThumbPath(rawPath) {
+    if (!rawPath) return rawPath
+    if (rawPath.includes('/photography/content/')) {
+        return rawPath.replace('/photography/content/', '/photography/thumb/')
+    }
+    return rawPath.replace('/photography/', '/photography/thumb/')
+}
+
+function toFullPath(rawPath) {
+    if (!rawPath) return rawPath
+    if (rawPath.includes('/photography/content/')) {
+        return rawPath.replace('/photography/content/', '/photography/full/')
+    }
+    return rawPath.replace('/photography/', '/photography/full/')
+}
+
 export function CataContainer({ categories }) {
     const [loadedImages, setLoadedImages] = useState(new Set())
     const [imageSrcs, setImageSrcs] = useState({})
 
-    const categoryData = categories && categories.length > 0 ? categories : []
+    const categoryData = useMemo(() => {
+        return categories && categories.length > 0 ? categories : []
+    }, [categories])
 
     // 预加载图片 — 尝试主封面，失败则用 fallback
     useEffect(() => {
         categoryData.forEach((item) => {
             const primaryPath = item.coverImage || `/photography/cata/${item.index}.jpg`
-            const thumbPath = primaryPath.replace('/photography/', '/photography/thumb/')
-            const fullPath = primaryPath.replace('/photography/', '/photography/full/')
+            const thumbPath = toThumbPath(primaryPath)
+            const fullPath = toFullPath(primaryPath)
 
             const fallbackPath = item.fallbackCover || primaryPath
-            const fallbackThumb = fallbackPath.replace('/photography/content/', '/photography/thumb/content/')
-            const fallbackFull = fallbackPath.replace('/photography/content/', '/photography/full/content/')
+            const fallbackThumb = toThumbPath(fallbackPath)
+            const fallbackFull = toFullPath(fallbackPath)
 
             const img = new Image()
             img.onload = () => {
@@ -105,9 +123,8 @@ export function CataContainer({ categories }) {
         <div className="flex flex-col justify-center items-center w-full">
             {categoryData.map((item) => {
                 const isLoaded = loadedImages.has(item.index)
-                const imageSrc = imageSrcs[item.index] || 
-                    (item.coverImage || `/photography/cata/${item.index}.jpg`)
-                        .replace('/photography/', '/photography/full/')
+                const imageSrc = imageSrcs[item.index] ||
+                    toFullPath(item.coverImage || `/photography/cata/${item.index}.jpg`)
 
                 return (
                     <Link key={item.index} href={"/photographer/" + item.title.toLowerCase()}>

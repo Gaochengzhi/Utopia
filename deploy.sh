@@ -139,6 +139,17 @@ if [ "$CONTENT_ONLY" = false ]; then
       error "部署失败"
       exit 1
     fi
+    echo ""
+
+    # ============================================
+    # Phase 4: 清理 Cloudflare 边缘缓存
+    # ============================================
+    step "Phase 4: 清理 Cloudflare 边缘缓存"
+    if npm run cf:purge-cache; then
+      success "缓存清理完成"
+    else
+      skip_msg "缓存清理失败（不阻断部署）"
+    fi
   fi
   echo ""
 else

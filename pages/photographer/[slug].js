@@ -6,7 +6,7 @@ import { firstUpperCase } from "/components/util/treeSort"
 import { getCfEnv } from "/lib/cfContext"
 
 // Photography images use /photography/content/... paths with rewrites
-// Thumbnails use /photography/thumb/content/... and full uses /photography/full/content/...
+// Thumbnails use /photography/thumb/... and full uses /photography/full/...
 
 function normalizePhotoKey(rawPath, category, filename) {
     const fallback = category && filename ? `photography/content/${category}/${filename}` : null
@@ -123,7 +123,7 @@ export default function Wall({ title, categories: initialCategories }) {
             <div className="w-full px-4">
                 {paths && paths.length > 0 && (
                     <img
-                        src={paths[0].path.replace('/photography/content/', '/photography/full/content/')}
+                        src={paths[0].path.replace('/photography/content/', '/photography/full/')}
                         alt=""
                         className="md:max-h-[60vh] max-h-[40vh]  w-[97%] object-cover mx-auto"
                     />

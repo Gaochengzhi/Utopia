@@ -28,7 +28,7 @@ export function Walls({ path, scrollDirection = 'horizontal' }) {
     // 为PhotoView生成全尺寸压缩图URL
     const getFullSizeUrl = (originalPath) => {
         if (originalPath.startsWith('/photography/content/')) {
-            return originalPath.replace('/photography/content/', '/photography/full/content/')
+            return originalPath.replace('/photography/content/', '/photography/full/')
         }
         return originalPath.replace('/.pic/', '/.pic/full/')
     }
@@ -36,7 +36,7 @@ export function Walls({ path, scrollDirection = 'horizontal' }) {
     // 获取缩略图URL
     const getThumbnailUrl = (originalPath) => {
         if (originalPath.startsWith('/photography/content/')) {
-            return originalPath.replace('/photography/content/', '/photography/thumb/content/')
+            return originalPath.replace('/photography/content/', '/photography/thumb/')
         }
         return originalPath.replace('/.pic/', '/.pic/thumb/')
     }

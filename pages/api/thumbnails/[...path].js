@@ -1,10 +1,8 @@
 /**
  * Thumbnails API - serves thumbnails from R2 or local filesystem
  * 
- * In production on Cloudflare: redirects to cdn-cgi/image transform
- * In dev/preview: falls back to serving the source image directly
- * 
- * Replaces the old sharp-based on-the-fly compression
+ * In production: reads pre-optimized images from R2
+ * In dev/preview: falls back to local filesystem
  */
 import { getR2 } from '../../../lib/cfContext'
 
@@ -22,6 +20,66 @@ function getContentType(filePath) {
   return CONTENT_TYPE_MAP[ext] || 'application/octet-stream'
 }
 
+const CACHE_CONTROL = 'public, max-age=3600, no-transform'
+
+function dedupe(values) {
+  return [...new Set(values.filter(Boolean))]
+}
+
+function withWebpFallback(key) {
+  if (!key || key.toLowerCase().endsWith('.webp')) return [key]
+  return [key, key.replace(/\.(jpe?g|png|gif|bmp)$/i, '.webp')]
+}
+
+function buildCandidateKeys(imagePath, type) {
+  let cleanPath = imagePath.join('/').replace(/^\/+/, '')
+  if (!cleanPath) return []
+
+  // Blog image path from /.pic/*
+  if (cleanPath.startsWith('.pic/')) {
+    return [cleanPath]
+  }
+
+  // Photography path normalization
+  if (cleanPath.startsWith('content/')) {
+    cleanPath = `photography/${cleanPath}`
+  } else if (!cleanPath.startsWith('photography/')) {
+    cleanPath = `photography/${cleanPath}`
+  }
+
+  const candidates = []
+  let suffix = null
+
+  if (cleanPath.startsWith('photography/content/')) {
+    suffix = cleanPath.slice('photography/content/'.length)
+    if (type === 'thumbnail') candidates.push(`photography/thumb/${suffix}`)
+    candidates.push(`photography/content/${suffix}`)
+  } else if (cleanPath.startsWith('photography/thumb/')) {
+    suffix = cleanPath.slice('photography/thumb/'.length)
+    candidates.push(`photography/thumb/${suffix}`)
+    candidates.push(`photography/content/${suffix}`)
+  } else if (cleanPath.startsWith('photography/full/')) {
+    suffix = cleanPath.slice('photography/full/'.length)
+    candidates.push(`photography/content/${suffix}`)
+    if (type === 'thumbnail') candidates.push(`photography/thumb/${suffix}`)
+  } else {
+    suffix = cleanPath.slice('photography/'.length)
+    if (type === 'thumbnail') candidates.push(`photography/thumb/${suffix}`)
+    candidates.push(`photography/content/${suffix}`)
+  }
+
+  // Backward compatibility for old keys with thumb/content/*
+  if (type === 'thumbnail') {
+    for (const key of [...candidates]) {
+      if (key.startsWith('photography/thumb/')) {
+        candidates.push(`photography/thumb/content/${key.slice('photography/thumb/'.length)}`)
+      }
+    }
+  }
+
+  return dedupe(candidates)
+}
+
 export default async function handler(req, res) {
   try {
     const { path: imagePath, type = 'thumbnail' } = req.query
@@ -34,57 +92,34 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid type parameter' })
     }
 
-    // Build the source image path
-    // The rewrite sends:
-    //   /.pic/thumb/:path* → /api/thumbnails/:path*?type=thumbnail
-    //   /.pic/full/:path*  → /api/thumbnails/:path*?type=fullsize
-    //
-    // imagePath might be ['.pic', 'xxx.jpg'] for nested .pic paths
-    // (from WaterfallCards: /.pic/thumb/.pic/xxx.jpg → /api/thumbnails/.pic/xxx.jpg)
-    let cleanPath = imagePath.join('/')
-
-    // Handle the nested .pic/ prefix from WaterfallCards
-    if (cleanPath.startsWith('.pic/')) {
-      cleanPath = cleanPath // keep as-is, it's already the R2 key prefix
-    } else if (cleanPath.startsWith('content/')) {
-      // Photography content paths
-      cleanPath = 'photography/' + cleanPath
-    } else if (cleanPath.startsWith('photography/')) {
-      // Already has the full photography path
-      cleanPath = cleanPath
+    const candidateKeys = buildCandidateKeys(imagePath, type)
+    if (candidateKeys.length === 0) {
+      return res.status(400).json({ error: 'Image path is required' })
     }
 
-    // Security checks
-    if (cleanPath.includes('..') || cleanPath.includes('//')) {
-      return res.status(403).json({ error: 'Access denied' })
+    for (const key of candidateKeys) {
+      if (key.includes('..') || key.includes('//')) {
+        return res.status(403).json({ error: 'Access denied' })
+      }
     }
 
-    // Serve image directly from R2 (cdn-cgi/image requires Pro plan)
-    // Images are pre-optimized by scripts/optimize-images.mjs
-    let r2Key = cleanPath
-    
     // Try R2 first
     const r2 = await getR2()
     if (r2) {
-      let object = await r2.get(r2Key)
-      
-      // Fallback to .webp if original not found
-      if (!object && !r2Key.toLowerCase().endsWith('.webp')) {
-        const webpKey = r2Key.replace(/\.(jpe?g|png|gif|bmp)$/i, '.webp')
-        const webpObject = await r2.get(webpKey)
-        if (webpObject) {
-          object = webpObject
-          r2Key = webpKey
-        }
-      }
+      for (const key of candidateKeys) {
+        for (const tryKey of withWebpFallback(key)) {
+          const object = await r2.get(tryKey)
+          if (!object) continue
 
-      if (object) {
-        const contentType = getContentType(r2Key)
-        res.setHeader('Content-Type', contentType)
-        res.setHeader('Cache-Control', 'public, max-age=3600')
-        if (object.httpEtag) res.setHeader('ETag', object.httpEtag)
-        const arrayBuffer = await object.arrayBuffer()
-        return res.send(Buffer.from(arrayBuffer))
+          const contentType = getContentType(tryKey)
+          res.setHeader('Content-Type', contentType)
+          res.setHeader('Cache-Control', CACHE_CONTROL)
+          res.setHeader('Access-Control-Allow-Origin', '*')
+          res.setHeader('Referrer-Policy', 'no-referrer')
+          if (object.httpEtag) res.setHeader('ETag', object.httpEtag)
+          const arrayBuffer = await object.arrayBuffer()
+          return res.send(Buffer.from(arrayBuffer))
+        }
       }
     }
 
@@ -93,38 +128,26 @@ export default async function handler(req, res) {
       const fs = require('fs')
       const path = require('path')
 
-      // Try direct path first (for .pic/ files)
-      let localPath = path.join(process.cwd(), r2Key)
-      
-      // If not found, try under public/ (for photography files)
-      if (!fs.existsSync(localPath)) {
-        localPath = path.join(process.cwd(), 'public', r2Key)
-      }
+      for (const key of candidateKeys) {
+        for (const tryKey of withWebpFallback(key)) {
+          let localPath = path.join(process.cwd(), tryKey)
+          if (!fs.existsSync(localPath)) {
+            localPath = path.join(process.cwd(), 'public', tryKey)
+          }
+          if (!fs.existsSync(localPath)) continue
 
-      // Fallback to .webp locally
-      if (!fs.existsSync(localPath) && !r2Key.toLowerCase().endsWith('.webp')) {
-        const webpKey = r2Key.replace(/\.(jpe?g|png|gif|bmp)$/i, '.webp')
-        let webpLocalPath = path.join(process.cwd(), webpKey)
-        if (!fs.existsSync(webpLocalPath)) {
-          webpLocalPath = path.join(process.cwd(), 'public', webpKey)
-        }
-        if (fs.existsSync(webpLocalPath)) {
-          localPath = webpLocalPath
-          r2Key = webpKey
+          const contentType = getContentType(tryKey)
+          res.setHeader('Content-Type', contentType)
+          res.setHeader('Cache-Control', CACHE_CONTROL)
+          res.setHeader('Referrer-Policy', 'no-referrer')
+          return res.send(fs.readFileSync(localPath))
         }
       }
-
-      if (!fs.existsSync(localPath)) {
-        return res.status(404).json({ error: 'Image not found' })
-      }
-
-      const contentType = getContentType(r2Key)
-      res.setHeader('Content-Type', contentType)
-      res.setHeader('Cache-Control', 'public, max-age=3600')
-      return res.send(fs.readFileSync(localPath))
     } catch (fsErr) {
-      return res.status(404).json({ error: 'Image not found' })
+      // Continue to unified 404 below
     }
+
+    return res.status(404).json({ error: 'Image not found' })
   } catch (error) {
     console.error('Error processing thumbnail:', error)
     res.status(500).json({ error: 'Internal server error' })
