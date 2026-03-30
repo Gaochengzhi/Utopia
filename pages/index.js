@@ -23,15 +23,19 @@ export default function Home({ paths: staticPaths, initialPosts, totalPosts: sta
         }
     }, [paths])
 
+    const hasStaticPosts = initialPosts && initialPosts.length > 0
+
     useEffect(() => {
         const loadData = async () => {
             try {
-                // Always fetch posts via API (getStaticProps may return empty when D1 unavailable at build)
-                const postsResponse = await fetch('/api/posts?page=1&limit=10')
-                const postsData = await postsResponse.json()
-                if (postsData.posts && postsData.posts.length > 0) {
-                    setPosts(postsData.posts)
-                    setTotalPosts(postsData.pagination?.totalPosts || postsData.posts.length)
+                // Only fetch posts if SSG didn't provide them
+                if (!hasStaticPosts) {
+                    const postsResponse = await fetch('/api/posts?page=1&limit=10')
+                    const postsData = await postsResponse.json()
+                    if (postsData.posts && postsData.posts.length > 0) {
+                        setPosts(postsData.posts)
+                        setTotalPosts(postsData.pagination?.totalPosts || postsData.posts.length)
+                    }
                 }
 
                 // Fetch paths if static props didn't provide them
@@ -44,12 +48,12 @@ export default function Home({ paths: staticPaths, initialPosts, totalPosts: sta
                     }
                 }
 
-                // Check authentication status
+                // Check authentication status (lightweight, still needed)
                 const authResponse = await fetch('/api/auth/check-diary')
                 const authData = await authResponse.json()
                 setIsAuthenticated(authData.authenticated)
 
-                // If authenticated, refresh posts to show unmasked content
+                // Only re-fetch posts if authenticated (to unmask protected content)
                 if (authData.authenticated) {
                     const authPostsResponse = await fetch('/api/posts?page=1&limit=10')
                     const authPostsData = await authPostsResponse.json()
@@ -63,7 +67,7 @@ export default function Home({ paths: staticPaths, initialPosts, totalPosts: sta
         }
 
         loadData()
-    }, [hasStaticPaths])
+    }, [hasStaticPaths, hasStaticPosts])
 
     return (
         <>

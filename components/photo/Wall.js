@@ -1,6 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import { PhotoProvider, PhotoView } from "react-photo-view"
 import "react-photo-view/dist/react-photo-view.css"
+import Head from "next/head"
+
+// R2 CDN direct URL (set via env var after configuring R2 public custom domain)
+const R2_CDN_URL = typeof window !== 'undefined'
+    ? (window.__NEXT_DATA__?.props?.pageProps?.__r2CdnUrl || '')
+    : (process.env.NEXT_PUBLIC_R2_CDN_URL || '')
 
 export function Walls({ path, scrollDirection = 'horizontal' }) {
     const [loadedImages, setLoadedImages] = useState(new Set())
@@ -15,18 +21,32 @@ export function Walls({ path, scrollDirection = 'horizontal' }) {
 
     // 为PhotoView生成全尺寸压缩图URL
     const getFullSizeUrl = (originalPath) => {
+        let url = originalPath
         if (originalPath.startsWith('/photography/content/')) {
-            return originalPath.replace('/photography/content/', '/photography/full/')
+            url = originalPath.replace('/photography/content/', '/photography/full/')
+        } else {
+            url = originalPath.replace('/.pic/', '/.pic/full/')
         }
-        return originalPath.replace('/.pic/', '/.pic/full/')
+        // Use CDN direct URL if configured
+        if (R2_CDN_URL && url.startsWith('/')) {
+            return R2_CDN_URL + url
+        }
+        return url
     }
 
     // 获取缩略图URL
     const getThumbnailUrl = (originalPath) => {
+        let url = originalPath
         if (originalPath.startsWith('/photography/content/')) {
-            return originalPath.replace('/photography/content/', '/photography/thumb/')
+            url = originalPath.replace('/photography/content/', '/photography/thumb/')
+        } else {
+            url = originalPath.replace('/.pic/', '/.pic/thumb/')
         }
-        return originalPath.replace('/.pic/', '/.pic/thumb/')
+        // Use CDN direct URL if configured
+        if (R2_CDN_URL && url.startsWith('/')) {
+            return R2_CDN_URL + url
+        }
+        return url
     }
 
     const markLoaded = useCallback((index) => {
@@ -249,6 +269,13 @@ export function Walls({ path, scrollDirection = 'horizontal' }) {
 
     return (
         <div className="w-full">
+            {/* Preconnect to CDN domain for faster image loading */}
+            {R2_CDN_URL && (
+                <Head>
+                    <link rel="preconnect" href={R2_CDN_URL} />
+                    <link rel="dns-prefetch" href={R2_CDN_URL} />
+                </Head>
+            )}
             <PhotoProvider
                 maskOpacity={0.5}
                 pullClosable={true}
@@ -425,14 +452,15 @@ export function Walls({ path, scrollDirection = 'horizontal' }) {
                                                 </div>
                                             )}
 
-                                            <img
+                                    <img
                                                 src={getThumbnailUrl(item.path)}
                                                 className={`absolute inset-0 w-full h-full object-cover rounded-lg transition-opacity duration-300 ${
                                                     isLoaded ? 'opacity-100' : 'opacity-0'
                                                 }`}
                                                 alt=""
-                                                loading={index < 16 ? 'eager' : 'lazy'}
+                                                loading={index < 24 ? 'eager' : 'lazy'}
                                                 decoding="async"
+                                                fetchpriority={index < 8 ? 'high' : 'auto'}
                                                 onLoad={() => markLoaded(index)}
                                             />
 

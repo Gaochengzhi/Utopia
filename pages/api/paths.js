@@ -73,6 +73,9 @@ export default async function handler(req, res) {
 
     const tree = buildTreeFromRows(results)
 
+    // Path tree is nearly static — cache aggressively
+    res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=3600, stale-while-revalidate=86400')
+
     res.status(200).json({
       paths: tree
     })

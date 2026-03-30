@@ -60,9 +60,9 @@ function findManualCoverPath(category) {
     return null
 }
 
-export default function Wall({ title, categories: initialCategories }) {
-    const [paths, setPaths] = useState([])
-    const [loading, setLoading] = useState(true)
+export default function Wall({ title, categories: initialCategories, initialImages }) {
+    const [paths, setPaths] = useState(initialImages || [])
+    const [loading, setLoading] = useState(!initialImages || initialImages.length === 0)
     const [error, setError] = useState(null)
     const [categories, setCategories] = useState(initialCategories || [])
 
@@ -102,10 +102,10 @@ export default function Wall({ title, categories: initialCategories }) {
     }, [title])
 
     useEffect(() => {
-        if (title) {
+        if (title && paths.length === 0) {
             loadImages()
         }
-    }, [title, loadImages])
+    }, [title, loadImages, paths.length])
 
     if (loading) {
         return (
@@ -184,6 +184,7 @@ export async function getStaticPaths() {
 
 export async function getStaticProps({ params: { slug } }) {
     let categories = []
+    let initialImages = []
 
     try {
         const env = await getCfEnv()
@@ -234,6 +235,22 @@ export async function getStaticProps({ params: { slug } }) {
             // Verify this category exists
             const exists = categories.find(c => c.title === slug.toLowerCase())
             if (!exists) return { notFound: true }
+
+            // Pre-fetch images for this category (SSG — no client waterfall!)
+            const { results: photoRows } = await db.prepare(`
+                SELECT * FROM photos
+                WHERE LOWER(category) = LOWER(?)
+                ORDER BY sort_order, filename
+            `).bind(slug).all()
+
+            initialImages = (photoRows || []).map(row => ({
+                path: toPublicPath(normalizePhotoKey(row.path, row.category, row.filename)),
+                title: row.filename,
+                isLeaf: true,
+                type: 'file',
+                key: String(Math.floor(Math.random() * 9e9)),
+                time: row.created_at,
+            }))
         }
     } catch (e) {
         console.error('getStaticProps failed:', e.message)
@@ -243,6 +260,7 @@ export async function getStaticProps({ params: { slug } }) {
         props: {
             title: slug,
             categories,
+            initialImages,
         },
     }
 }

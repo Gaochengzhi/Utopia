@@ -11,9 +11,9 @@ const CONTENT_TYPE_MAP = {
   '.ico': 'image/x-icon',
 }
 
-const CACHE_CONTROL = 'public, max-age=3600, no-transform'
+const CACHE_CONTROL = 'public, max-age=31536000, immutable'
 const RETRY_TIMES = 2
-const RETRY_DELAY_MS = 60
+const RETRY_DELAY_MS = 30
 
 function getContentType(filePath) {
   const ext = '.' + filePath.split('.').pop().toLowerCase()
@@ -54,6 +54,13 @@ export default async function handler(req, res) {
     // Security: block path traversal
     if (r2Key.includes('..') || r2Key.includes('//')) {
       return res.status(403).json({ error: 'Access denied' })
+    }
+
+    // If R2 CDN is configured, redirect instead of proxying
+    const cdnUrl = process.env.NEXT_PUBLIC_R2_CDN_URL
+    if (cdnUrl) {
+      res.setHeader('Cache-Control', CACHE_CONTROL)
+      return res.redirect(301, `${cdnUrl}/${r2Key}`)
     }
 
     // Try R2 first (production)

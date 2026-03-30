@@ -20,6 +20,8 @@ bucket_name = "utopia-images"
 
 [vars]
 NEXT_PUBLIC_IMAGE_URL = "/.pic/"
+# Uncomment after setting up R2 custom domain (see plan.md)
+# NEXT_PUBLIC_R2_CDN_URL = "https://cdn.gaochengzhi.com"
 
 # Custom domain routing
 routes = [

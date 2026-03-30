@@ -1,5 +1,11 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import Link from "next/link"
+import Head from "next/head"
+
+// R2 CDN direct URL
+const R2_CDN_URL = typeof window !== 'undefined'
+    ? (window.__NEXT_DATA__?.props?.pageProps?.__r2CdnUrl || '')
+    : (process.env.NEXT_PUBLIC_R2_CDN_URL || '')
 
 /**
  * Lightweight parallax image banner — no external library needed.
@@ -72,13 +78,19 @@ function ParallaxImage({ src, speed = -0.3, className, onLoad, onError, loadingS
 
 function toThumbPath(rawPath) {
     if (!rawPath) return rawPath
+    let url = rawPath
     if (rawPath.includes('/photography/cata/')) {
-        return rawPath
+        url = rawPath
+    } else if (rawPath.includes('/photography/content/')) {
+        url = rawPath.replace('/photography/content/', '/photography/thumb/')
+    } else {
+        url = rawPath.replace('/photography/', '/photography/thumb/')
     }
-    if (rawPath.includes('/photography/content/')) {
-        return rawPath.replace('/photography/content/', '/photography/thumb/')
+    // Use CDN direct URL if configured
+    if (R2_CDN_URL && url.startsWith('/')) {
+        return R2_CDN_URL + url
     }
-    return rawPath.replace('/photography/', '/photography/thumb/')
+    return url
 }
 
 export function CataContainer({ categories, eagerCount = 2 }) {
@@ -119,7 +131,14 @@ export function CataContainer({ categories, eagerCount = 2 }) {
     }, [categoryData])
 
     return (
-        <div className="flex flex-col justify-center items-center w-full">
+        <div className="flex flex-col w-full">
+            {/* Preconnect to CDN domain */}
+            {R2_CDN_URL && (
+                <Head>
+                    <link rel="preconnect" href={R2_CDN_URL} />
+                    <link rel="dns-prefetch" href={R2_CDN_URL} />
+                </Head>
+            )}
             {categoryData.length === 0 && (
                 <div className="w-full py-12 text-center text-gray-500">No categories available</div>
             )}
@@ -131,7 +150,7 @@ export function CataContainer({ categories, eagerCount = 2 }) {
                 const imageSrc = imageSrcs[item.index] || primarySrc
 
                 return (
-                    <Link key={`${item.index}-${item.title}`} href={"/photographer/" + item.title}>
+                    <Link key={`${item.index}-${item.title}`} href={"/photographer/" + item.title} className="block w-full">
                         <div className="text-gray-300 w-full lg:h-[29rem] sm:h-[13rem] md:h-[19rem] h-[12rem] lg:text-8xl text-5xl flex justify-center group relative overflow-hidden">
                             {/* 加载状态 */}
                             {!isLoaded && (

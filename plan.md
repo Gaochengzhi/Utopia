@@ -1,345 +1,215 @@
-# optimize-images.mjs 开发计划
+# R2 CDN 直连方案 — 操作指南
 
-> 域名连接 Cloudflare ✅ 已完成。下面是图片压缩脚本的详细开发规格。
-> 日期：2026-03-30
+> 目标：让所有图片请求绕过 Worker，直接通过 Cloudflare CDN 边缘节点从 R2 分发。
+
+## 为什么需要这个？
+
+**当前架构（慢）：**
+```
+浏览器 → CF Edge → Worker (API Route) → R2.get() → arrayBuffer → Buffer → Response
+```
+每张图片都要消耗 Worker CPU 时间、触发 R2 API 调用，300张图 = 300次 Worker 冷启动。
+
+**目标架构（快）：**
+```
+浏览器 → CF Edge (CDN Cache HIT) → 直接返回
+浏览器 → CF Edge (MISS) → R2 Public Bucket → 缓存到 Edge → 返回
+```
+图片直接从 CDN 缓存返回，命中后零延迟、零 Worker 消耗、零 R2 API 调用。
 
 ---
 
-## 1. 目标
+## Step 1: 为 R2 Bucket 绑定自定义域名
 
-编写 `scripts/optimize-images.mjs`，实现：
+> 参考: https://developers.cloudflare.com/r2/buckets/public-buckets/#connect-a-bucket-to-a-custom-domain
 
-- 基于 manifest（hash 表）的**增量**图片优化
-- **原地替换**为 WebP 格式（不生成中间文件）
-- **智能决策**：根据图片实际尺寸和格式动态决定操作
-- 处理后与 R2 **双向同步**（新增上传、删除传播）
+### 1.1 选择子域名
+
+推荐使用: `cdn.gaochengzhi.com`
+
+> [!NOTE]
+> 域名必须在你 Cloudflare 账号下的同一 zone 中管理。
+> `gaochengzhi.com` 已经在你的账号里了（wrangler.toml 里有配置），可以直接用。
+
+### 1.2 在 Dashboard 操作
+
+1. 登录 [Cloudflare Dashboard](https://dash.cloudflare.com/)
+2. 进入 **R2 > Overview**，点击 `utopia-images` bucket
+3. 进入 **Settings** 标签页
+4. 找到 **Public access > Custom Domains**，点击 **Add**
+5. 输入 `cdn.gaochengzhi.com`，点击 **Continue**
+6. 检查自动生成的 DNS CNAME 记录，点击 **Connect Domain**
+7. 等待状态从 "Initializing" 变为 **"Active"**（通常 2-5 分钟）
+
+### 1.3 验证连通性
+
+```bash
+# 测试一张已知存在的图片（使用你 R2 里实际的 key）
+curl -I "https://cdn.gaochengzhi.com/photography/thumb/City/some-photo.webp"
+
+# 应该返回 200，Content-Type: image/webp
+```
 
 ---
 
-## 2. Manifest 设计（精简）
+## Step 2: 配置 Cache Rules（最重要！）
 
-### 文件位置
+> [!IMPORTANT]
+> R2 自定义域名默认只缓存 [特定扩展名](https://developers.cloudflare.com/cache/concepts/default-cache-behavior/#default-cached-file-extensions)。
+> 对于图片静态资源，你需要设置 **Cache Everything + 长 Edge TTL** 才能发挥最大性能。
 
-```
-scripts/.image-manifest.json   ← 入 Git，单人维护
-```
+### 2.1 在 Dashboard 操作
 
-### 结构
+1. 进入 Cloudflare Dashboard，选择 `gaochengzhi.com` zone
+2. 左侧菜单 → **Caching > Cache Rules**
+3. 点击 **Create rule**
 
-每个条目只保留**决策必需**的字段：
+### 2.2 规则配置
 
-```jsonc
-{
-  "version": 1,
-  "files": {
-    // key = 相对于 public/ 的当前路径（处理后路径）
-    ".pic/IMG_7586.webp": {
-      "hash": "a1b2c3d4",     // 当前文件的 SHA256 前 16 位（足够防碰撞）
-      "status": "ok"          // "ok" | "skip" | "error"
-    },
-    ".pic/animation.gif": {
-      "hash": "e5f6a7b8",
-      "status": "skip",       // skip = 已评估过，不需要处理（GIF/SVG/已达标的WebP）
-      "reason": "gif"         // 跳过原因：便于调试
-    },
-    ".pic/corrupt-file.png": {
-      "hash": "c9d0e1f2",
-      "status": "error",      // error = sharp 处理出错，下次跳过
-      "reason": "Input buffer contains unsupported image format"
-    }
+| 字段 | 值 |
+|-----|---|
+| **Rule name** | `R2 Images - Cache Everything` |
+| **Matching expression** | `Hostname equals cdn.gaochengzhi.com` |
+| **Cache eligibility** | ✅ Eligible for cache |
+| **Edge TTL** | Override origin → `1 year` (31536000 seconds) |
+| **Browser TTL** | Override origin → `1 month` (2592000 seconds) |
+
+4. 点击 **Deploy**
+
+### 2.3 开启 Smart Tiered Cache
+
+> 参考: https://developers.cloudflare.com/cache/how-to/tiered-cache/#smart-tiered-cache
+
+1. 同样在 `gaochengzhi.com` zone 下
+2. 左侧菜单 → **Caching > Tiered Cache**
+3. 开启 **Smart Tiered Cache**（免费版可用）
+
+这会在 R2 bucket 附近选择一个 "上层" 数据中心作为缓存层，进一步减少 Cache MISS。
+
+---
+
+## Step 3: 配置 CORS（如果图片跨域加载）
+
+如果你的博客通过 `gaochengzhi.com` 加载 `cdn.gaochengzhi.com` 的图片，需要配置 CORS。
+
+### 3.1 在 R2 Bucket 配置 CORS
+
+1. 进入 R2 > `utopia-images` > **Settings** > **CORS policy**
+2. 添加规则:
+
+```json
+[
+  {
+    "AllowedOrigins": [
+      "https://gaochengzhi.com",
+      "https://www.gaochengzhi.com",
+      "http://localhost:3000"
+    ],
+    "AllowedMethods": ["GET", "HEAD"],
+    "AllowedHeaders": ["*"],
+    "MaxAgeSeconds": 86400
   }
-}
-```
-
-**为什么这么精简？**  
-- `hash` → 判断文件是否变化，这是唯一的增量检测依据
-- `status` → 区分"已成功处理"、"评估后跳过"、"处理报错"三种状态
-- `reason` → 仅 skip/error 时存在，用于调试。ok 状态不需要 reason
-- 不存原始大小、尺寸、操作类型等 — 这些是处理时的临时信息，用日志输出即可，不需要持久化
-
-**874 个文件时 manifest 大小估算：** ~50KB（每条约 60 字节）
-
----
-
-## 3. 增量检测流程
-
-```
-脚本启动
-  │
-  ├─ 加载 manifest
-  ├─ 扫描 public/.pic/ 全部文件
-  │
-  ├─ 对比差异：
-  │   ├─ 本地存在 + manifest 无记录      → 新文件 → 加入处理队列
-  │   ├─ 本地存在 + hash 与 manifest 不同 → 文件被用户替换了 → 重新处理
-  │   ├─ 本地存在 + hash 一致 + status=ok/skip → 跳过
-  │   ├─ 本地存在 + hash 一致 + status=error  → 跳过（不反复重试已知错误）
-  │   └─ manifest 有记录但本地不存在     → 从 manifest 删除 + 从 R2 删除
-  │
-  ├─ 处理队列中的文件（详见决策逻辑）
-  ├─ 保存 manifest
-  └─ 同步到 R2
-```
-
-**关键点：hash 是处理后文件的 hash。**  
-首次处理时：读原文件 → sharp 处理 → 写 WebP → 计算新文件 hash → 写入 manifest。  
-后续检测时：读当前文件 → 计算 hash → 与 manifest 比对。如果用户用新图片替换了（hash 变化），则重新处理。
-
----
-
-## 4. 处理决策逻辑（智能版）
-
-**核心原则：不做无意义的二次压缩。**
-
-### 4.1 前置判断（格式级别，立即决定）
-
-```
-if 文件是 GIF → status="skip", reason="gif"   （动图不处理）
-if 文件是 SVG → status="skip", reason="svg"   （矢量图不处理）
-if 文件已是 WebP 且 ≤ 500KB → status="skip", reason="webp_small_enough"
-```
-
-### 4.2 主处理流程（需要读取图片元数据）
-
-```javascript
-const meta = await sharp(file).metadata()  // 获取 width, height, format
-const fileSize = fs.statSync(file).size
-const MAX_WIDTH = 2560  // 博客配图上限（4K Retina 安全值）
-
-// 第一步：确定是否需要缩放
-let needResize = false
-let targetWidth = meta.width  // 默认保持原宽度
-
-if (meta.width > MAX_WIDTH) {
-  needResize = true
-  targetWidth = MAX_WIDTH
-  // 高度按原始宽高比自动计算，不需要手动设置
-}
-
-// 第二步：确定 WebP quality
-// 小文件用高 quality 保证画质，大文件用较低 quality 压缩体积
-let quality
-if (fileSize <= 200 * 1024) {
-  quality = 90      // ≤200KB 的小图：高画质转换
-} else if (fileSize <= 500 * 1024) {
-  quality = 85      // 200-500KB：中等画质
-} else {
-  quality = 80      // >500KB：积极压缩
-}
-
-// 第三步：执行 sharp 处理
-let pipeline = sharp(file)
-if (needResize) {
-  pipeline = pipeline.resize({ width: targetWidth, withoutEnlargement: true })
-}
-const result = await pipeline.webp({ quality }).toBuffer()
-
-// 第四步：防止二次压缩导致文件变大
-// 如果输出比输入还大（例如已经很优化的 JPEG），保留原文件格式
-if (result.length >= fileSize && !needResize) {
-  // 压缩无效或反而变大 → 标记 skip，下次不再处理
-  manifest[key] = { hash: hashOf(originalFile), status: "skip", reason: "no_gain" }
-  return  // 不替换文件
-}
-
-// 第五步：原地替换
-writeFile(newPath, result)
-if (originalExt !== '.webp') deleteFile(originalPath)  // 删除旧格式文件
-manifest[newKey] = { hash: hashOf(result), status: "ok" }
-```
-
-### 4.3 决策流程图
-
-```
-文件进入
-  │
-  ├─ GIF/SVG? ────────────────────────→ skip (reason: gif/svg)
-  ├─ 已是 WebP 且 ≤ 500KB? ──────────→ skip (reason: webp_small_enough)
-  │
-  ├─ 读取 metadata (width, height)
-  ├─ width > 2560? ──→ 需要 resize
-  │
-  ├─ 根据 fileSize 选 quality (90/85/80)
-  ├─ sharp 处理 (resize? + webp)
-  │
-  ├─ 输出 ≥ 原始大小 且 没 resize?
-  │   ├─ 是 → skip (reason: no_gain)   ← 防止质量下降
-  │   └─ 否 → 原地替换 → status: ok
-  │
-  └─ sharp 报错? → error (reason: 错误信息)
-```
-
-### 4.4 摄影作品额外处理
-
-摄影作品（`photography/content/` 下的文件）走同样的主流程，但：
-
-1. **全尺寸版本**：与配图一致，宽度上限 2560px，原地替换
-2. **缩略图**：额外生成 `thumb/{Category}/{filename}.webp`
-   - 宽度 400px，quality 70
-   - 每次 **重新生成**（不做增量跳过，因为跟随源图状态）
-   - 缩略图**不记录在 manifest 中**
-
----
-
-## 5. 性能评估（基于实测数据）
-
-### 实测基准
-
-| 操作 | 耗时 |
-|------|------|
-| SHA256 哈希 872 个文件 (155MB) | **341ms** |
-| sharp 处理大图 (3.7MB, 4000×3000) | **566ms** |
-| sharp 处理中图 (86KB, 1196×1236) | **68ms** |
-| sharp 处理小图 (1KB, 65×65) | **2ms** |
-| sharp 20 张图顺序处理 | **1393ms**（平均 70ms/张） |
-
-### 首次全量处理预估
-
-```
-扫描 + hash：                ~400ms
-sharp 处理 ~850 张图（排除 GIF/skip）：
-  顺序执行: 850 × 70ms   ≈ 60s
-  8 路并行: 850 × 70ms / 8 ≈ 8s
-manifest 写入：             ~10ms
-─────────────────────────────────
-顺序总计 ≈ 61s
-并行总计 ≈ 9s
-```
-
-### 结论：需要并行
-
-首次运行 60s vs 9s 差异明显。使用 `p-limit` 或手写 Promise 池，并发度 = `os.cpus().length`（通常 8-16）。
-
-### 后续增量运行
-
-```
-扫描 + hash：   ~400ms
-处理 0-5 张新图：~500ms
-──────────────────────
-总计 < 1s
+]
 ```
 
 ---
 
-## 6. 当前图片现状（实测数据）
+## Step 4: 代码端对接（已经自动完成）
 
-### 文件分布
+> [!TIP]
+> 代码修改已经在本次优化中完成了。前端现在使用环境变量 `NEXT_PUBLIC_R2_CDN_URL` 来生成图片 URL。
+> 
+> 你只需要在 `.env` 和 `wrangler.toml` 中设置这个值为你的 R2 CDN 域名。
 
-| 指标 | 数值 |
-|------|------|
-| 总数 | 874 个 |
-| 总大小 | 157 MB |
-| 格式 | JPG 688, JPEG 95, PNG 76, GIF 8, WebP 5 |
+### 4.1 环境变量设置
 
-### 尺寸分布
+在 `.env` 中添加:
+```
+NEXT_PUBLIC_R2_CDN_URL=https://cdn.gaochengzhi.com
+```
 
-| 宽度范围 | 数量 | 处理方式 |
-|----------|------|----------|
-| ≤ 400px | 23 | 仅转 WebP，不缩放 |
-| 401-1080px | 534 | 仅转 WebP，不缩放 |
-| 1081-2560px | 291 | 仅转 WebP，不缩放 |
-| 2561-4000px | 14 | resize 到 2560px + 转 WebP |
-| > 4000px | 2 | resize 到 2560px + 转 WebP |
+在 `wrangler.toml` 的 `[vars]` 中添加:
+```toml
+NEXT_PUBLIC_R2_CDN_URL = "https://cdn.gaochengzhi.com"
+```
 
-### 大小分布
+### 4.2 URL 映射关系
 
-| 范围 | 数量 | 预估操作 |
-|------|------|----------|
-| < 100KB | 514 | quality 90 转 WebP（高画质保留） |
-| 100-500KB | 318 | quality 85-90 转 WebP |
-| > 500KB | 42 | quality 80 转 WebP + 可能需要 resize |
-
-> **结论**：只有 16 张图需要 resize，绝大多数仅需格式转换。首次运行后 manifest 建立，后续几乎为零开销。
+| R2 Key | CDN URL |
+|--------|---------|
+| `photography/thumb/City/xxx.webp` | `https://cdn.gaochengzhi.com/photography/thumb/City/xxx.webp` |
+| `photography/content/City/xxx.webp` | `https://cdn.gaochengzhi.com/photography/content/City/xxx.webp` |
+| `.pic/post/xxx.webp` | `https://cdn.gaochengzhi.com/.pic/post/xxx.webp` |
+| `photography/cata/City.webp` | `https://cdn.gaochengzhi.com/photography/cata/City.webp` |
 
 ---
 
-## 7. CLI 接口设计
+## Step 5: 验证缓存状态
+
+部署完成后，用浏览器 DevTools 或 curl 检查响应头:
 
 ```bash
-# 默认：增量压缩 + 同步 R2
-node scripts/optimize-images.mjs
-
-# 预览模式
-node scripts/optimize-images.mjs --dry-run
-
-# 仅压缩，不同步
-node scripts/optimize-images.mjs --no-sync
-
-# 仅同步（手动改图后用）
-node scripts/optimize-images.mjs --sync-only
-
-# 强制全量重处理（忽略 manifest）
-node scripts/optimize-images.mjs --force
-
-# 仅博客配图 / 仅摄影
-node scripts/optimize-images.mjs --scope blog
-node scripts/optimize-images.mjs --scope photography
+curl -I "https://cdn.gaochengzhi.com/photography/thumb/City/some-photo.webp"
 ```
+
+检查这些响应头:
+
+| Header | 期望值 | 含义 |
+|--------|-------|------|
+| `cf-cache-status` | `HIT` | ✅ 从 CDN 缓存返回 |
+| `cf-cache-status` | `MISS` | ⚠️ 第一次访问，已缓存到 Edge |
+| `cf-cache-status` | `DYNAMIC` | ❌ 未被缓存，检查 Cache Rules |
+| `cache-control` | `max-age=2592000` | Browser 缓存 1 个月 |
 
 ---
 
-## 8. 文件结构
+## Step 6: 安全加固（可选）
 
-```
-scripts/
-├── optimize-images.mjs          ← 新脚本（本次开发）
-├── .image-manifest.json         ← manifest（入 Git）
-├── sync-r2.mjs                  ← 现有同步脚本（复用其 S3 API 逻辑）
-└── ...
-```
+### 6.1 禁用 r2.dev 公开 URL
 
----
+> [!WARNING]
+> 如果你之前启用了 r2.dev 公开 URL，现在有了自定义域名后建议禁用它。
+> r2.dev 不支持 WAF/Cache，且可能被滥用。
 
-## 9. 前端路径兼容
+在 R2 > `utopia-images` > Settings > Public Development URL > **Disable**
 
-原地替换 `.jpg/.png` → `.webp` 后，历史 Markdown 中的图片引用会 404。
+### 6.2 设置 Hotlink Protection（防盗链）
 
-**方案：API 层 fallback**
+你可以通过 WAF 规则限制只允许你的网站引用图片:
 
-在 `pages/api/thumbnails/[...path].js` 中，当 R2 请求原路径 404 时，自动尝试 `.webp` 后缀：
-
-```
-请求 /.pic/IMG_7586.jpg → R2 404 → 重试 /.pic/IMG_7586.webp → 200
-```
-
-不修改历史 Markdown 文件，对已有内容零侵入。
+1. Cloudflare Dashboard → `gaochengzhi.com` → **Security > WAF**
+2. 创建自定义规则:
+   - 条件: `(http.host eq "cdn.gaochengzhi.com" and not http.referer contains "gaochengzhi.com" and not http.referer eq "")`
+   - 动作: Block
 
 ---
 
-## 10. 开发步骤与工时
+## 最终架构图
 
-| # | 任务 | 耗时 |
-|---|------|------|
-| 1 | 脚本骨架：CLI 解析、manifest 读写、目录扫描 | 30min |
-| 2 | 增量检测：hash 计算 + diff 逻辑 | 30min |
-| 3 | 处理决策：格式判断、尺寸判断、quality 选择 | 30min |
-| 4 | sharp 处理 + 原地替换 + 错误处理 | 30min |
-| 5 | 并行处理：Promise 池 (concurrency = CPU cores) | 15min |
-| 6 | R2 同步集成（复用 sync-r2.mjs 的 S3 逻辑）| 20min |
-| 7 | `--dry-run` 预览测试 | 10min |
-| 8 | 首次全量运行 + 验证 manifest | 15min |
-| 9 | 前端 API fallback (.webp 后缀) | 20min |
-| 10 | 端到端验证 | 20min |
-| **合计** | | **~3.5h** |
-
----
-
-## 11. 依赖
-
-```bash
-npm install -D sharp p-limit   # p-limit 用于控制并行度
-# @aws-sdk/client-s3 已有
+```
+┌──────────────────────────────────────────────────────────────┐
+│  gaochengzhi.com (Workers + Pages)                          │
+│  ├── HTML/JS/CSS → Cloudflare Pages                        │
+│  ├── /api/* → Worker (D1 查询等)                            │
+│  └── 图片 URL 指向 ↓                                        │
+│                                                              │
+│  cdn.gaochengzhi.com (R2 Public Bucket + CDN)               │
+│  ├── Cache HIT → 直接返回（0ms R2 调用）                     │
+│  └── Cache MISS → R2 读取 → 缓存到 Edge → 返回              │
+│      ├── photography/thumb/* (缩略图, ~30-80KB)              │
+│      ├── photography/content/* (全尺寸, ~200KB-2MB)          │
+│      ├── photography/cata/* (分类封面)                        │
+│      └── .pic/* (博客文章图片)                                │
+└──────────────────────────────────────────────────────────────┘
 ```
 
----
+## Checklist
 
-## 12. 已决定事项
-
-| 问题 | 决定 |
-|------|------|
-| Markdown 路径兼容 | API 层 fallback，不改历史文件 |
-| manifest 入 Git？ | 入 Git（单人维护） |
-| 摄影全尺寸宽度上限 | 2560px |
-| 已是 WebP 且 ≤ 500KB | 跳过不处理 |
-| 压缩后反而变大的文件 | 标记 skip，保留原文件不替换 |
-| 特殊格式 sharp 报错 | 标记 error + reason，下次跳过 |
+- [ ] Step 1: 在 R2 bucket 绑定 `cdn.gaochengzhi.com`
+- [ ] Step 2: 创建 Cache Rule（Cache Everything + 1年 Edge TTL）
+- [ ] Step 2.3: 开启 Smart Tiered Cache
+- [ ] Step 3: 配置 R2 CORS
+- [ ] Step 4.1: 设置 `NEXT_PUBLIC_R2_CDN_URL` 环境变量
+- [ ] Step 5: 验证 `cf-cache-status: HIT`
+- [ ] Step 6.1: 禁用 r2.dev 公开 URL（可选）
+- [ ] Step 6.2: 设置防盗链 WAF 规则（可选）

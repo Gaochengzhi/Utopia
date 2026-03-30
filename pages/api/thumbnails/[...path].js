@@ -20,10 +20,10 @@ function getContentType(filePath) {
   return CONTENT_TYPE_MAP[ext] || 'application/octet-stream'
 }
 
-const CACHE_CONTROL = 'public, max-age=3600, no-transform'
+const CACHE_CONTROL = 'public, max-age=31536000, immutable'
 
 const RETRY_TIMES = 2
-const RETRY_DELAY_MS = 60
+const RETRY_DELAY_MS = 30
 
 function dedupe(values) {
   return [...new Set(values.filter(Boolean))]
@@ -140,6 +140,13 @@ export default async function handler(req, res) {
       if (key.includes('..') || key.includes('//')) {
         return res.status(403).json({ error: 'Access denied' })
       }
+    }
+
+    // If R2 CDN is configured, redirect to the first candidate key
+    const cdnUrl = process.env.NEXT_PUBLIC_R2_CDN_URL
+    if (cdnUrl) {
+      res.setHeader('Cache-Control', CACHE_CONTROL)
+      return res.redirect(301, `${cdnUrl}/${candidateKeys[0]}`)
     }
 
     // Try R2 first
