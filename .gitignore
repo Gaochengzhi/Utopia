@@ -27,7 +27,12 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # local env files
-.env*.local
+.env
+.env.*
+!.env.example
+!.env.sample
+.dev.vars
+.dev.vars.*
 config.local.js
 
 # vercel
@@ -36,5 +41,5 @@ config.local.js
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-.env.local
 scripts/d1-seed.sql
+.wrangler/
