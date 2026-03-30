@@ -26,7 +26,7 @@
 #          D1:   d1-seed-remote.sh → D1 数据库
 #
 
-set -e
+# Note: NOT using set -e — individual task failures are handled gracefully
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." 2>/dev/null && pwd || cd "$SCRIPT_DIR" && pwd)"
@@ -37,6 +37,18 @@ if [ -f "$SCRIPT_DIR/package.json" ]; then
 fi
 
 cd "$PROJECT_DIR"
+
+# Ensure node is on PATH (nvm / homebrew / fnm)
+export PATH="$HOME/.nvm/versions/node/$(ls $HOME/.nvm/versions/node/ 2>/dev/null | tail -1)/bin:$PATH" 2>/dev/null
+export PATH="/opt/homebrew/bin:/usr/local/bin:$HOME/.local/bin:$PATH"
+if ! command -v node &>/dev/null; then
+  # Try loading nvm explicitly
+  [ -s "$HOME/.nvm/nvm.sh" ] && source "$HOME/.nvm/nvm.sh"
+fi
+if ! command -v node &>/dev/null; then
+  echo -e "\033[0;31m❌ node not found in PATH. Install Node.js or check your shell config.\033[0m"
+  exit 1
+fi
 
 # ============================================
 # 参数解析
@@ -220,8 +232,7 @@ for logfile in "$LOG_DIR"/*.log; do
 done
 
 if [ "$FAILED" -gt 0 ]; then
-  error "有 $FAILED 个任务失败，中止"
-  exit 1
+  error "有 $FAILED 个任务失败 (继续执行后续步骤)"
 fi
 
 # ============================================

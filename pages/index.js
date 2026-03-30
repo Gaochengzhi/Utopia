@@ -9,7 +9,16 @@ import { useEffect, useState } from "react"
 import { getCfEnv } from "/lib/cfContext"
 
 export default function Home({ paths, initialPosts, totalPosts, folders }) {
-    const [posts, setPosts] = useState(initialPosts)
+    const [posts, setPosts] = useState(() => {
+        // Try to restore cached posts from sessionStorage for instant display
+        if (typeof window !== 'undefined') {
+            const cached = sessionStorage.getItem('cachedPosts')
+            if (cached) {
+                try { return JSON.parse(cached) } catch (e) {}
+            }
+        }
+        return initialPosts
+    })
     const [isAuthenticated, setIsAuthenticated] = useState(false)
 
     useEffect(() => {
@@ -28,6 +37,7 @@ export default function Home({ paths, initialPosts, totalPosts, folders }) {
                     const postsData = await postsResponse.json()
                     if (postsData.posts) {
                         setPosts(postsData.posts)
+                        sessionStorage.setItem('cachedPosts', JSON.stringify(postsData.posts))
                     }
                 }
             } catch (error) {
@@ -37,6 +47,13 @@ export default function Home({ paths, initialPosts, totalPosts, folders }) {
 
         checkAuth()
     }, [])
+
+    // Cache posts whenever they change
+    useEffect(() => {
+        if (posts.length > 0) {
+            sessionStorage.setItem('cachedPosts', JSON.stringify(posts))
+        }
+    }, [posts])
 
     return (
         <>
@@ -78,6 +95,7 @@ export default function Home({ paths, initialPosts, totalPosts, folders }) {
                     <WaterfallCards
                         initialPosts={posts}
                         totalPosts={totalPosts}
+                        isAuthenticated={isAuthenticated}
                     />
                 </div>
             </div>

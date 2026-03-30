@@ -3,12 +3,33 @@ import { useEffect, useState, useCallback } from "react"
 import { useRouter } from "next/router"
 import ViewBadge from "/components/ViewBadge"
 
-export default function WaterfallCards({ initialPosts, totalPosts }) {
+export default function WaterfallCards({ initialPosts, totalPosts, isAuthenticated }) {
     const router = useRouter()
-    const [posts, setPosts] = useState(initialPosts || [])
+    const [posts, setPosts] = useState(() => {
+        // Restore cached posts (including loaded-more) from sessionStorage
+        if (typeof window !== 'undefined') {
+            const cached = sessionStorage.getItem('waterfallPosts')
+            if (cached) {
+                try { return JSON.parse(cached) } catch (e) {}
+            }
+        }
+        return initialPosts || []
+    })
     const [loading, setLoading] = useState(false)
-    const [hasMore, setHasMore] = useState(initialPosts?.length < totalPosts)
-    const [page, setPage] = useState(1)
+    const [hasMore, setHasMore] = useState(() => {
+        if (typeof window !== 'undefined') {
+            const cachedHasMore = sessionStorage.getItem('waterfallHasMore')
+            if (cachedHasMore !== null) return cachedHasMore === 'true'
+        }
+        return initialPosts?.length < totalPosts
+    })
+    const [page, setPage] = useState(() => {
+        if (typeof window !== 'undefined') {
+            const cachedPage = sessionStorage.getItem('waterfallPage')
+            if (cachedPage) return parseInt(cachedPage) || 1
+        }
+        return 1
+    })
     const [error, setError] = useState(null)
     const [viewCounts, setViewCounts] = useState({})
     // 小于等于平板宽度（此处按 1024px）时，卡片单列显示
@@ -16,8 +37,20 @@ export default function WaterfallCards({ initialPosts, totalPosts }) {
 
     // Update posts when initialPosts changes (e.g., after authentication)
     useEffect(() => {
-        setPosts(initialPosts || [])
+        // Only update from initialPosts if no cached posts exist
+        if (!sessionStorage.getItem('waterfallPosts')) {
+            setPosts(initialPosts || [])
+        }
     }, [initialPosts])
+
+    // Cache posts state whenever it changes
+    useEffect(() => {
+        if (posts.length > 0) {
+            sessionStorage.setItem('waterfallPosts', JSON.stringify(posts))
+            sessionStorage.setItem('waterfallPage', String(page))
+            sessionStorage.setItem('waterfallHasMore', String(hasMore))
+        }
+    }, [posts, page, hasMore])
 
     // Handle protected post click
     const handlePostClick = async (e, post) => {
@@ -282,7 +315,7 @@ export default function WaterfallCards({ initialPosts, totalPosts }) {
                                                     <div className="px-6 pt-3 overflow-hidden" style={{ height: '60px' }}>
                                                         <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 line-clamp-2 flex items-center gap-2">
                                                             {title}
-                                                            {post.isProtected && (
+                                                            {!isAuthenticated && post.isProtected && (
                                                                 <svg className="w-5 h-5 text-blue-500 dark:text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                                                 </svg>
@@ -295,7 +328,7 @@ export default function WaterfallCards({ initialPosts, totalPosts }) {
                                                     {/* 标题 */}
                                                     <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3 line-clamp-2 flex items-center gap-2">
                                                         {title}
-                                                        {post.isProtected && (
+                                                        {!isAuthenticated && post.isProtected && (
                                                             <svg className="w-5 h-5 text-blue-500 dark:text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                                             </svg>
