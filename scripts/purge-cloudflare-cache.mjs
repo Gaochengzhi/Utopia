@@ -4,7 +4,10 @@ import { loadProjectEnv } from './load-env.mjs'
 loadProjectEnv()
 
 const API_BASE = 'https://api.cloudflare.com/client/v4'
-const API_TOKEN = process.env.CLOUDFLARE_API_TOKEN
+const API_TOKEN = process.env.CLOUDFLARE_ZONE_API_TOKEN || process.env.CLOUDFLARE_API_TOKEN
+const TOKEN_SOURCE = process.env.CLOUDFLARE_ZONE_API_TOKEN
+  ? 'CLOUDFLARE_ZONE_API_TOKEN'
+  : 'CLOUDFLARE_API_TOKEN'
 const ZONE_NAME = process.env.CLOUDFLARE_ZONE_NAME || 'gaochengzhi.com'
 
 async function cfRequest(path, init = {}) {
@@ -39,11 +42,11 @@ async function resolveZoneId() {
 
 async function main() {
   if (!API_TOKEN) {
-    throw new Error('Missing CLOUDFLARE_API_TOKEN in environment')
+    throw new Error('Missing CLOUDFLARE_ZONE_API_TOKEN or CLOUDFLARE_API_TOKEN in environment')
   }
 
   const zoneId = await resolveZoneId()
-  console.log(`Purging Cloudflare cache for zone ${ZONE_NAME} (${zoneId})...`)
+  console.log(`Purging Cloudflare cache for zone ${ZONE_NAME} (${zoneId}) using ${TOKEN_SOURCE}...`)
 
   await cfRequest(`/zones/${zoneId}/purge_cache`, {
     method: 'POST',
