@@ -63,18 +63,41 @@ function ParallaxImage({ src, speed = -0.3, className, children }) {
 
 export function CataContainer({ categories }) {
     const [loadedImages, setLoadedImages] = useState(new Set())
+    const [imageSrcs, setImageSrcs] = useState({})
 
     const categoryData = categories && categories.length > 0 ? categories : []
 
-    // 预加载图片
+    // 预加载图片 — 尝试主封面，失败则用 fallback
     useEffect(() => {
         categoryData.forEach((item) => {
+            const primaryPath = item.coverImage || `/photography/cata/${item.index}.jpg`
+            const thumbPath = primaryPath.replace('/photography/', '/photography/thumb/')
+            const fullPath = primaryPath.replace('/photography/', '/photography/full/')
+
+            const fallbackPath = item.fallbackCover || primaryPath
+            const fallbackThumb = fallbackPath.replace('/photography/content/', '/photography/thumb/content/')
+            const fallbackFull = fallbackPath.replace('/photography/content/', '/photography/full/content/')
+
             const img = new Image()
             img.onload = () => {
                 setLoadedImages(prev => new Set([...prev, item.index]))
+                setImageSrcs(prev => ({ ...prev, [item.index]: fullPath }))
             }
-            const imagePath = item.coverImage || `/photography/cata/${item.index}.jpg`
-            img.src = imagePath.replace('/photography/', '/photography/thumb/')
+            img.onerror = () => {
+                // Primary cover failed, try fallback (first photo in category)
+                const fallbackImg = new Image()
+                fallbackImg.onload = () => {
+                    setLoadedImages(prev => new Set([...prev, item.index]))
+                    setImageSrcs(prev => ({ ...prev, [item.index]: fallbackFull }))
+                }
+                fallbackImg.onerror = () => {
+                    // Both failed, show placeholder
+                    setLoadedImages(prev => new Set([...prev, item.index]))
+                    setImageSrcs(prev => ({ ...prev, [item.index]: '' }))
+                }
+                fallbackImg.src = fallbackThumb
+            }
+            img.src = thumbPath
         })
     }, [categoryData])
 
@@ -82,8 +105,9 @@ export function CataContainer({ categories }) {
         <div className="flex flex-col justify-center items-center w-full">
             {categoryData.map((item) => {
                 const isLoaded = loadedImages.has(item.index)
-                const imageSrc = (item.coverImage || `/photography/cata/${item.index}.jpg`)
-                    .replace('/photography/', '/photography/full/')
+                const imageSrc = imageSrcs[item.index] || 
+                    (item.coverImage || `/photography/cata/${item.index}.jpg`)
+                        .replace('/photography/', '/photography/full/')
 
                 return (
                     <Link key={item.index} href={"/photographer/" + item.title.toLowerCase()}>

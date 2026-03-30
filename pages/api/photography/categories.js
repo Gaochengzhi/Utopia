@@ -11,11 +11,25 @@ export default async function handler(req, res) {
       SELECT DISTINCT category FROM photos ORDER BY category
     `).all()
 
-    const categories = (catRows || []).map((row, index) => ({
-      index: index.toString(),
-      title: row.category.toLowerCase(),
-      url: `/photographer/${row.category.toLowerCase()}`,
-      coverImage: `/photography/cata/${row.category}.jpg`,
+    // For each category, check if a manual cover image exists in R2
+    // If not, use the first photo in that category as the cover
+    const categories = await Promise.all((catRows || []).map(async (row, index) => {
+      const manualCover = `/photography/cata/${row.category}.jpg`
+
+      // Get the first photo from this category as fallback cover
+      const firstPhoto = await db.prepare(`
+        SELECT path FROM photos WHERE category = ? ORDER BY created_at DESC LIMIT 1
+      `).bind(row.category).first()
+
+      const fallbackCover = firstPhoto ? '/' + firstPhoto.path : manualCover
+
+      return {
+        index: index.toString(),
+        title: row.category.toLowerCase(),
+        url: `/photographer/${row.category.toLowerCase()}`,
+        coverImage: manualCover,
+        fallbackCover: fallbackCover,
+      }
     }))
 
     res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300')
