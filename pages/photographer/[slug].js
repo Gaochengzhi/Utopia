@@ -14,6 +14,26 @@ export default function Wall({ title, categories: initialCategories, initialImag
     const [error, setError] = useState(null)
     const [categories, setCategories] = useState(initialCategories || [])
 
+    // Sync state when navigating between category pages (Next.js reuses the component)
+    useEffect(() => {
+        if (initialImages && initialImages.length > 0) {
+            setPaths(initialImages)
+            setLoading(false)
+            setError(null)
+        } else {
+            // No SSG data — trigger client-side fetch
+            setPaths([])
+            setLoading(true)
+        }
+    }, [title]) // title changes = new category page
+
+    // Sync categories on navigation
+    useEffect(() => {
+        if (initialCategories && initialCategories.length > 0) {
+            setCategories(initialCategories)
+        }
+    }, [title])
+
     // Fetch categories client-side if getStaticProps returned empty (D1 unavailable at build)
     useEffect(() => {
         if (categories.length > 0) return
@@ -35,8 +55,6 @@ export default function Wall({ title, categories: initialCategories, initialImag
             const data = await response.json()
 
             if (data.success && data.images) {
-                // Keep /photography/content/... paths as-is
-                // Rewrite rules handle serving from R2/local
                 setPaths(data.images)
             } else {
                 setError(data.error || 'Failed to load images')
