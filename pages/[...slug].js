@@ -67,7 +67,7 @@ export default function Post({ contents, filename, status, folderContents, folde
         } else {
             setChecking(false)
         }
-    }, [isProtected, router])
+    }, [isProtected, router, filename, folderPath])
 
     useEffect(() => {
         if (router.isFallback) return

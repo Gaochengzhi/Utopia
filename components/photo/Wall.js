@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import { PhotoProvider, PhotoView } from "react-photo-view"
 import "react-photo-view/dist/react-photo-view.css"
+import Image from "next/image"
 
 export function Walls({ path, scrollDirection = 'horizontal' }) {
     const [loadedImages, setLoadedImages] = useState(new Set())
@@ -384,7 +385,7 @@ export function Walls({ path, scrollDirection = 'horizontal' }) {
                                                         </div>
                                                     )}
 
-                                                    <img
+                                                    <Image
                                                         src={getThumbnailUrl(item.path)}
                                                         className={`w-full h-full object-cover rounded-lg ${isLoaded
                                                             ? 'opacity-100 filter-none'
@@ -394,7 +395,9 @@ export function Walls({ path, scrollDirection = 'horizontal' }) {
                                                                 : 'transition-all duration-300'
                                                             }`}
                                                         alt=""
-                                                        loading="lazy"
+                                                        fill
+                                                        sizes="(max-width: 768px) 60vw, 30vw"
+                                                        unoptimized
                                                         style={{
                                                             backfaceVisibility: 'hidden',
                                                         }}
@@ -430,13 +433,15 @@ export function Walls({ path, scrollDirection = 'horizontal' }) {
                                                 </div>
                                             )}
 
-                                            <img
+                                            <Image
                                                 src={getThumbnailUrl(item.path)}
                                                 className={`w-full h-full object-cover rounded-lg transition-all duration-300 ${
                                                     isLoaded ? 'opacity-100' : 'opacity-0'
                                                 }`}
                                                 alt=""
-                                                loading="lazy"
+                                                fill
+                                                sizes="(max-width: 768px) 50vw, 20vw"
+                                                unoptimized
                                             />
 
                                             {/* 简单的悬停遮罩 */}

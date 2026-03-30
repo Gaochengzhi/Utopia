@@ -1,5 +1,6 @@
 import Link from "next/link"
-import { useEffect, useState, useCallback } from "react"
+import Image from "next/image"
+import { useEffect, useState, useCallback, useRef } from "react"
 import { useRouter } from "next/router"
 import ViewBadge from "/components/ViewBadge"
 import { normalizeImageUrl } from "/components/util/imageUtils"
@@ -15,6 +16,7 @@ export default function WaterfallCards({ initialPosts, totalPosts, isAuthenticat
     const [viewCounts, setViewCounts] = useState({})
     // 小于等于平板宽度（此处按 1024px）时，卡片单列显示
     const [isTabletOrBelow, setIsTabletOrBelow] = useState(false)
+    const lastInitialFingerprintRef = useRef("")
 
     // Restore cached state from sessionStorage AFTER mount (avoids hydration error)
     useEffect(() => {
@@ -41,10 +43,10 @@ export default function WaterfallCards({ initialPosts, totalPosts, isAuthenticat
         // Generate a fingerprint of the incoming posts to detect real changes
         // (e.g., masked '****' content replaced with real content after auth)
         const incomingFingerprint = initialPosts.map(p => p.path + ':' + (p.content || '').slice(0, 50)).join('|')
-        const currentFingerprint = posts.map(p => p.path + ':' + (p.content || '').slice(0, 50)).join('|')
 
-        if (incomingFingerprint !== currentFingerprint) {
+        if (incomingFingerprint !== lastInitialFingerprintRef.current) {
             setPosts(initialPosts)
+            lastInitialFingerprintRef.current = incomingFingerprint
             // Clear stale cache so it gets rebuilt
             sessionStorage.removeItem('waterfallPosts')
             sessionStorage.removeItem('waterfallPage')
@@ -108,7 +110,7 @@ export default function WaterfallCards({ initialPosts, totalPosts, isAuthenticat
         if (posts.length > 0) {
             fetchViewCounts(posts)
         }
-    }, [posts.length])
+    }, [posts, fetchViewCounts])
 
     // 加载更多文章
     const loadMorePosts = useCallback(async () => {
@@ -141,13 +143,11 @@ export default function WaterfallCards({ initialPosts, totalPosts, isAuthenticat
         } finally {
             setLoading(false)
         }
-    }, [loading, hasMore, page])
+    }, [loading, hasMore, page, fetchViewCounts])
 
     // 检测滚动到底部
     useEffect(() => {
         const handleScroll = () => {
-            if (loading || !hasMore) return
-
             const scrollHeight = document.documentElement.scrollHeight
             const scrollTop = document.documentElement.scrollTop || document.body.scrollTop
             const clientHeight = document.documentElement.clientHeight
@@ -313,12 +313,13 @@ export default function WaterfallCards({ initialPosts, totalPosts, isAuthenticat
                                             {thumbUrl ? (
                                                 <>
                                                     {/* Image card */}
-                                                    <div className="overflow-hidden rounded-t-lg" style={{ height: '140px' }}>
-                                                        <img
+                                                    <div className="relative overflow-hidden rounded-t-lg" style={{ height: '140px' }}>
+                                                        <Image
                                                             src={thumbUrl}
                                                             alt={title}
+                                                            fill
+                                                            sizes="(max-width: 1024px) 100vw, 50vw"
                                                             className="w-full h-full object-cover"
-                                                            loading="lazy"
                                                         />
                                                     </div>
                                                     <div className="px-6 pt-3 overflow-hidden" style={{ height: '60px' }}>

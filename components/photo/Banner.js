@@ -3,6 +3,7 @@ import ShareLInk from "/components/ShareLInk"
 import { PhotoProvider, PhotoView } from "react-photo-view"
 import "react-photo-view/dist/react-photo-view.css"
 import Link from "next/link"
+import Image from "next/image"
 
 // Inline SVG icons
 const BankIcon = ({ className }) => (
@@ -264,13 +265,16 @@ export function Banner({ }) {
                                                 </div>
                                             )}
 
-                                            <img
+                                            <Image
                                                 src={getThumbnailUrl(`/photography/banner/${i}.jpg`)}
                                                 className={`picinside h-full object-cover w-full transition-all duration-1000 group-hover:scale-105 ${loadedImages.has(i)
                                                     ? 'opacity-100 filter-none'
                                                     : 'opacity-0 blur-md'
                                                     }`}
                                                 alt={`Banner image ${i}`}
+                                                fill
+                                                sizes="(max-width: 768px) 100vw, 60vw"
+                                                unoptimized
                                                 style={{
                                                     transform: `translateY(${scrollY * 0.05}px)`
                                                 }}

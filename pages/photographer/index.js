@@ -91,7 +91,7 @@ export default function Index({ path: initialPath, categories: initialCategories
         }
 
         fetchData()
-    }, [])
+    }, [path.length, categories.length])
 
     return (
         <div className="bg-black min-h-screen">

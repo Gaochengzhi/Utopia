@@ -1,5 +1,6 @@
 import { useEffect } from "react"
 import Cookies from "js-cookie"
+import Image from "next/image"
 
 export default function Index({ path }) {
     useEffect(() => {
@@ -13,7 +14,7 @@ export default function Index({ path }) {
     return (
         <div className="bg-white">
             {/* insert a picture /fake.jpg  */}
-            <img src="/fake.jpg" alt="fake" className="w-full" />
+            <Image src="/fake.jpg" alt="fake" width={1920} height={1080} className="w-full h-auto" />
         </div>
     )
 }

@@ -1,7 +1,8 @@
 import { Footer } from "/components/footer"
 import { Pnav } from "/components/photo/Pnav"
 import { Walls } from "/components/photo/Wall"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
+import Image from "next/image"
 import { firstUpperCase } from "/components/util/treeSort"
 import { getCfEnv } from "/lib/cfContext"
 
@@ -69,9 +70,9 @@ export default function Wall({ title, categories: initialCategories }) {
                 if (data.categories) setCategories(data.categories)
             })
             .catch(err => console.error('Failed to fetch categories:', err))
-    }, [])
+    }, [categories.length])
 
-    const loadImages = async () => {
+    const loadImages = useCallback(async () => {
         try {
             setLoading(true)
             setError(null)
@@ -93,13 +94,13 @@ export default function Wall({ title, categories: initialCategories }) {
         } finally {
             setLoading(false)
         }
-    }
+    }, [title])
 
     useEffect(() => {
         if (title) {
             loadImages()
         }
-    }, [title])
+    }, [title, loadImages])
 
     if (loading) {
         return (
@@ -122,10 +123,13 @@ export default function Wall({ title, categories: initialCategories }) {
             <Pnav select={title} categories={categories} />
             <div className="w-full px-4">
                 {paths && paths.length > 0 && (
-                    <img
+                    <Image
                         src={paths[0].path.replace('/photography/content/', '/photography/full/')}
                         alt=""
+                        width={1800}
+                        height={1000}
                         className="md:max-h-[60vh] max-h-[40vh]  w-[97%] object-cover mx-auto"
+                        unoptimized
                     />
                 )}
                 <div className=" text-white p-3 text-6xl">{firstUpperCase(title)}</div>

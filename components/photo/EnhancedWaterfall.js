@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react"
 import { PhotoProvider, PhotoView } from "react-photo-view"
 import "react-photo-view/dist/react-photo-view.css"
+import Image from "next/image"
 
 export function EnhancedWaterfall({ path, columns = 3 }) {
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
@@ -165,15 +166,17 @@ export function EnhancedWaterfall({ path, columns = 3 }) {
                                                 </div>
                                             )}
                                             
-                                            <img
+                                            <Image
                                                 src={item.path}
                                                 alt=""
+                                                width={1200}
+                                                height={800}
                                                 className={`w-full h-auto object-cover transition-all duration-500 ${
                                                     loadedImages.has(item.index) 
                                                         ? 'opacity-100 filter-none' 
                                                         : 'opacity-0 blur-sm'
                                                 }`}
-                                                loading="lazy"
+                                                unoptimized
                                                 style={{
                                                     aspectRatio: 'auto',
                                                     minHeight: '200px'

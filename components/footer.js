@@ -1,5 +1,5 @@
-import ShareLInk from "/components/ShareLInk"
 import React from "react"
+import Image from "next/image"
 export function Footer({}) {
   return (
     <>
@@ -8,7 +8,7 @@ export function Footer({}) {
           <div className="flex-grow border-t border-gray-200 dark:border-gray-600"></div>
           <div className="flex-shrink-0 mx-4">
             <div className="max-w-xs svg flex justify-center items-center">
-              <img src="/header.svg" alt="" className="dark:invert" />
+              <Image src="/header.svg" alt="" width={180} height={36} className="dark:invert" />
             </div>
           </div>
           <div className="flex-grow border-t border-gray-200 dark:border-gray-600"></div>

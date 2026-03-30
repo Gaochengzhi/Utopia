@@ -1,4 +1,5 @@
 import Link from "next/link"
+import Image from "next/image"
 import React from "react"
 import ShareLInk from "./ShareLInk"
 import { SkillsList } from "./SkillsTags"
@@ -16,7 +17,7 @@ export function Info({ variant = "desktop", showSkills = true }) {
 
         <div className="">
           <div className="flex justify-center items-center rounded-full p-1 border-gray-400 dark:border-gray-600 border-dotted border-2 shadow-md">
-            <img src="/icon.jpeg" alt="" className="w-28 rounded-full" />
+            <Image src="/icon.jpeg" alt="Avatar" width={112} height={112} className="w-28 h-28 rounded-full object-cover" />
           </div>
         </div>
         <div className="flex flex-col">
@@ -64,7 +65,7 @@ export function Info({ variant = "desktop", showSkills = true }) {
           {/* Avatar and basic info */}
           <div className="flex items-center space-x-4 mb-4">
             <div className="flex justify-center items-center rounded-full p-1 border-gray-400 border-dotted border-2 shadow-md">
-              <img src="/icon.jpeg" alt="" className="w-16 h-16 rounded-full object-cover" />
+              <Image src="/icon.jpeg" alt="Avatar" width={64} height={64} className="w-16 h-16 rounded-full object-cover" />
             </div>
             <div className="flex flex-col">
               <div className="text-xl font-light text-gray-900 dark:text-gray-100">@Taitan_Pascal</div>

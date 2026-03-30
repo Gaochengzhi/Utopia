@@ -5,7 +5,6 @@ import { Info } from "/components/Info"
 import SkillsTags from "/components/SkillsTags"
 import Head from "next/head"
 import Navbar from "/components/Navbar"
-import { normalizeImageUrl } from "/components/util/imageUtils"
 import { useEffect, useState } from "react"
 import { getCfEnv } from "/lib/cfContext"
 
@@ -15,12 +14,15 @@ export default function Home({ paths: staticPaths, initialPosts, totalPosts: sta
     const [paths, setPaths] = useState(staticPaths || {})
     const [folders, setFolders] = useState(staticFolders || [])
     const [isAuthenticated, setIsAuthenticated] = useState(false)
+    const hasStaticPaths = staticPaths && Object.keys(staticPaths).length > 0
 
     useEffect(() => {
         if (paths && Object.keys(paths).length > 0) {
             localStorage.setItem("paths", JSON.stringify(paths))
         }
+    }, [paths])
 
+    useEffect(() => {
         const loadData = async () => {
             try {
                 // Always fetch posts via API (getStaticProps may return empty when D1 unavailable at build)
@@ -32,7 +34,7 @@ export default function Home({ paths: staticPaths, initialPosts, totalPosts: sta
                 }
 
                 // Fetch paths if static props didn't provide them
-                if (!paths || Object.keys(paths).length === 0) {
+                if (!hasStaticPaths) {
                     const pathsRes = await fetch('/api/paths')
                     const pathsData = await pathsRes.json()
                     if (pathsData.paths) {
@@ -60,7 +62,7 @@ export default function Home({ paths: staticPaths, initialPosts, totalPosts: sta
         }
 
         loadData()
-    }, [])
+    }, [hasStaticPaths])
 
     return (
         <>

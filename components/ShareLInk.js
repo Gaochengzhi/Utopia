@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import Image from "next/image"
 
 // Inline SVG icons to replace @ant-design/icons
 const TwitterIcon = ({ onClick, className }) => (
@@ -111,7 +112,7 @@ export default function ShareLInk() {
                                 </svg>
                             </button>
                         </div>
-                        <img src="/me.jpeg" alt="" className="w-full rounded" />
+                        <Image src="/me.jpeg" alt="WeChat QR code" width={900} height={900} className="w-full h-auto rounded" />
                         <div className="flex justify-end mt-4">
                             <button
                                 onClick={handleOk}
