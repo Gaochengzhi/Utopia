@@ -9,7 +9,7 @@ import PageView from "/components/PageView"
 import Head from "next/head"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/router"
-import { obseverImg } from "/components/util/handleErrorPic"
+
 import { getCfEnv } from "/lib/cfContext"
 
 // Custom loading spinner to replace antd Spin
@@ -87,7 +87,7 @@ export default function Post({ contents, filename, status, folderContents, folde
                 .catch(err => console.error('Failed to fetch paths:', err))
         }
 
-        obseverImg(document.body)
+
     }, [router.isFallback])
 
     if (router.isFallback || (isProtected && checking)) {

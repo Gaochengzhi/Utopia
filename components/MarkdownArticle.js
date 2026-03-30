@@ -8,6 +8,7 @@ import { vscDarkPlus } from "react-syntax-highlighter/dist/cjs/styles/prism"
 import "github-markdown-css/github-markdown-light.css"
 import "katex/dist/katex.min.css"
 import { useRef } from "react"
+import { CDN_BASE, handleCdnError } from "/lib/cdnUrl"
 
 /**
  * Generate a URL-friendly slug from heading text.
@@ -105,6 +106,22 @@ export default function MarkdownArticle({ content }) {
                         <code className="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-1 py-0.5 rounded" {...props}>
                             {children}
                         </code>
+                    )
+                },
+                img({ src, alt, ...props }) {
+                    // Rewrite /.pic/ paths directly to CDN, skipping Worker proxy
+                    let resolvedSrc = src
+                    if (CDN_BASE && src && src.startsWith('/.pic/')) {
+                        resolvedSrc = CDN_BASE + src
+                    }
+                    return (
+                        <img
+                            src={resolvedSrc}
+                            alt={alt || ''}
+                            loading="lazy"
+                            onError={handleCdnError}
+                            {...props}
+                        />
                     )
                 },
             }}

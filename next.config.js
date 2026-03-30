@@ -22,36 +22,20 @@ const nextConfig = {
     unoptimized: true,
   },
   async rewrites() {
+    // In production the frontend uses CDN URLs directly (lib/cdnUrl.js).
+    // These rewrites are only needed as a dev/fallback path when
+    // NEXT_PUBLIC_R2_CDN_URL is not configured.
+    if (process.env.NEXT_PUBLIC_R2_CDN_URL) {
+      return []
+    }
+
     return [
-      // Photography images: thumb/full variants
+      // Photography images (content, thumb, full, cata)
       {
-        source: '/photography/thumb/:path*',
-        destination: '/api/thumbnails/photography/:path*?type=thumbnail'
+        source: '/photography/:variant(content|thumb|full|cata)/:path*',
+        destination: '/api/photography-images/:variant/:path*'
       },
-      {
-        source: '/photography/full/:path*',
-        destination: '/api/thumbnails/photography/:path*?type=fullsize'
-      },
-      // Photography images: direct serve
-      {
-        source: '/photography/content/:path*',
-        destination: '/api/photography-images/:path*'
-      },
-      // Photography cata (category covers)
-      {
-        source: '/photography/cata/:path*',
-        destination: '/api/photography-images/cata/:path*'
-      },
-      // Blog images: thumb/full variants
-      {
-        source: '/.pic/thumb/:path*',
-        destination: '/api/thumbnails/:path*?type=thumbnail'
-      },
-      {
-        source: '/.pic/full/:path*',
-        destination: '/api/thumbnails/:path*?type=fullsize'
-      },
-      // Blog images: direct serve
+      // Blog images
       {
         source: '/.pic/:path*',
         destination: '/api/images/:path*'

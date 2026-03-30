@@ -1,32 +1,5 @@
 import { getDB } from '../../../lib/cfContext'
-
-function normalizePhotoKey(rawPath, category, filename) {
-  const fallback = category && filename ? `photography/content/${category}/${filename}` : null
-  if (!rawPath) return fallback
-
-  let key = String(rawPath).trim()
-  if (!key) return fallback
-
-  key = key.replace(/^https?:\/\/(?:www\.)?gaochengzhi\.com\//i, '')
-  key = key.replace(/^\/+/, '')
-
-  if (key.startsWith('photography/')) return key
-  if (key.startsWith('content/')) return `photography/${key}`
-  if (key.startsWith('.pic/')) return key
-  if (key.startsWith('api/images/')) return `.pic/${key.slice('api/images/'.length)}`
-
-  if (category) {
-    if (key.includes('/')) return `photography/content/${key}`
-    return `photography/content/${category}/${key}`
-  }
-
-  return fallback || key
-}
-
-function toPublicPath(key) {
-  if (!key) return null
-  return `/${String(key).replace(/^\/+/, '')}`
-}
+import { normalizePhotoKey, toPublicPath } from '../../../lib/photoUtils'
 
 export default async function handler(req, res) {
   try {

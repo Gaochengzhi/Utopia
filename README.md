@@ -176,55 +176,29 @@ npm run deploy       # Full deployment with restart
 
 ## Deployment
 
-The project includes several deployment strategies:
+The project deploys to **Cloudflare Workers** via `wrangler`. No traditional servers required.
 
-### Quick Deploy
+### Quick Commands
 ```bash
-npm run quick-deploy    # Fast deployment for daily updates
-```
-
-### Stable Deploy  
-```bash
-npm run simple-deploy   # Sequential sync for unstable networks
-```
-
-### Manual Deploy
-```bash
-npm run upload          # Sync files only
-npm run deploy          # Full deployment with server restart
+./deploy.sh                # Full deploy (content + code)
+./deploy.sh --code-only    # Rebuild + deploy Worker only
+./deploy.sh --content-only # Sync content to R2 + D1 only
+./upload.sh                # Content sync only (parallel)
 ```
 
 ### Deployment Scripts
 
 | Script             | Use Case         | Features                         |
 | ------------------ | ---------------- | -------------------------------- |
-| `quick-deploy.sh`  | Daily updates    | One-click deployment             |
-| `simple-deploy.sh` | Unstable network | Sequential sync with retries     |
-| `deploy.sh`        | Full deployment  | File sync + server restart       |
-| `upload.sh`        | File sync only   | Parallel upload with compression |
-
-### Server Configuration
-
-- **Server**: Custom VPS
-- **Port**: 8888 (configured in package.json)
-- **Process**: Background via `nohup`
-- **Logs**: `~/web-server.log`
-- **File sync**: rsync with SSH
+| `deploy.sh`        | Full deployment  | Content sync → Build → Deploy → Purge cache |
+| `upload.sh`        | Content sync     | Parallel image/article/index sync |
 
 ### Environment Setup
 
-1. Configure server details in deployment scripts:
-```bash
-SERVER="your-server-ip"
-USER="your-username"
-PATH="~/web/"
-```
-
-2. Ensure SSH key authentication is set up
-
-3. Server requirements:
-   - Node.js 16+
-   - PM2 or similar process manager (optional)
+1. Install dependencies: `npm install`
+2. Configure `.env` with Cloudflare credentials (see Configuration section)
+3. Ensure `wrangler` is logged in: `npx wrangler login`
+4. First-time D1 setup: `npx wrangler d1 execute utopia-db --remote --file scripts/d1-schema.sql`
 
 ---
 

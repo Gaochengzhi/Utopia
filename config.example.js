@@ -6,14 +6,8 @@ const config = {
     ? 'yourdomain.com'           // 生产环境域名
     : 'localhost:3000',          // 本地开发环境
 
-  // 图片服务器配置  
-  IMAGE_SERVER_URL: process.env.NODE_ENV === 'production'
-    ? 'http://your.server.ip:5555/.pic/'  // 服务器环境
-    : '/.pic/',                           // 本地开发环境
-
-  // 服务器配置
-  SERVER_IP: 'your.server.ip',
-  SERVER_PORT: 5555,
+  // 图片路径前缀（由 CDN/Cloudflare 代理处理）
+  IMAGE_SERVER_URL: '/.pic/',
 
   // 社交媒体链接
   SOCIAL_LINKS: {
