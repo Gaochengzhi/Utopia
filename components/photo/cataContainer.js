@@ -1,11 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import Link from "next/link"
-import Head from "next/head"
-
-// R2 CDN direct URL
-const R2_CDN_URL = typeof window !== 'undefined'
-    ? (window.__NEXT_DATA__?.props?.pageProps?.__r2CdnUrl || '')
-    : (process.env.NEXT_PUBLIC_R2_CDN_URL || '')
 
 /**
  * Lightweight parallax image banner — no external library needed.
@@ -16,7 +10,6 @@ function ParallaxImage({ src, speed = -0.3, className, onLoad, onError, loadingS
     const [offset, setOffset] = useState(0)
     const [isInView, setIsInView] = useState(false)
 
-    // Track visibility with IntersectionObserver
     useEffect(() => {
         const el = containerRef.current
         if (!el) return
@@ -29,19 +22,16 @@ function ParallaxImage({ src, speed = -0.3, className, onLoad, onError, loadingS
         return () => observer.disconnect()
     }, [])
 
-    // Compute parallax offset only when in view
     const handleScroll = useCallback(() => {
         if (!isInView || !containerRef.current) return
         const rect = containerRef.current.getBoundingClientRect()
         const windowH = window.innerHeight
-        // Progress: 0 when element enters bottom, 1 when it leaves top
         const progress = 1 - (rect.top + rect.height) / (windowH + rect.height)
         setOffset(progress * speed * rect.height)
     }, [isInView, speed])
 
     useEffect(() => {
         if (!isInView) return
-        // Compute initial position
         handleScroll()
         window.addEventListener("scroll", handleScroll, { passive: true })
         return () => window.removeEventListener("scroll", handleScroll)
@@ -49,12 +39,11 @@ function ParallaxImage({ src, speed = -0.3, className, onLoad, onError, loadingS
 
     return (
         <div ref={containerRef} className={className} style={{ position: "relative", overflow: "hidden" }}>
-            {/* Parallax background layer */}
             {src && (
                 <div
                     style={{
                         position: "absolute",
-                        inset: "-20% 0", // Extra height for parallax travel room
+                        inset: "-20% 0",
                         transform: `translate3d(0, ${offset}px, 0)`,
                         willChange: "transform",
                     }}
@@ -70,7 +59,6 @@ function ParallaxImage({ src, speed = -0.3, className, onLoad, onError, loadingS
                     />
                 </div>
             )}
-            {/* Content overlay */}
             {children}
         </div>
     )
@@ -78,76 +66,51 @@ function ParallaxImage({ src, speed = -0.3, className, onLoad, onError, loadingS
 
 function toThumbPath(rawPath) {
     if (!rawPath) return rawPath
-    let url = rawPath
-    if (rawPath.includes('/photography/cata/')) {
-        url = rawPath
-    } else if (rawPath.includes('/photography/content/')) {
-        url = rawPath.replace('/photography/content/', '/photography/thumb/')
-    } else {
-        url = rawPath.replace('/photography/', '/photography/thumb/')
+    if (rawPath.includes('/photography/cata/')) return rawPath
+    if (rawPath.includes('/photography/content/')) {
+        return rawPath.replace('/photography/content/', '/photography/thumb/')
     }
-    // Use CDN direct URL if configured
-    if (R2_CDN_URL && url.startsWith('/')) {
-        return R2_CDN_URL + url
-    }
-    return url
+    return rawPath.replace('/photography/', '/photography/thumb/')
 }
 
 export function CataContainer({ categories, eagerCount = 2 }) {
     const [loadedImages, setLoadedImages] = useState(new Set())
-    const [imageSrcs, setImageSrcs] = useState({})
-    const [fallbackTried, setFallbackTried] = useState(new Set())
 
     const categoryData = useMemo(() => {
         if (!Array.isArray(categories) || categories.length === 0) return []
 
         return categories
             .map((item, index) => {
-                const rawTitle =
-                    (typeof item?.title === 'string' && item.title.trim()) ||
-                    (typeof item?.category === 'string' && item.category.trim()) ||
-                    null
-
-                if (!rawTitle) return null
-
-                const normalizedTitle = rawTitle.toLowerCase()
-                const normalizedIndex = item?.index != null ? String(item.index) : String(index)
+                const title = typeof item?.title === 'string' && item.title.trim()
+                if (!title) return null
 
                 return {
-                    index: normalizedIndex,
-                    title: normalizedTitle,
+                    index: item?.index != null ? String(item.index) : String(index),
+                    title: title.toLowerCase(),
                     coverImage: item?.coverImage || null,
-                    fallbackCover: item?.fallbackCover || item?.coverImage || null,
                 }
             })
             .filter(Boolean)
     }, [categories])
 
-    useEffect(() => {
-        // Reset when categories set changes (e.g. after API fallback fetch)
-        setLoadedImages(new Set())
-        setImageSrcs({})
-        setFallbackTried(new Set())
-    }, [categoryData])
+    const markLoaded = useCallback((id) => {
+        setLoadedImages(prev => {
+            if (prev.has(id)) return prev
+            const next = new Set(prev)
+            next.add(id)
+            return next
+        })
+    }, [])
 
     return (
         <div className="flex flex-col w-full">
-            {/* Preconnect to CDN domain */}
-            {R2_CDN_URL && (
-                <Head>
-                    <link rel="preconnect" href={R2_CDN_URL} />
-                    <link rel="dns-prefetch" href={R2_CDN_URL} />
-                </Head>
-            )}
             {categoryData.length === 0 && (
                 <div className="w-full py-12 text-center text-gray-500">No categories available</div>
             )}
 
             {categoryData.map((item, index) => {
                 const isLoaded = loadedImages.has(item.index)
-                const primarySrc = toThumbPath(item.coverImage || `/photography/cata/${item.index}.jpg`)
-                const fallbackSrc = toThumbPath(item.fallbackCover || primarySrc)
-                const imageSrc = imageSrcs[item.index] || primarySrc
+                const imageSrc = toThumbPath(item.coverImage || `/photography/cata/${item.index}.jpg`)
 
                 return (
                     <Link key={`${item.index}-${item.title}`} href={"/photographer/" + item.title} className="block w-full">
@@ -164,32 +127,8 @@ export function CataContainer({ categories, eagerCount = 2 }) {
                                 speed={-0.3}
                                 loadingStrategy={index < eagerCount ? 'eager' : 'lazy'}
                                 className="w-full h-full transition-transform duration-500 group-hover:scale-105"
-                                onLoad={() => {
-                                    setLoadedImages(prev => {
-                                        if (prev.has(item.index)) return prev
-                                        const next = new Set(prev)
-                                        next.add(item.index)
-                                        return next
-                                    })
-                                }}
-                                onError={() => {
-                                    const tried = fallbackTried.has(item.index)
-                                    if (!tried && fallbackSrc && fallbackSrc !== imageSrc) {
-                                        setFallbackTried(prev => {
-                                            const next = new Set(prev)
-                                            next.add(item.index)
-                                            return next
-                                        })
-                                        setImageSrcs(prev => ({ ...prev, [item.index]: fallbackSrc }))
-                                        return
-                                    }
-                                    setLoadedImages(prev => {
-                                        if (prev.has(item.index)) return prev
-                                        const next = new Set(prev)
-                                        next.add(item.index)
-                                        return next
-                                    })
-                                }}
+                                onLoad={() => markLoaded(item.index)}
+                                onError={() => markLoaded(item.index)}
                             >
                                 {/* 渐变覆盖层 */}
                                 <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/40 group-hover:from-black/60 group-hover:to-black/60 transition-all duration-500"></div>
