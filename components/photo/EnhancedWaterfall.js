@@ -151,7 +151,8 @@ export function EnhancedWaterfall({ path, columns = 3 }) {
                                             <img
                                                 src={item.path}
                                                 alt=""
-                                                loading="lazy"
+                                                loading={item.index < 15 ? 'eager' : 'lazy'}
+                                                decoding="async"
                                                 className={`w-full h-auto object-cover transition-opacity duration-500 ${
                                                     loadedImages.has(item.index) 
                                                         ? 'opacity-100' 

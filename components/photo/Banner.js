@@ -263,6 +263,8 @@ export function Banner({ }) {
                                                 fill
                                                 sizes="(max-width: 768px) 100vw, 60vw"
                                                 unoptimized
+                                                priority={i === 1}
+                                                loading={i <= 2 ? 'eager' : 'lazy'}
                                                 onLoad={() => {
                                                     setLoadedImages(prev => {
                                                         if (prev.has(i)) return prev

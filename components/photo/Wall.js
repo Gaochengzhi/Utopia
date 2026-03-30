@@ -374,11 +374,9 @@ export function Walls({ path, scrollDirection = 'horizontal' }) {
                                                         }
                                                     }}
                                                 >
-                                                    {/* 加载状态 */}
+                                                    {/* 加载状态 - 横向墙使用轻量占位，无spinner */}
                                                     {!isLoaded && (
-                                                        <div className="absolute inset-0 bg-gray-800 flex items-center justify-center rounded-lg">
-                                                            <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                                        </div>
+                                                        <div className="absolute inset-0 bg-gray-800/60 rounded-lg"></div>
                                                     )}
 
                                                     <img
@@ -392,7 +390,8 @@ export function Walls({ path, scrollDirection = 'horizontal' }) {
                                                                 : 'transition-opacity duration-300'
                                                             }`}
                                                         alt=""
-                                                        loading="lazy"
+                                                        loading="eager"
+                                                        decoding="async"
                                                         onLoad={() => markLoaded(item.originalIndex)}
                                                     />
 
@@ -432,7 +431,8 @@ export function Walls({ path, scrollDirection = 'horizontal' }) {
                                                     isLoaded ? 'opacity-100' : 'opacity-0'
                                                 }`}
                                                 alt=""
-                                                loading="lazy"
+                                                loading={index < 16 ? 'eager' : 'lazy'}
+                                                decoding="async"
                                                 onLoad={() => markLoaded(index)}
                                             />
 

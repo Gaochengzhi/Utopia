@@ -1,0 +1,117 @@
+{
+  "main": {
+    "id": "be484cdf82e0fece",
+    "type": "split",
+    "children": [
+      {
+        "id": "f1f9e7477feec041",
+        "type": "leaf",
+        "state": {
+          "type": "markdown",
+          "state": {
+            "file": "2020年/2020-03.md",
+            "mode": "source",
+            "source": false
+          }
+        }
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "35ecd14b873c8dea",
+    "type": "mobile-drawer",
+    "children": [
+      {
+        "id": "7afd0ea1f7d8c264",
+        "type": "leaf",
+        "state": {
+          "type": "file-explorer",
+          "state": {}
+        }
+      },
+      {
+        "id": "740310a463d16ece",
+        "type": "leaf",
+        "state": {
+          "type": "search",
+          "state": {
+            "query": "",
+            "matchingCase": false,
+            "explainSearch": false,
+            "collapseAll": false,
+            "extraContext": false,
+            "sortOrder": "alphabetical"
+          }
+        }
+      },
+      {
+        "id": "1b9e64dea204907c",
+        "type": "leaf",
+        "state": {
+          "type": "tag",
+          "state": {
+            "sortOrder": "frequency",
+            "useHierarchy": true
+          }
+        }
+      },
+      {
+        "id": "f00f1c2c6cec9769",
+        "type": "leaf",
+        "state": {
+          "type": "starred",
+          "state": {}
+        }
+      }
+    ]
+  },
+  "right": {
+    "id": "989a21bc0bdf7d19",
+    "type": "mobile-drawer",
+    "children": [
+      {
+        "id": "bb5436f88178ebf0",
+        "type": "leaf",
+        "state": {
+          "type": "backlink",
+          "state": {
+            "file": "2020年/2020-03.md",
+            "collapseAll": false,
+            "extraContext": false,
+            "sortOrder": "alphabetical",
+            "showSearch": false,
+            "searchQuery": "",
+            "backlinkCollapsed": false,
+            "unlinkedCollapsed": true
+          }
+        }
+      },
+      {
+        "id": "ccc254c2e1f1ce2a",
+        "type": "leaf",
+        "state": {
+          "type": "outgoing-link",
+          "state": {
+            "file": "2020年/2020-03.md",
+            "linksCollapsed": false,
+            "unlinkedCollapsed": true
+          }
+        }
+      },
+      {
+        "id": "175f2e8a4419876e",
+        "type": "leaf",
+        "state": {
+          "type": "outline",
+          "state": {
+            "file": "2020年/2020-03.md"
+          }
+        }
+      }
+    ],
+    "currentTab": 0
+  },
+  "active": "f1f9e7477feec041",
+  "lastOpenFiles": []
+}
