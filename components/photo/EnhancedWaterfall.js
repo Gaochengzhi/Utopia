@@ -128,7 +128,13 @@ export function EnhancedWaterfall({ path, columns = 3 }) {
                     {masonryColumns.map((column, columnIndex) => (
                         <div key={columnIndex} className="masonry-column">
                             {column.map((item) => (
-                                <PhotoView key={item.index} src={item.path}>
+                                <PhotoView
+                                    key={item.index}
+                                    src={item.path}
+                                    render={({ attrs }) => (
+                                        <img {...attrs} crossOrigin="anonymous" />
+                                    )}
+                                >
                                     <div
                                         className="masonry-item group cursor-pointer"
                                         style={{
@@ -151,6 +157,7 @@ export function EnhancedWaterfall({ path, columns = 3 }) {
                                             <img
                                                 src={item.path}
                                                 alt=""
+                                                crossOrigin="anonymous"
                                                 loading={item.index < 15 ? 'eager' : 'lazy'}
                                                 decoding="async"
                                                 className={`w-full h-auto object-cover transition-opacity duration-500 ${

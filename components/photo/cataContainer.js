@@ -52,6 +52,7 @@ function ParallaxImage({ src, speed = -0.3, className, onLoad, onError, loadingS
                     <img
                         src={src}
                         alt=""
+                        crossOrigin="anonymous"
                         loading={loadingStrategy || 'lazy'}
                         decoding="async"
                         className="absolute inset-0 w-full h-full object-cover"

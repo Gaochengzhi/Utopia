@@ -132,6 +132,7 @@ export default function Wall({ title, categories: initialCategories, initialImag
                     <img
                         src={getCdnFullUrl(paths[0].path)}
                         alt=""
+                        crossOrigin="anonymous"
                         loading="eager"
                         decoding="async"
                         fetchpriority="high"

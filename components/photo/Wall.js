@@ -321,7 +321,13 @@ export function Walls({ path, scrollDirection = 'horizontal' }) {
                                         const isLoaded = loadedImages.has(item.originalIndex)
 
                                         return (
-                                            <PhotoView key={`${item.key}-${index}`} src={getFullSizeUrl(item.path)}>
+                                            <PhotoView
+                                                key={`${item.key}-${index}`}
+                                                src={getFullSizeUrl(item.path)}
+                                                render={({ attrs, scale }) => (
+                                                    <img {...attrs} crossOrigin="anonymous" />
+                                                )}
+                                            >
                                                 <div
                                                     className={`flex-shrink-0 group cursor-pointer relative overflow-hidden rounded-lg responsive-photo-item hover:z-10 ${isDraggingActive ? '' : 'transition-all duration-300'
                                                         }`}
@@ -372,6 +378,7 @@ export function Walls({ path, scrollDirection = 'horizontal' }) {
 
                                                     <img
                                                         src={getThumbnailUrl(item.path)}
+                                                        crossOrigin="anonymous"
                                                         className={`absolute inset-0 w-full h-full object-cover rounded-lg ${
                                                             isLoaded
                                                             ? 'opacity-100'
@@ -408,7 +415,13 @@ export function Walls({ path, scrollDirection = 'horizontal' }) {
                                 const isLoaded = loadedImages.has(index)
                                 
                                 return (
-                                    <PhotoView key={item.key} src={getFullSizeUrl(item.path)}>
+                                    <PhotoView
+                                        key={item.key}
+                                        src={getFullSizeUrl(item.path)}
+                                        render={({ attrs, scale }) => (
+                                            <img {...attrs} crossOrigin="anonymous" />
+                                        )}
+                                    >
                                         <div className="aspect-square group cursor-pointer relative overflow-hidden rounded-lg hover:scale-105 transition-transform duration-300">
                                             {/* 加载状态 */}
                                             {!isLoaded && (
@@ -419,6 +432,7 @@ export function Walls({ path, scrollDirection = 'horizontal' }) {
 
                                     <img
                                                 src={getThumbnailUrl(item.path)}
+                                                crossOrigin="anonymous"
                                                 className={`absolute inset-0 w-full h-full object-cover rounded-lg transition-opacity duration-300 ${
                                                     isLoaded ? 'opacity-100' : 'opacity-0'
                                                 }`}

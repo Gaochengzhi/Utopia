@@ -5,16 +5,20 @@
 ## 为什么需要这个？
 
 **当前架构（慢）：**
+
 ```
 浏览器 → CF Edge → Worker (API Route) → R2.get() → arrayBuffer → Buffer → Response
 ```
+
 每张图片都要消耗 Worker CPU 时间、触发 R2 API 调用，300张图 = 300次 Worker 冷启动。
 
 **目标架构（快）：**
+
 ```
 浏览器 → CF Edge (CDN Cache HIT) → 直接返回
 浏览器 → CF Edge (MISS) → R2 Public Bucket → 缓存到 Edge → 返回
 ```
+
 图片直接从 CDN 缓存返回，命中后零延迟、零 Worker 消耗、零 R2 API 调用。
 
 ---
@@ -66,13 +70,13 @@ curl -I "https://cdn.gaochengzhi.com/photography/thumb/City/some-photo.webp"
 
 ### 2.2 规则配置
 
-| 字段 | 值 |
-|-----|---|
-| **Rule name** | `R2 Images - Cache Everything` |
-| **Matching expression** | `Hostname equals cdn.gaochengzhi.com` |
-| **Cache eligibility** | ✅ Eligible for cache |
-| **Edge TTL** | Override origin → `1 year` (31536000 seconds) |
-| **Browser TTL** | Override origin → `1 month` (2592000 seconds) |
+| 字段                    | 值                                            |
+| ----------------------- | --------------------------------------------- |
+| **Rule name**           | `R2 Images - Cache Everything`                |
+| **Matching expression** | `Hostname equals cdn.gaochengzhi.com`         |
+| **Cache eligibility**   | ✅ Eligible for cache                         |
+| **Edge TTL**            | Override origin → `1 year` (31536000 seconds) |
+| **Browser TTL**         | Override origin → `1 month` (2592000 seconds) |
 
 4. 点击 **Deploy**
 
@@ -118,29 +122,31 @@ curl -I "https://cdn.gaochengzhi.com/photography/thumb/City/some-photo.webp"
 
 > [!TIP]
 > 代码修改已经在本次优化中完成了。前端现在使用环境变量 `NEXT_PUBLIC_R2_CDN_URL` 来生成图片 URL。
-> 
+>
 > 你只需要在 `.env` 和 `wrangler.toml` 中设置这个值为你的 R2 CDN 域名。
 
 ### 4.1 环境变量设置
 
 在 `.env` 中添加:
+
 ```
 NEXT_PUBLIC_R2_CDN_URL=https://cdn.gaochengzhi.com
 ```
 
 在 `wrangler.toml` 的 `[vars]` 中添加:
+
 ```toml
 NEXT_PUBLIC_R2_CDN_URL = "https://cdn.gaochengzhi.com"
 ```
 
 ### 4.2 URL 映射关系
 
-| R2 Key | CDN URL |
-|--------|---------|
-| `photography/thumb/City/xxx.webp` | `https://cdn.gaochengzhi.com/photography/thumb/City/xxx.webp` |
+| R2 Key                              | CDN URL                                                         |
+| ----------------------------------- | --------------------------------------------------------------- |
+| `photography/thumb/City/xxx.webp`   | `https://cdn.gaochengzhi.com/photography/thumb/City/xxx.webp`   |
 | `photography/content/City/xxx.webp` | `https://cdn.gaochengzhi.com/photography/content/City/xxx.webp` |
-| `.pic/post/xxx.webp` | `https://cdn.gaochengzhi.com/.pic/post/xxx.webp` |
-| `photography/cata/City.webp` | `https://cdn.gaochengzhi.com/photography/cata/City.webp` |
+| `.pic/post/xxx.webp`                | `https://cdn.gaochengzhi.com/.pic/post/xxx.webp`                |
+| `photography/cata/City.webp`        | `https://cdn.gaochengzhi.com/photography/cata/City.webp`        |
 
 ---
 
@@ -154,12 +160,12 @@ curl -I "https://cdn.gaochengzhi.com/photography/thumb/City/some-photo.webp"
 
 检查这些响应头:
 
-| Header | 期望值 | 含义 |
-|--------|-------|------|
-| `cf-cache-status` | `HIT` | ✅ 从 CDN 缓存返回 |
-| `cf-cache-status` | `MISS` | ⚠️ 第一次访问，已缓存到 Edge |
-| `cf-cache-status` | `DYNAMIC` | ❌ 未被缓存，检查 Cache Rules |
-| `cache-control` | `max-age=2592000` | Browser 缓存 1 个月 |
+| Header            | 期望值            | 含义                          |
+| ----------------- | ----------------- | ----------------------------- |
+| `cf-cache-status` | `HIT`             | ✅ 从 CDN 缓存返回            |
+| `cf-cache-status` | `MISS`            | ⚠️ 第一次访问，已缓存到 Edge  |
+| `cf-cache-status` | `DYNAMIC`         | ❌ 未被缓存，检查 Cache Rules |
+| `cache-control`   | `max-age=2592000` | Browser 缓存 1 个月           |
 
 ---
 
@@ -207,7 +213,7 @@ curl -I "https://cdn.gaochengzhi.com/photography/thumb/City/some-photo.webp"
 
 - [x] Step 1: 在 R2 bucket 绑定 `cdn.gaochengzhi.com` ✅ 已 Active
 - [x] Step 2: 创建 Cache Rule（Cache Everything + 1年 Edge TTL）✅ API 创建完成
-- [ ] Step 2.3: 开启 Smart Tiered Cache ⚠️ **需要手动操作**（API token 权限不够）
+- [x] Step 2.3: 开启 Smart Tiered Cache ⚠️ **需要手动操作**（API token 权限不够）
 - [x] Step 3: 配置 R2 CORS ✅ API 设置完成
 - [x] Step 4.1: 设置 `NEXT_PUBLIC_R2_CDN_URL` 环境变量 ✅ 已在 .env + wrangler.toml 启用
 - [x] Step 5: 验证 `cf-cache-status: HIT` ✅ 已验证缩略图和分类图都 HIT
