@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import Link from "next/link"
+import NextImage from "next/image"
 
 /**
  * Lightweight parallax image banner — no external library needed.
  * Uses IntersectionObserver + scroll listener for smooth background movement.
  */
-function ParallaxImage({ src, speed = -0.3, className, children }) {
+function ParallaxImage({ src, speed = -0.3, className, onLoad, onError, children }) {
     const containerRef = useRef(null)
     const [offset, setOffset] = useState(0)
     const [isInView, setIsInView] = useState(false)
@@ -44,17 +45,27 @@ function ParallaxImage({ src, speed = -0.3, className, children }) {
     return (
         <div ref={containerRef} className={className} style={{ position: "relative", overflow: "hidden" }}>
             {/* Parallax background layer */}
-            <div
-                style={{
-                    position: "absolute",
-                    inset: "-20% 0",           // Extra height for parallax travel room
-                    backgroundImage: `url(${src})`,
-                    backgroundSize: "cover",
-                    backgroundPosition: "center",
-                    transform: `translate3d(0, ${offset}px, 0)`,
-                    willChange: "transform",
-                }}
-            />
+            {src && (
+                <div
+                    style={{
+                        position: "absolute",
+                        inset: "-20% 0", // Extra height for parallax travel room
+                        transform: `translate3d(0, ${offset}px, 0)`,
+                        willChange: "transform",
+                    }}
+                >
+                    <NextImage
+                        src={src}
+                        alt=""
+                        fill
+                        unoptimized
+                        sizes="100vw"
+                        className="object-cover"
+                        onLoad={onLoad}
+                        onError={onError}
+                    />
+                </div>
+            )}
             {/* Content overlay */}
             {children}
         </div>
@@ -72,74 +83,26 @@ function toThumbPath(rawPath) {
 export function CataContainer({ categories }) {
     const [loadedImages, setLoadedImages] = useState(new Set())
     const [imageSrcs, setImageSrcs] = useState({})
+    const [fallbackTried, setFallbackTried] = useState(new Set())
 
     const categoryData = useMemo(() => {
         return categories && categories.length > 0 ? categories : []
     }, [categories])
 
-    // 顺序预加载分类封面，避免一次性并发请求过多
     useEffect(() => {
-        let cancelled = false
-
-        const markLoaded = (index, src = '') => {
-            setLoadedImages(prev => {
-                if (prev.has(index)) return prev
-                const next = new Set(prev)
-                next.add(index)
-                return next
-            })
-            setImageSrcs(prev => ({ ...prev, [index]: src }))
-        }
-
-        const preloadOne = (src) => new Promise((resolve) => {
-            const img = new Image()
-            img.onload = () => resolve(true)
-            img.onerror = () => resolve(false)
-            img.src = src
-        })
-
-        const preloadSequentially = async () => {
-            for (const item of categoryData) {
-                if (cancelled) break
-
-                const primaryPath = item.coverImage || `/photography/cata/${item.index}.jpg`
-                const thumbPath = toThumbPath(primaryPath)
-
-                const fallbackPath = item.fallbackCover || primaryPath
-                const fallbackThumb = toThumbPath(fallbackPath)
-
-                const primaryOk = await preloadOne(thumbPath)
-                if (cancelled) break
-
-                if (primaryOk) {
-                    markLoaded(item.index, thumbPath)
-                    continue
-                }
-
-                const fallbackOk = await preloadOne(fallbackThumb)
-                if (cancelled) break
-
-                if (fallbackOk) {
-                    markLoaded(item.index, fallbackThumb)
-                } else {
-                    markLoaded(item.index, '')
-                }
-            }
-        }
-
-        preloadSequentially()
-
-        return () => {
-            cancelled = true
-        }
+        // Reset when categories set changes (e.g. after API fallback fetch)
+        setLoadedImages(new Set())
+        setImageSrcs({})
+        setFallbackTried(new Set())
     }, [categoryData])
 
     return (
         <div className="flex flex-col justify-center items-center w-full">
             {categoryData.map((item) => {
                 const isLoaded = loadedImages.has(item.index)
-                const imageSrc = imageSrcs[item.index] ||
-                    toThumbPath(item.coverImage || item.fallbackCover || `/photography/cata/${item.index}.jpg`)
+                const primarySrc = toThumbPath(item.coverImage || `/photography/cata/${item.index}.jpg`)
+                const fallbackSrc = toThumbPath(item.fallbackCover || primarySrc)
+                const imageSrc = imageSrcs[item.index] || primarySrc
 
                 return (
                     <Link key={item.index} href={"/photographer/" + item.title.toLowerCase()}>
@@ -155,6 +118,32 @@ export function CataContainer({ categories }) {
                                 src={imageSrc}
                                 speed={-0.3}
                                 className="w-full h-full transition-transform duration-500 group-hover:scale-105"
+                                onLoad={() => {
+                                    setLoadedImages(prev => {
+                                        if (prev.has(item.index)) return prev
+                                        const next = new Set(prev)
+                                        next.add(item.index)
+                                        return next
+                                    })
+                                }}
+                                onError={() => {
+                                    const tried = fallbackTried.has(item.index)
+                                    if (!tried && fallbackSrc && fallbackSrc !== imageSrc) {
+                                        setFallbackTried(prev => {
+                                            const next = new Set(prev)
+                                            next.add(item.index)
+                                            return next
+                                        })
+                                        setImageSrcs(prev => ({ ...prev, [item.index]: fallbackSrc }))
+                                        return
+                                    }
+                                    setLoadedImages(prev => {
+                                        if (prev.has(item.index)) return prev
+                                        const next = new Set(prev)
+                                        next.add(item.index)
+                                        return next
+                                    })
+                                }}
                             >
                                 {/* 渐变覆盖层 */}
                                 <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/40 group-hover:from-black/60 group-hover:to-black/60 transition-all duration-500"></div>
