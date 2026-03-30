@@ -325,7 +325,7 @@ export function Walls({ path, scrollDirection = 'horizontal' }) {
                                                 key={`${item.key}-${index}`}
                                                 src={getFullSizeUrl(item.path)}
                                                 render={({ attrs, scale }) => (
-                                                    <img {...attrs} crossOrigin="anonymous" />
+                                                    <img {...attrs} />
                                                 )}
                                             >
                                                 <div
@@ -418,7 +418,7 @@ export function Walls({ path, scrollDirection = 'horizontal' }) {
                                         key={item.key}
                                         src={getFullSizeUrl(item.path)}
                                         render={({ attrs, scale }) => (
-                                            <img {...attrs} crossOrigin="anonymous" />
+                                            <img {...attrs} />
                                         )}
                                     >
                                         <div className="aspect-square group cursor-pointer relative overflow-hidden rounded-lg hover:scale-105 transition-transform duration-300">

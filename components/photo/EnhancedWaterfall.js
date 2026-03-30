@@ -132,7 +132,7 @@ export function EnhancedWaterfall({ path, columns = 3 }) {
                                     key={item.index}
                                     src={item.path}
                                     render={({ attrs }) => (
-                                        <img {...attrs} crossOrigin="anonymous" />
+                                        <img {...attrs} />
                                     )}
                                 >
                                     <div
@@ -157,7 +157,6 @@ export function EnhancedWaterfall({ path, columns = 3 }) {
                                             <img
                                                 src={item.path}
                                                 alt=""
-                                                crossOrigin="anonymous"
                                                 loading={item.index < 15 ? 'eager' : 'lazy'}
                                                 decoding="async"
                                                 className={`w-full h-auto object-cover transition-opacity duration-500 ${
