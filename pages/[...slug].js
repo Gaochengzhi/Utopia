@@ -250,9 +250,11 @@ export const getStaticProps = async ({ params: { slug } }) => {
         const obj = await r2.get(post.slug)
         if (!obj) throw new Error(`R2 object not found: ${post.slug}`)
 
-        const matter = require('gray-matter')
+        const raw = await obj.text()
+        // Lightweight frontmatter strip (avoids heavy gray-matter library that exceeds Worker CPU limits)
+        const stripped = raw.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, '')
         const { normalizeImagePath } = require('/components/util/imageUtils')
-        let content = normalizeImagePath(matter(await obj.text()).content)
+        let content = normalizeImagePath(stripped)
 
         // For protected articles, serve masked content (B-plan)
         // Real content is fetched client-side after auth

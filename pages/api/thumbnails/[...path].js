@@ -59,28 +59,8 @@ export default async function handler(req, res) {
       return res.status(403).json({ error: 'Access denied' })
     }
 
-    // Try cdn-cgi redirect first (only works in Cloudflare production)
-    const host = req.headers.host || 'localhost'
-    const isCloudflare = host.includes('gaochengzhi.com') || host.includes('workers.dev')
-
-    if (isCloudflare) {
-      const protocol = req.headers['x-forwarded-proto'] || 'https'
-      const sourceUrl = `${protocol}://${host}/api/images/${cleanPath.replace('.pic/', '')}`
-
-      let transformParams
-      if (type === 'thumbnail') {
-        transformParams = 'width=400,quality=60,format=auto'
-      } else {
-        transformParams = 'quality=85,format=auto'
-      }
-
-      const cdnUrl = `/cdn-cgi/image/${transformParams}/${sourceUrl}`
-      res.setHeader('Cache-Control', 'public, max-age=31536000')
-      return res.redirect(302, cdnUrl)
-    }
-
-    // Fallback: serve the source image directly (for dev and non-CF environments)
-    // This means no resizing, but images will at least load
+    // Serve image directly from R2 (cdn-cgi/image requires Pro plan)
+    // Images are pre-optimized by scripts/optimize-images.mjs
     let r2Key = cleanPath
     
     // Try R2 first
