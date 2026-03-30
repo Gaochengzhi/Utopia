@@ -35,7 +35,8 @@ function parseHeadingsFromMarkdown(markdown) {
     }
     if (inCodeBlock) continue
 
-    const match = /^(#{1,5})\s+(.+)$/.exec(line)
+    // Skip h1 headings — they are the article title, not part of the TOC
+    const match = /^(#{2,5})\s+(.+)$/.exec(line)
     if (!match) continue
 
     const level = match[1].length
@@ -53,12 +54,18 @@ function parseHeadingsFromMarkdown(markdown) {
     headings.push({ title, id: slug, level })
   }
 
-  // Calculate indent relative to the minimum level present
+  // Hide the top-most heading level in TOC (usually the article main title level)
   if (headings.length === 0) return []
   const minLevel = Math.min(...headings.map((h) => h.level))
-  return headings.map((h) => ({
+  const withoutTopLevel = headings.filter((h) => h.level > minLevel)
+
+  // Fallback: if an article only has one heading level, keep it so TOC is not empty
+  const visibleHeadings = withoutTopLevel.length > 0 ? withoutTopLevel : headings
+  const visibleMinLevel = Math.min(...visibleHeadings.map((h) => h.level))
+
+  return visibleHeadings.map((h) => ({
     ...h,
-    indent: h.level - minLevel,
+    indent: h.level - visibleMinLevel,
   }))
 }
 
@@ -112,7 +119,9 @@ export function Toc({ content }) {
           <div
             onClick={(e) => handleClick(e, o)}
             key={o.id}
-            className={`flex text-sm mt-1 overflow-ellipsis transition-all ease-in firstT cursor-pointer py-1.5 px-2 rounded-md hover:bg-gray-200/60 dark:hover:bg-gray-700/60 ${
+            className={`flex text-sm mt-1 overflow-ellipsis transition-all ease-in cursor-pointer py-1.5 px-2 rounded-md hover:bg-gray-200/60 dark:hover:bg-gray-700/60 ${
+              o.indent === 0 ? "toc-h2" : ""
+            } ${
               activeId === o.id
                 ? "bg-blue-100/60 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-semibold"
                 : o.indent === 0
