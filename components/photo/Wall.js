@@ -378,7 +378,6 @@ export function Walls({ path, scrollDirection = 'horizontal' }) {
 
                                                     <img
                                                         src={getThumbnailUrl(item.path)}
-                                                        crossOrigin="anonymous"
                                                         className={`absolute inset-0 w-full h-full object-cover rounded-lg ${
                                                             isLoaded
                                                             ? 'opacity-100'
@@ -432,7 +431,6 @@ export function Walls({ path, scrollDirection = 'horizontal' }) {
 
                                     <img
                                                 src={getThumbnailUrl(item.path)}
-                                                crossOrigin="anonymous"
                                                 className={`absolute inset-0 w-full h-full object-cover rounded-lg transition-opacity duration-300 ${
                                                     isLoaded ? 'opacity-100' : 'opacity-0'
                                                 }`}
