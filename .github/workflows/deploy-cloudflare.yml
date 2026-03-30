@@ -33,7 +33,7 @@ jobs:
         run: node scripts/build-content-index.mjs
 
       - name: Build for Cloudflare Workers
-        run: npx opennextjs-cloudflare build && rm -rf .open-next/assets/.pic .open-next/assets/photography
+        run: npm run cf:build
 
 
   deploy:
@@ -59,7 +59,7 @@ jobs:
         run: node scripts/build-content-index.mjs
 
       - name: Build for Cloudflare Workers
-        run: npx opennextjs-cloudflare build && rm -rf .open-next/assets/.pic .open-next/assets/photography
+        run: npm run cf:build
 
       - name: Deploy to Production
         run: npx wrangler deploy
