@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import { PhotoProvider, PhotoView } from "react-photo-view"
 import "react-photo-view/dist/react-photo-view.css"
-import Image from "next/image"
+import NextImage from "next/image"
 
 export function Walls({ path, scrollDirection = 'horizontal' }) {
     const [loadedImages, setLoadedImages] = useState(new Set())
@@ -385,7 +385,7 @@ export function Walls({ path, scrollDirection = 'horizontal' }) {
                                                         </div>
                                                     )}
 
-                                                    <Image
+                                                    <NextImage
                                                         src={getThumbnailUrl(item.path)}
                                                         className={`w-full h-full object-cover rounded-lg ${isLoaded
                                                             ? 'opacity-100 filter-none'
@@ -433,7 +433,7 @@ export function Walls({ path, scrollDirection = 'horizontal' }) {
                                                 </div>
                                             )}
 
-                                            <Image
+                                            <NextImage
                                                 src={getThumbnailUrl(item.path)}
                                                 className={`w-full h-full object-cover rounded-lg transition-all duration-300 ${
                                                     isLoaded ? 'opacity-100' : 'opacity-0'

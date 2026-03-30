@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react"
 import { PhotoProvider, PhotoView } from "react-photo-view"
 import "react-photo-view/dist/react-photo-view.css"
-import Image from "next/image"
+import NextImage from "next/image"
 
 export function EnhancedWaterfall({ path, columns = 3 }) {
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
@@ -166,7 +166,7 @@ export function EnhancedWaterfall({ path, columns = 3 }) {
                                                 </div>
                                             )}
                                             
-                                            <Image
+                                            <NextImage
                                                 src={item.path}
                                                 alt=""
                                                 width={1200}
