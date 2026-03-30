@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import Link from "next/link"
-import NextImage from "next/image"
 
 /**
  * Lightweight parallax image banner — no external library needed.
@@ -54,13 +53,11 @@ function ParallaxImage({ src, speed = -0.3, className, onLoad, onError, children
                         willChange: "transform",
                     }}
                 >
-                    <NextImage
+                    <img
                         src={src}
                         alt=""
-                        fill
-                        unoptimized
-                        sizes="100vw"
-                        className="object-cover"
+                        loading="lazy"
+                        className="absolute inset-0 w-full h-full object-cover"
                         onLoad={onLoad}
                         onError={onError}
                     />

@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import { PhotoProvider, PhotoView } from "react-photo-view"
 import "react-photo-view/dist/react-photo-view.css"
-import NextImage from "next/image"
 
 export function Walls({ path, scrollDirection = 'horizontal' }) {
     const [loadedImages, setLoadedImages] = useState(new Set())
@@ -382,23 +381,19 @@ export function Walls({ path, scrollDirection = 'horizontal' }) {
                                                         </div>
                                                     )}
 
-                                                    <NextImage
+                                                    <img
                                                         src={getThumbnailUrl(item.path)}
-                                                        className={`w-full h-full object-cover rounded-lg ${isLoaded
-                                                            ? 'opacity-100 filter-none'
-                                                            : 'opacity-0 blur-sm'
+                                                        className={`absolute inset-0 w-full h-full object-cover rounded-lg ${
+                                                            isLoaded
+                                                            ? 'opacity-100'
+                                                            : 'opacity-0'
                                                             } ${isDraggingActive
                                                                 ? 'transition-none'
-                                                                : 'transition-all duration-300'
+                                                                : 'transition-opacity duration-300'
                                                             }`}
                                                         alt=""
-                                                        fill
-                                                        sizes="(max-width: 768px) 60vw, 30vw"
-                                                        unoptimized
+                                                        loading="lazy"
                                                         onLoad={() => markLoaded(item.originalIndex)}
-                                                        style={{
-                                                            backfaceVisibility: 'hidden',
-                                                        }}
                                                     />
 
                                                     {/* 光影效果 - 拖拽时简化但保留 */}
@@ -431,15 +426,13 @@ export function Walls({ path, scrollDirection = 'horizontal' }) {
                                                 </div>
                                             )}
 
-                                            <NextImage
+                                            <img
                                                 src={getThumbnailUrl(item.path)}
-                                                className={`w-full h-full object-cover rounded-lg transition-all duration-300 ${
+                                                className={`absolute inset-0 w-full h-full object-cover rounded-lg transition-opacity duration-300 ${
                                                     isLoaded ? 'opacity-100' : 'opacity-0'
                                                 }`}
                                                 alt=""
-                                                fill
-                                                sizes="(max-width: 768px) 50vw, 20vw"
-                                                unoptimized
+                                                loading="lazy"
                                                 onLoad={() => markLoaded(index)}
                                             />
 

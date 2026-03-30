@@ -1,5 +1,4 @@
 import Link from "next/link"
-import Image from "next/image"
 import { useEffect, useState, useCallback, useRef } from "react"
 import { useRouter } from "next/router"
 import ViewBadge from "/components/ViewBadge"
@@ -314,11 +313,10 @@ export default function WaterfallCards({ initialPosts, totalPosts, isAuthenticat
                                                 <>
                                                     {/* Image card */}
                                                     <div className="relative overflow-hidden rounded-t-lg" style={{ height: '140px' }}>
-                                                        <Image
+                                                        <img
                                                             src={thumbUrl}
                                                             alt={title}
-                                                            fill
-                                                            sizes="(max-width: 1024px) 100vw, 50vw"
+                                                            loading="lazy"
                                                             className="w-full h-full object-cover"
                                                         />
                                                     </div>

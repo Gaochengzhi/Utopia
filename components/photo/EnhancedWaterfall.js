@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react"
 import { PhotoProvider, PhotoView } from "react-photo-view"
 import "react-photo-view/dist/react-photo-view.css"
-import NextImage from "next/image"
 
 export function EnhancedWaterfall({ path, columns = 3 }) {
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
@@ -149,17 +148,15 @@ export function EnhancedWaterfall({ path, columns = 3 }) {
                                                 </div>
                                             )}
                                             
-                                            <NextImage
+                                            <img
                                                 src={item.path}
                                                 alt=""
-                                                width={1200}
-                                                height={800}
-                                                className={`w-full h-auto object-cover transition-all duration-500 ${
+                                                loading="lazy"
+                                                className={`w-full h-auto object-cover transition-opacity duration-500 ${
                                                     loadedImages.has(item.index) 
-                                                        ? 'opacity-100 filter-none' 
-                                                        : 'opacity-0 blur-sm'
+                                                        ? 'opacity-100' 
+                                                        : 'opacity-0'
                                                 }`}
-                                                unoptimized
                                                 onLoad={() => {
                                                     setLoadedImages(prev => {
                                                         if (prev.has(item.index)) return prev
@@ -169,7 +166,6 @@ export function EnhancedWaterfall({ path, columns = 3 }) {
                                                     })
                                                 }}
                                                 style={{
-                                                    aspectRatio: 'auto',
                                                     minHeight: '200px'
                                                 }}
                                             />
