@@ -298,7 +298,7 @@ export default function WaterfallCards({ initialPosts, totalPosts, isAuthenticat
 
                         return (
                             <div key={post.key} style={{ flexBasis, width: flexBasis, flexShrink: 0 }}>
-                                <Link href={post.path} className="block" onClick={(e) => handlePostClick(e, post)}>
+                                <Link href={post.path} prefetch={false} className="block" onClick={(e) => handlePostClick(e, post)}>
                                         <div className="relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg pb-4 hover:shadow-xl hover:border-gray-400 dark:hover:border-gray-500 transition-all duration-300 cursor-pointer">
                                             <ViewBadge views={viewCounts[post.path.replace(/^\//, '')]} />
                                             {thumbUrl ? (
