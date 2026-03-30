@@ -28,6 +28,12 @@ function toPublicPath(key) {
   return `/${String(key).replace(/^\/+/, '')}`
 }
 
+function normalizeCategoryName(value) {
+  if (typeof value !== 'string') return null
+  const trimmed = value.trim()
+  return trimmed || null
+}
+
 function findManualCoverPath(category) {
   try {
     const fs = require('fs')
@@ -54,28 +60,46 @@ export default async function handler(req, res) {
     }
 
     const { results: catRows } = await db.prepare(`
-      SELECT DISTINCT category FROM photos ORDER BY category
+      SELECT c.category,
+             (
+               SELECT p.path
+               FROM photos p
+               WHERE p.category = c.category
+               ORDER BY p.created_at DESC
+               LIMIT 1
+             ) AS first_path,
+             (
+               SELECT p.filename
+               FROM photos p
+               WHERE p.category = c.category
+               ORDER BY p.created_at DESC
+               LIMIT 1
+             ) AS first_filename
+      FROM (
+        SELECT DISTINCT category
+        FROM photos
+        WHERE category IS NOT NULL AND TRIM(category) != ''
+      ) c
+      ORDER BY c.category
     `).all()
 
-    const categories = await Promise.all((catRows || []).map(async (row, index) => {
-      const manualCover = findManualCoverPath(row.category)
+    const categories = (catRows || []).map((row, index) => {
+      const categoryName = normalizeCategoryName(row.category)
+      if (!categoryName) return null
 
-      const firstPhoto = await db.prepare(`
-        SELECT path, filename FROM photos WHERE category = ? ORDER BY created_at DESC LIMIT 1
-      `).bind(row.category).first()
-
-      const fallbackKey = normalizePhotoKey(firstPhoto?.path, row.category, firstPhoto?.filename)
+      const manualCover = findManualCoverPath(categoryName)
+      const fallbackKey = normalizePhotoKey(row.first_path, categoryName, row.first_filename)
       const fallbackCover = toPublicPath(fallbackKey)
-      const resolvedCover = manualCover || fallbackCover || `/photography/cata/${row.category}.jpg`
+      const resolvedCover = manualCover || fallbackCover || `/photography/cata/${categoryName}.jpg`
 
       return {
         index: index.toString(),
-        title: row.category.toLowerCase(),
-        url: `/photographer/${row.category.toLowerCase()}`,
+        title: categoryName.toLowerCase(),
+        url: `/photographer/${categoryName.toLowerCase()}`,
         coverImage: resolvedCover,
         fallbackCover: fallbackCover || resolvedCover,
       }
-    }))
+    }).filter(Boolean)
 
     res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300')
 

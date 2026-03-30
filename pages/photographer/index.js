@@ -34,6 +34,12 @@ function toPublicPath(key) {
     return `/${String(key).replace(/^\/+/, '')}`
 }
 
+function normalizeCategoryName(value) {
+    if (typeof value !== 'string') return null
+    const trimmed = value.trim()
+    return trimmed || null
+}
+
 function findManualCoverPath(category) {
     try {
         const fs = require('fs')
@@ -192,24 +198,29 @@ export const getStaticProps = async () => {
                            LIMIT 1
                        ) AS first_filename
                 FROM (
-                    SELECT DISTINCT category FROM photos
+                    SELECT DISTINCT category
+                    FROM photos
+                    WHERE category IS NOT NULL AND TRIM(category) != ''
                 ) c
                 ORDER BY c.category
             `).all()
 
             categories = (catRows || []).map((row, index) => {
-                const manualCover = findManualCoverPath(row.category)
-                const fallbackCover = toPublicPath(normalizePhotoKey(row.first_path, row.category, row.first_filename))
-                const resolvedCover = manualCover || fallbackCover || `/photography/cata/${row.category}.jpg`
+                const categoryName = normalizeCategoryName(row.category)
+                if (!categoryName) return null
+
+                const manualCover = findManualCoverPath(categoryName)
+                const fallbackCover = toPublicPath(normalizePhotoKey(row.first_path, categoryName, row.first_filename))
+                const resolvedCover = manualCover || fallbackCover || `/photography/cata/${categoryName}.jpg`
 
                 return {
                     index: index.toString(),
-                    title: row.category.toLowerCase(),
-                    url: `/photographer/${row.category.toLowerCase()}`,
+                    title: categoryName.toLowerCase(),
+                    url: `/photographer/${categoryName.toLowerCase()}`,
                     coverImage: resolvedCover,
                     fallbackCover: fallbackCover || resolvedCover,
                 }
-            })
+            }).filter(Boolean)
         }
     } catch (e) {
         console.error('photographer getStaticProps failed:', e.message)

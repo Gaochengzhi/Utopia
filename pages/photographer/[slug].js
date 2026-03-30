@@ -36,6 +36,12 @@ function toPublicPath(key) {
     return `/${String(key).replace(/^\/+/, '')}`
 }
 
+function normalizeCategoryName(value) {
+    if (typeof value !== 'string') return null
+    const trimmed = value.trim()
+    return trimmed || null
+}
+
 function findManualCoverPath(category) {
     try {
         const fs = require('fs')
@@ -125,6 +131,9 @@ export default function Wall({ title, categories: initialCategories }) {
                     <img
                         src={paths[0].path.replace('/photography/content/', '/photography/full/')}
                         alt=""
+                        loading="eager"
+                        decoding="async"
+                        fetchpriority="high"
                         className="md:max-h-[60vh] max-h-[40vh]  w-[97%] object-cover mx-auto"
                     />
                 )}
@@ -149,13 +158,19 @@ export async function getStaticPaths() {
         const db = env?.DB
 
         if (db) {
-            const { results } = await db.prepare(
-                'SELECT DISTINCT category FROM photos ORDER BY category'
-            ).all()
+            const { results } = await db.prepare(`
+                SELECT DISTINCT category
+                FROM photos
+                WHERE category IS NOT NULL AND TRIM(category) != ''
+                ORDER BY category
+            `).all()
 
-            categoryPaths = (results || []).map(row => ({
-                params: { slug: row.category.toLowerCase() }
-            }))
+            categoryPaths = (results || [])
+                .map(row => normalizeCategoryName(row.category))
+                .filter(Boolean)
+                .map(category => ({
+                    params: { slug: category.toLowerCase() }
+                }))
         }
     } catch (e) {
         console.error('getStaticPaths failed:', e.message)
@@ -192,24 +207,29 @@ export async function getStaticProps({ params: { slug } }) {
                            LIMIT 1
                        ) AS first_filename
                 FROM (
-                    SELECT DISTINCT category FROM photos
+                    SELECT DISTINCT category
+                    FROM photos
+                    WHERE category IS NOT NULL AND TRIM(category) != ''
                 ) c
                 ORDER BY c.category
             `).all()
 
             categories = (catRows || []).map((row, index) => {
-                const manualCover = findManualCoverPath(row.category)
-                const fallbackCover = toPublicPath(normalizePhotoKey(row.first_path, row.category, row.first_filename))
-                const resolvedCover = manualCover || fallbackCover || `/photography/cata/${row.category}.jpg`
+                const categoryName = normalizeCategoryName(row.category)
+                if (!categoryName) return null
+
+                const manualCover = findManualCoverPath(categoryName)
+                const fallbackCover = toPublicPath(normalizePhotoKey(row.first_path, categoryName, row.first_filename))
+                const resolvedCover = manualCover || fallbackCover || `/photography/cata/${categoryName}.jpg`
 
                 return {
                     index: index.toString(),
-                    title: row.category.toLowerCase(),
-                    url: `/photographer/${row.category.toLowerCase()}`,
+                    title: categoryName.toLowerCase(),
+                    url: `/photographer/${categoryName.toLowerCase()}`,
                     coverImage: resolvedCover,
                     fallbackCover: fallbackCover || resolvedCover,
                 }
-            })
+            }).filter(Boolean)
 
             // Verify this category exists
             const exists = categories.find(c => c.title === slug.toLowerCase())

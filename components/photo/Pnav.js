@@ -7,6 +7,19 @@ const HomeIcon = ({ className }) => (
 )
 
 export function Pnav({ select, categories }) {
+  const normalizedCategories = Array.isArray(categories)
+    ? categories
+        .map((item, index) => {
+          const title = typeof item?.title === 'string' ? item.title.trim().toLowerCase() : ''
+          if (!title) return null
+          return {
+            key: item?.index != null ? String(item.index) : String(index),
+            title,
+          }
+        })
+        .filter(Boolean)
+    : []
+
   return (
     <div className="pnav w-full myblur fixed top-0 h-[4rem] flex justify-between items-center px-4 border-y border-gray-600 z-50">
       {/* Scrollable navigation */}
@@ -30,11 +43,11 @@ export function Pnav({ select, categories }) {
           </div>
         </Link>
 
-        {(categories || []).map((o) => (
-          <Link key={o.index} href={"/photographer/" + o.title.toLowerCase()}>
+        {normalizedCategories.map((o) => (
+          <Link key={o.key} href={"/photographer/" + o.title}>
             <div
               className={
-                o.title.toLowerCase() == select
+                o.title == select
                   ? "pclick text-3xl font-bold text-white whitespace-nowrap"
                   : "pclick whitespace-nowrap hover:text-gray-200 transition-colors"
               }

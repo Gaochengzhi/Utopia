@@ -5,7 +5,7 @@ import Link from "next/link"
  * Lightweight parallax image banner — no external library needed.
  * Uses IntersectionObserver + scroll listener for smooth background movement.
  */
-function ParallaxImage({ src, speed = -0.3, className, onLoad, onError, children }) {
+function ParallaxImage({ src, speed = -0.3, className, onLoad, onError, loadingStrategy, children }) {
     const containerRef = useRef(null)
     const [offset, setOffset] = useState(0)
     const [isInView, setIsInView] = useState(false)
@@ -56,7 +56,8 @@ function ParallaxImage({ src, speed = -0.3, className, onLoad, onError, children
                     <img
                         src={src}
                         alt=""
-                        loading="lazy"
+                        loading={loadingStrategy || 'lazy'}
+                        decoding="async"
                         className="absolute inset-0 w-full h-full object-cover"
                         onLoad={onLoad}
                         onError={onError}
@@ -71,19 +72,43 @@ function ParallaxImage({ src, speed = -0.3, className, onLoad, onError, children
 
 function toThumbPath(rawPath) {
     if (!rawPath) return rawPath
+    if (rawPath.includes('/photography/cata/')) {
+        return rawPath
+    }
     if (rawPath.includes('/photography/content/')) {
         return rawPath.replace('/photography/content/', '/photography/thumb/')
     }
     return rawPath.replace('/photography/', '/photography/thumb/')
 }
 
-export function CataContainer({ categories }) {
+export function CataContainer({ categories, eagerCount = 2 }) {
     const [loadedImages, setLoadedImages] = useState(new Set())
     const [imageSrcs, setImageSrcs] = useState({})
     const [fallbackTried, setFallbackTried] = useState(new Set())
 
     const categoryData = useMemo(() => {
-        return categories && categories.length > 0 ? categories : []
+        if (!Array.isArray(categories) || categories.length === 0) return []
+
+        return categories
+            .map((item, index) => {
+                const rawTitle =
+                    (typeof item?.title === 'string' && item.title.trim()) ||
+                    (typeof item?.category === 'string' && item.category.trim()) ||
+                    null
+
+                if (!rawTitle) return null
+
+                const normalizedTitle = rawTitle.toLowerCase()
+                const normalizedIndex = item?.index != null ? String(item.index) : String(index)
+
+                return {
+                    index: normalizedIndex,
+                    title: normalizedTitle,
+                    coverImage: item?.coverImage || null,
+                    fallbackCover: item?.fallbackCover || item?.coverImage || null,
+                }
+            })
+            .filter(Boolean)
     }, [categories])
 
     useEffect(() => {
@@ -95,14 +120,18 @@ export function CataContainer({ categories }) {
 
     return (
         <div className="flex flex-col justify-center items-center w-full">
-            {categoryData.map((item) => {
+            {categoryData.length === 0 && (
+                <div className="w-full py-12 text-center text-gray-500">No categories available</div>
+            )}
+
+            {categoryData.map((item, index) => {
                 const isLoaded = loadedImages.has(item.index)
                 const primarySrc = toThumbPath(item.coverImage || `/photography/cata/${item.index}.jpg`)
                 const fallbackSrc = toThumbPath(item.fallbackCover || primarySrc)
                 const imageSrc = imageSrcs[item.index] || primarySrc
 
                 return (
-                    <Link key={item.index} href={"/photographer/" + item.title.toLowerCase()}>
+                    <Link key={`${item.index}-${item.title}`} href={"/photographer/" + item.title}>
                         <div className="text-gray-300 w-full lg:h-[29rem] sm:h-[13rem] md:h-[19rem] h-[12rem] lg:text-8xl text-5xl flex justify-center group relative overflow-hidden">
                             {/* 加载状态 */}
                             {!isLoaded && (
@@ -114,6 +143,7 @@ export function CataContainer({ categories }) {
                             <ParallaxImage
                                 src={imageSrc}
                                 speed={-0.3}
+                                loadingStrategy={index < eagerCount ? 'eager' : 'lazy'}
                                 className="w-full h-full transition-transform duration-500 group-hover:scale-105"
                                 onLoad={() => {
                                     setLoadedImages(prev => {

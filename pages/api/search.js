@@ -1,25 +1,9 @@
 import { getDB } from '../../lib/cfContext'
-
-const PROTECTED_FOLDERS = ['我的日记']
-
-function isProtectedSlug(slug) {
-  if (!slug) return false
-  return PROTECTED_FOLDERS.some(folder => slug.includes(folder))
-}
+import { verifyAuthCookieAsync } from '../../lib/auth'
 
 function maskContent(content) {
   if (!content) return content
   return content.replace(/[^\s\n]/g, '*')
-}
-
-function verifyAuthCookie(cookies) {
-  if (!cookies || !cookies.diary_auth) return false
-  try {
-    const parsed = JSON.parse(cookies.diary_auth)
-    if (Date.now() > parsed.expires) return false
-    if (!parsed.token || parsed.token.length !== 64) return false
-    return true
-  } catch { return false }
 }
 
 export default async function handler(req, res) {
@@ -48,7 +32,11 @@ export default async function handler(req, res) {
     return res.status(503).json({ error: 'Database not available' })
   }
 
-  const isAuthenticated = verifyAuthCookie(req.cookies)
+  // Search result content is auth-sensitive (masked/unmasked)
+  res.setHeader('Cache-Control', 'private, no-store, max-age=0')
+  res.setHeader('Vary', 'Cookie')
+
+  const isAuthenticated = await verifyAuthCookieAsync(req.cookies)
 
   try {
     // FTS5 search — quote the query to treat it as a phrase

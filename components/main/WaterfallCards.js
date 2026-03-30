@@ -13,6 +13,7 @@ export default function WaterfallCards({ initialPosts, totalPosts, isAuthenticat
     const [page, setPage] = useState(1)
     const [error, setError] = useState(null)
     const [viewCounts, setViewCounts] = useState({})
+    const [brokenImagePosts, setBrokenImagePosts] = useState(new Set())
     // 小于等于平板宽度（此处按 1024px）时，卡片单列显示
     const [isTabletOrBelow, setIsTabletOrBelow] = useState(false)
     const lastInitialFingerprintRef = useRef("")
@@ -170,7 +171,11 @@ export default function WaterfallCards({ initialPosts, totalPosts, isAuthenticat
     }, [])
 
     // 提取标题（优先级：H1 > 前5行H2 > 第一行非空非图片文本）
-    const extractTitle = (content) => {
+    const extractTitle = (content, fallbackTitle) => {
+        if (!content || typeof content !== 'string') {
+            return fallbackTitle || '无标题'
+        }
+
         const h1Match = content.match(/^#\s+(.+)$/m)
         if (h1Match) return h1Match[1]
 
@@ -183,11 +188,12 @@ export default function WaterfallCards({ initialPosts, totalPosts, isAuthenticat
         for (const line of lines) {
             const trimmed = line.trim()
             if (trimmed && !trimmed.startsWith('!')) {
-                return trimmed.replace(/[#*_~`\[\]]/g, '').trim()
+                const parsed = trimmed.replace(/[#*_~`\[\]]/g, '').trim()
+                if (parsed) return parsed
             }
         }
 
-        return '无标题'
+        return fallbackTitle || '无标题'
     }
 
     // 提取第一张图片URL
@@ -198,6 +204,8 @@ export default function WaterfallCards({ initialPosts, totalPosts, isAuthenticat
 
     // 提取纯文本内容（去除markdown标记和标题）
     const extractPlainText = (content) => {
+        if (!content || typeof content !== 'string') return ''
+
         // 移除标题
         let text = content.replace(/^#+\s+.+$/gm, '')
         // 移除代码块
@@ -274,15 +282,17 @@ export default function WaterfallCards({ initialPosts, totalPosts, isAuthenticat
             <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
                 <div className="flex flex-wrap gap-6">
                     {posts.map((post, index) => {
-                        const title = extractTitle(post.content)
+                        const fallbackTitle = (post.title || '').replace(/\.md$/i, '')
+                        const title = extractTitle(post.content, fallbackTitle)
                         const plainText = extractPlainText(post.content)
                         // Prefer pre-extracted firstImage from D1, fallback to extracting from content
                         const firstImage = normalizeImageUrl(post.firstImage || extractFirstImage(post.content))
+                        const imageBlocked = brokenImagePosts.has(post.path)
                         // Convert /.pic/xxx to thumbnail URL: /.pic/thumb/.pic/xxx
                         // so rewrite rule strips /.pic/thumb/ prefix and API receives .pic/xxx
-                        const thumbUrl = firstImage && firstImage.startsWith('/.pic/')
+                        const thumbUrl = !imageBlocked && firstImage && firstImage.startsWith('/.pic/')
                             ? firstImage.replace('/.pic/', '/.pic/thumb/.pic/')
-                            : null
+                            : (!imageBlocked ? firstImage : null)
 
                         // 使用预先计算好的宽度
                         const widthRatio = cardWidths[index]
@@ -318,6 +328,14 @@ export default function WaterfallCards({ initialPosts, totalPosts, isAuthenticat
                                                             alt={title}
                                                             loading="lazy"
                                                             className="w-full h-full object-cover"
+                                                            onError={() => {
+                                                                setBrokenImagePosts((prev) => {
+                                                                    if (prev.has(post.path)) return prev
+                                                                    const next = new Set(prev)
+                                                                    next.add(post.path)
+                                                                    return next
+                                                                })
+                                                            }}
                                                         />
                                                     </div>
                                                     <div className="px-6 pt-3 overflow-hidden" style={{ height: '60px' }}>
@@ -345,7 +363,7 @@ export default function WaterfallCards({ initialPosts, totalPosts, isAuthenticat
 
                                                     {/* 文本内容 - 固定显示行数 */}
                                                     <p className="text-gray-600 dark:text-gray-400 leading-relaxed line-clamp-4">
-                                                        {plainText}
+                                                        {plainText || (post.isProtected && !isAuthenticated ? '已加密内容，解锁后可预览。' : '')}
                                                     </p>
                                                 </div>
                                             )}
