@@ -21,17 +21,23 @@ export function Walls({ path, scrollDirection = 'horizontal' }) {
                 setLoadedImages(prev => new Set([...prev, index]))
             }
             // 加载缩略图而不是原图
-            img.src = item.path.replace('/.pic/', '/.pic/thumb/')
+            img.src = getThumbnailUrl(item.path)
         })
     }, [path])
 
     // 为PhotoView生成全尺寸压缩图URL
     const getFullSizeUrl = (originalPath) => {
+        if (originalPath.startsWith('/photography/content/')) {
+            return originalPath.replace('/photography/content/', '/photography/full/content/')
+        }
         return originalPath.replace('/.pic/', '/.pic/full/')
     }
 
     // 获取缩略图URL
     const getThumbnailUrl = (originalPath) => {
+        if (originalPath.startsWith('/photography/content/')) {
+            return originalPath.replace('/photography/content/', '/photography/thumb/content/')
+        }
         return originalPath.replace('/.pic/', '/.pic/thumb/')
     }
 

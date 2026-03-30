@@ -1,24 +1,28 @@
-// Search API - search keywords in markdown files
-import { rateLimit, getClientIp } from '../../lib/rateLimit'
-import { isProtectedPath, maskContent, verifyAuthCookie } from '../../lib/auth'
+import { getDB } from '../../lib/cfContext'
 
-export default function handler(req, res) {
-  // Rate limiting: 10 requests per minute per IP
-  const clientIp = getClientIp(req)
-  const rateLimitResult = rateLimit(clientIp, { limit: 10, windowMs: 60000 })
+const PROTECTED_FOLDERS = ['我的日记']
 
-  // Set rate limit headers
-  res.setHeader('X-RateLimit-Limit', '10')
-  res.setHeader('X-RateLimit-Remaining', rateLimitResult.remaining.toString())
-  res.setHeader('X-RateLimit-Reset', Math.ceil(rateLimitResult.resetIn / 1000).toString())
+function isProtectedSlug(slug) {
+  if (!slug) return false
+  return PROTECTED_FOLDERS.some(folder => slug.includes(folder))
+}
 
-  if (!rateLimitResult.allowed) {
-    return res.status(429).json({
-      error: 'Too many requests. Please try again later.',
-      retryAfter: Math.ceil(rateLimitResult.resetIn / 1000)
-    })
-  }
+function maskContent(content) {
+  if (!content) return content
+  return content.replace(/[^\s\n]/g, '*')
+}
 
+function verifyAuthCookie(cookies) {
+  if (!cookies || !cookies.diary_auth) return false
+  try {
+    const parsed = JSON.parse(cookies.diary_auth)
+    if (Date.now() > parsed.expires) return false
+    if (!parsed.token || parsed.token.length !== 64) return false
+    return true
+  } catch { return false }
+}
+
+export default async function handler(req, res) {
   const { query } = req.query
 
   // Input validation
@@ -26,71 +30,91 @@ export default function handler(req, res) {
     return res.status(400).json({ error: 'Invalid search query' })
   }
 
-  // Security check: filter dangerous characters
   const dangerousChars = /[|&;$`\\'"<>]/g
   if (dangerousChars.test(query)) {
     return res.status(400).json({ error: 'Invalid characters in search query' })
   }
 
-  // Limit search query length
   if (query.length > 100) {
     return res.status(400).json({ error: 'Search query too long' })
   }
 
-  // Minimum query length
   if (query.trim().length < 2) {
     return res.status(400).json({ error: 'Search query too short' })
   }
 
-  // Check authentication status
+  const db = await getDB()
+  if (!db) {
+    return res.status(503).json({ error: 'Database not available' })
+  }
+
   const isAuthenticated = verifyAuthCookie(req.cookies)
 
-  // Escape special regex characters
-  const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  try {
+    // FTS5 search — quote the query to treat it as a phrase
+    const ftsQuery = `"${query.trim().replace(/"/g, '""')}"`
 
-  const { exec } = require("child_process")
+    const { results } = await db.prepare(`
+      SELECT p.slug, p.title, p.is_protected, p.path,
+             snippet(posts_fts, 1, '<<', '>>', '...', 40) as snippet
+      FROM posts_fts
+      JOIN posts p ON p.id = posts_fts.rowid
+      WHERE posts_fts MATCH ?
+      ORDER BY rank
+      LIMIT 30
+    `).bind(ftsQuery).all()
 
-  // Use safer grep command with limited results
-  const command = `grep -ir --line-number --binary-files=without-match --max-count=50 '${escapedQuery}' './post'`
+    // Format results as grep-compatible strings for existing SearchBar.js
+    // Format: "filepath:lineNumber:content"
+    const formattedResults = (results || []).map(row => {
+      const filePath = `./${row.slug}`
+      let content = row.snippet || row.title
 
-  exec(command, { timeout: 5000 }, (err, stdout, stderr) => {
-    if (err) {
-      // If no matches found
-      if (err.code === 1) {
-        return res.status(200).json({ results: [], total: 0 })
-      }
-      // Other errors - don't expose internal details
-      console.error('Search error:', err)
-      return res.status(500).json({ error: 'Search failed' })
-    }
-
-    // Process results
-    const lines = stdout.trim().split('\n').filter(line => line.length > 0)
-
-    // Mask protected content if not authenticated
-    const processedLines = lines.map(line => {
-      // Extract file path from grep output (format: filepath:line:content)
-      const match = line.match(/^([^:]+):(\d+):(.*)$/)
-      if (!match) return line
-
-      const [, filePath, lineNum, content] = match
-
-      // Check if this file is protected
-      if (isProtectedPath(filePath) && !isAuthenticated) {
-        // Mask the content but keep file path and line number
-        const maskedContent = maskContent(content)
-        return `${filePath}:${lineNum}:${maskedContent}`
+      // Mask protected content if not authenticated
+      if (row.is_protected && !isAuthenticated) {
+        content = maskContent(content)
       }
 
-      return line
+      // Remove FTS highlight markers for grep-format compatibility
+      content = content.replace(/<<|>>/g, '')
+
+      return `${filePath}:1:${content}`
     })
-
-    const results = processedLines.slice(0, 30) // Limit results for frontend
 
     res.status(200).json({
-      results: results,
-      total: results.length,
-      hasMore: lines.length > 30
+      results: formattedResults,
+      total: formattedResults.length,
+      hasMore: false,
     })
-  })
+  } catch (error) {
+    console.error('Search error:', error)
+    // If FTS5 MATCH fails (e.g., bad query syntax), try LIKE fallback
+    try {
+      const likeQuery = `%${query.trim()}%`
+      const { results } = await db.prepare(`
+        SELECT slug, title, is_protected, content_preview
+        FROM posts
+        WHERE title LIKE ? OR content_plain LIKE ?
+        LIMIT 30
+      `).bind(likeQuery, likeQuery).all()
+
+      const formattedResults = (results || []).map(row => {
+        const filePath = `./${row.slug}`
+        let content = row.title
+        if (row.is_protected && !isAuthenticated) {
+          content = maskContent(content)
+        }
+        return `${filePath}:1:${content}`
+      })
+
+      res.status(200).json({
+        results: formattedResults,
+        total: formattedResults.length,
+        hasMore: false,
+      })
+    } catch (fallbackError) {
+      console.error('Search fallback also failed:', fallbackError)
+      res.status(500).json({ error: 'Search failed' })
+    }
+  }
 }

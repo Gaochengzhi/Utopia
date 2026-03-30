@@ -1,16 +1,25 @@
-import fs from 'fs'
-import path from 'path'
-import {
-  getImageContentType,
-  setCacheHeaders
-} from '../../../lib/imageApiUtils'
+/**
+ * Thumbnails API - serves thumbnails from R2 or local filesystem
+ * 
+ * In production on Cloudflare: redirects to cdn-cgi/image transform
+ * In dev/preview: falls back to serving the source image directly
+ * 
+ * Replaces the old sharp-based on-the-fly compression
+ */
+import { getR2 } from '../../../lib/cfContext'
 
-// Try to import sharp, fallback gracefully if not available
-let sharp = null
-try {
-  sharp = require('sharp')
-} catch (e) {
-  console.warn('sharp not available, serving original images without compression')
+const CONTENT_TYPE_MAP = {
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.png': 'image/png',
+  '.gif': 'image/gif',
+  '.webp': 'image/webp',
+  '.svg': 'image/svg+xml',
+}
+
+function getContentType(filePath) {
+  const ext = '.' + filePath.split('.').pop().toLowerCase()
+  return CONTENT_TYPE_MAP[ext] || 'application/octet-stream'
 }
 
 export default async function handler(req, res) {
@@ -21,122 +30,123 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Image path is required' })
     }
 
-    // Type validation
     if (!['thumbnail', 'fullsize'].includes(type)) {
       return res.status(400).json({ error: 'Invalid type parameter' })
     }
 
-    // Build original image path
-    let originalPath
-    if (imagePath[0] === 'content') {
-      originalPath = path.join(process.cwd(), 'public', 'photography', ...imagePath)
-    } else {
-      originalPath = path.join(process.cwd(), 'public', ...imagePath)
+    // Build the source image path
+    // The rewrite sends:
+    //   /.pic/thumb/:path* → /api/thumbnails/:path*?type=thumbnail
+    //   /.pic/full/:path*  → /api/thumbnails/:path*?type=fullsize
+    //
+    // imagePath might be ['.pic', 'xxx.jpg'] for nested .pic paths
+    // (from WaterfallCards: /.pic/thumb/.pic/xxx.jpg → /api/thumbnails/.pic/xxx.jpg)
+    let cleanPath = imagePath.join('/')
+
+    // Handle the nested .pic/ prefix from WaterfallCards
+    if (cleanPath.startsWith('.pic/')) {
+      cleanPath = cleanPath // keep as-is, it's already the R2 key prefix
+    } else if (cleanPath.startsWith('content/')) {
+      // Photography content paths
+      cleanPath = 'photography/' + cleanPath
+    } else if (cleanPath.startsWith('photography/')) {
+      // Already has the full photography path
+      cleanPath = cleanPath
     }
 
-    // Security check
-    const publicDir = path.join(process.cwd(), 'public')
-    if (!originalPath.startsWith(publicDir)) {
+    // Security checks
+    if (cleanPath.includes('..') || cleanPath.includes('//')) {
       return res.status(403).json({ error: 'Access denied' })
     }
 
-    // Check if original file exists
-    if (!fs.existsSync(originalPath)) {
-      return res.status(404).json({ error: 'Original image not found' })
-    }
+    // Try cdn-cgi redirect first (only works in Cloudflare production)
+    const host = req.headers.host || 'localhost'
+    const isCloudflare = host.includes('gaochengzhi.com') || host.includes('workers.dev')
 
-    const stat = fs.statSync(originalPath)
-    if (!stat.isFile()) {
-      return res.status(404).json({ error: 'Not a file' })
-    }
+    if (isCloudflare) {
+      const protocol = req.headers['x-forwarded-proto'] || 'https'
+      const sourceUrl = `${protocol}://${host}/api/images/${cleanPath.replace('.pic/', '')}`
 
-    // If sharp is not available, serve original image
-    if (!sharp) {
-      const contentType = getImageContentType(originalPath)
-      res.setHeader('Content-Type', contentType)
-      res.setHeader('Referrer-Policy', 'no-referrer')
-      res.setHeader('Access-Control-Allow-Origin', '*')
-      setCacheHeaders(res, stat.mtime, 86400)
-      const imageBuffer = fs.readFileSync(originalPath)
-      return res.send(imageBuffer)
-    }
-
-    // Compressed image paths
-    const compressedDir = path.join(process.cwd(), 'public', '.pic', 'compressed', type)
-    if (!fs.existsSync(compressedDir)) {
-      fs.mkdirSync(compressedDir, { recursive: true })
-    }
-
-    const relativePath = path.relative(path.join(process.cwd(), 'public'), originalPath)
-    const ext = path.extname(originalPath).toLowerCase()
-    const nameWithoutExt = relativePath.replace(ext, '')
-    const compressedFileName = `${nameWithoutExt}.webp`
-    const compressedPath = path.join(compressedDir, compressedFileName)
-
-    // Ensure directory exists
-    const compressedFileDir = path.dirname(compressedPath)
-    if (!fs.existsSync(compressedFileDir)) {
-      fs.mkdirSync(compressedFileDir, { recursive: true })
-    }
-
-    // Serve cached compressed image if it exists and is fresh
-    if (fs.existsSync(compressedPath)) {
-      const compressedStats = fs.statSync(compressedPath)
-      if (compressedStats.mtime >= stat.mtime) {
-        res.setHeader('Content-Type', 'image/webp')
-        res.setHeader('Referrer-Policy', 'no-referrer')
-        res.setHeader('Access-Control-Allow-Origin', '*')
-        setCacheHeaders(res, compressedStats.mtime, 31536000) // 1 year cache
-
-        const cachedBuffer = fs.readFileSync(compressedPath)
-        return res.send(cachedBuffer)
-      }
-    }
-
-    // Generate new compressed image
-    try {
-      let sharpInstance = sharp(originalPath)
-
+      let transformParams
       if (type === 'thumbnail') {
-        sharpInstance = sharpInstance
-          .resize(400, 300, {
-            fit: 'inside',
-            withoutEnlargement: true
-          })
-          .webp({ quality: 60 })
+        transformParams = 'width=400,quality=60,format=auto'
       } else {
-        sharpInstance = sharpInstance.webp({ quality: 85 })
+        transformParams = 'quality=85,format=auto'
       }
 
-      const compressedBuffer = await sharpInstance.toBuffer()
-
-      // Save compressed image
-      fs.writeFileSync(compressedPath, compressedBuffer)
-
-      // Serve compressed image
-      res.setHeader('Content-Type', 'image/webp')
-      res.setHeader('Referrer-Policy', 'no-referrer')
-      res.setHeader('Access-Control-Allow-Origin', '*')
-      setCacheHeaders(res, new Date(), 31536000) // 1 year cache
-
-      res.send(compressedBuffer)
-
-    } catch (sharpError) {
-      console.error('Sharp processing error:', sharpError)
-
-      // Fallback: serve original image
-      const contentType = getImageContentType(originalPath)
-      res.setHeader('Content-Type', contentType)
-      res.setHeader('Referrer-Policy', 'no-referrer')
-      res.setHeader('Access-Control-Allow-Origin', '*')
-      setCacheHeaders(res, stat.mtime, 86400) // 24 hours
-
-      const originalBuffer = fs.readFileSync(originalPath)
-      res.send(originalBuffer)
+      const cdnUrl = `/cdn-cgi/image/${transformParams}/${sourceUrl}`
+      res.setHeader('Cache-Control', 'public, max-age=31536000')
+      return res.redirect(302, cdnUrl)
     }
 
+    // Fallback: serve the source image directly (for dev and non-CF environments)
+    // This means no resizing, but images will at least load
+    let r2Key = cleanPath
+    
+    // Try R2 first
+    const r2 = await getR2()
+    if (r2) {
+      let object = await r2.get(r2Key)
+      
+      // Fallback to .webp if original not found
+      if (!object && !r2Key.toLowerCase().endsWith('.webp')) {
+        const webpKey = r2Key.replace(/\.(jpe?g|png|gif|bmp)$/i, '.webp')
+        const webpObject = await r2.get(webpKey)
+        if (webpObject) {
+          object = webpObject
+          r2Key = webpKey
+        }
+      }
+
+      if (object) {
+        const contentType = getContentType(r2Key)
+        res.setHeader('Content-Type', contentType)
+        res.setHeader('Cache-Control', 'public, max-age=3600')
+        if (object.httpEtag) res.setHeader('ETag', object.httpEtag)
+        const arrayBuffer = await object.arrayBuffer()
+        return res.send(Buffer.from(arrayBuffer))
+      }
+    }
+
+    // Fallback: local filesystem
+    try {
+      const fs = require('fs')
+      const path = require('path')
+
+      // Try direct path first (for .pic/ files)
+      let localPath = path.join(process.cwd(), r2Key)
+      
+      // If not found, try under public/ (for photography files)
+      if (!fs.existsSync(localPath)) {
+        localPath = path.join(process.cwd(), 'public', r2Key)
+      }
+
+      // Fallback to .webp locally
+      if (!fs.existsSync(localPath) && !r2Key.toLowerCase().endsWith('.webp')) {
+        const webpKey = r2Key.replace(/\.(jpe?g|png|gif|bmp)$/i, '.webp')
+        let webpLocalPath = path.join(process.cwd(), webpKey)
+        if (!fs.existsSync(webpLocalPath)) {
+          webpLocalPath = path.join(process.cwd(), 'public', webpKey)
+        }
+        if (fs.existsSync(webpLocalPath)) {
+          localPath = webpLocalPath
+          r2Key = webpKey
+        }
+      }
+
+      if (!fs.existsSync(localPath)) {
+        return res.status(404).json({ error: 'Image not found' })
+      }
+
+      const contentType = getContentType(r2Key)
+      res.setHeader('Content-Type', contentType)
+      res.setHeader('Cache-Control', 'public, max-age=3600')
+      return res.send(fs.readFileSync(localPath))
+    } catch (fsErr) {
+      return res.status(404).json({ error: 'Image not found' })
+    }
   } catch (error) {
-    console.error('Error serving compressed image:', error)
+    console.error('Error processing thumbnail:', error)
     res.status(500).json({ error: 'Internal server error' })
   }
 }

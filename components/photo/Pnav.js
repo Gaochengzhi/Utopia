@@ -1,4 +1,3 @@
-import { cataList } from "./cataList"
 import Link from "next/link"
 
 const HomeIcon = ({ className }) => (
@@ -31,7 +30,7 @@ export function Pnav({ select, categories }) {
           </div>
         </Link>
 
-        {(categories || cataList).map((o) => (
+        {(categories || []).map((o) => (
           <Link key={o.index} href={"/photographer/" + o.title.toLowerCase()}>
             <div
               className={

@@ -235,7 +235,8 @@ export default function WaterfallCards({ initialPosts, totalPosts }) {
                     {posts.map((post, index) => {
                         const title = extractTitle(post.content)
                         const plainText = extractPlainText(post.content)
-                        const firstImage = extractFirstImage(post.content)
+                        // Prefer pre-extracted firstImage from D1, fallback to extracting from content
+                        const firstImage = post.firstImage || extractFirstImage(post.content)
                         // Convert /.pic/xxx to thumbnail URL: /.pic/thumb/.pic/xxx
                         // so rewrite rule strips /.pic/thumb/ prefix and API receives .pic/xxx
                         const thumbUrl = firstImage && firstImage.startsWith('/.pic/')
@@ -264,8 +265,7 @@ export default function WaterfallCards({ initialPosts, totalPosts }) {
 
                         return (
                             <div key={post.key} style={{ flexBasis, width: flexBasis, flexShrink: 0 }}>
-                                <Link href={post.path}>
-                                    <a className="block" onClick={(e) => handlePostClick(e, post)}>
+                                <Link href={post.path} className="block" onClick={(e) => handlePostClick(e, post)}>
                                         <div className="relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg pb-4 hover:shadow-xl hover:border-gray-400 dark:hover:border-gray-500 transition-all duration-300 cursor-pointer">
                                             <ViewBadge views={viewCounts[post.path.replace(/^\//, '')]} />
                                             {thumbUrl ? (
@@ -309,7 +309,6 @@ export default function WaterfallCards({ initialPosts, totalPosts }) {
                                                 </div>
                                             )}
                                         </div>
-                                    </a>
                                 </Link>
                             </div>
                         )

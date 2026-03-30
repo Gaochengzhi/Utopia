@@ -102,6 +102,7 @@ export default function FileTree({ paths }) {
     const [expandedKeys, setExpandedKeys] = useState(new Set(["myrootkey"]))
     const router = useRouter()
 
+
     useEffect(() => {
         if (!isTreeMode) {
             fetch('/api/posts?limit=50')
@@ -149,15 +150,22 @@ export default function FileTree({ paths }) {
             )
         }
 
+        const nodesToRender = (paths.children && paths.children.length > 0 && (paths.title === 'content' || paths.key === 'myrootkey' || paths.title === 'post' || !paths.isLeaf))
+            ? paths.children
+            : [paths]
+
         return (
-            <div className="min-w-[16rem] text-gray-900 dark:text-gray-100">
-                <TreeNode
-                    node={paths}
-                    depth={0}
-                    onFileClick={onFileClick}
-                    expandedKeys={expandedKeys}
-                    toggleExpand={toggleExpand}
-                />
+            <div className="min-w-[16rem] text-gray-900 dark:text-gray-100 mt-2">
+                {nodesToRender.map(node => (
+                    <TreeNode
+                        key={node.key || node.path || Math.random().toString()}
+                        node={node}
+                        depth={0}
+                        onFileClick={onFileClick}
+                        expandedKeys={expandedKeys}
+                        toggleExpand={toggleExpand}
+                    />
+                ))}
             </div>
         )
     }

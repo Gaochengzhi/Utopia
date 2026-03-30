@@ -213,17 +213,37 @@ PATH="~/web/"
 
 ## Image Handling
 
-### Image Upload & Optimization
+### Image Optimization & Cloudflare R2 Sync
+
+The project uses a smart, incremental image compression script that replaces images with highly-compressed WebP versions without losing perceived quality, and syncs them directly to Cloudflare R2.
 
 ```bash
-./imgUpload.sh image.jpg    # Auto-resize and optimize
+# Default: Incremental compression + Sync to R2
+node scripts/optimize-images.mjs
+
+# Preview mode (see what would change)
+node scripts/optimize-images.mjs --dry-run
+
+# Only compress, without syncing
+node scripts/optimize-images.mjs --no-sync
+
+# Only sync to R2 (e.g. after manual modifications)
+node scripts/optimize-images.mjs --sync-only
+
+# Force full re-processing (ignores manifest cache)
+node scripts/optimize-images.mjs --force
+
+# Scope limit: only process blog images or photography
+node scripts/optimize-images.mjs --scope blog
+node scripts/optimize-images.mjs --scope photography
 ```
 
 Features:
-- Auto-resize to 1080px width
-- PNG optimization with pngcrush
-- UUID naming to prevent conflicts
-- Output to `/public/.pic/`
+- **Intelligent Resizing**: Scales down extremely large images (max 2560px).
+- **Format Conversion**: In-place conversion to WebP out of the box.
+- **Incremental**: Maintains an image hash manifest (`.image-manifest.json`) meaning subsequent runs take less than a second.
+- **Cloudflare Integration**: Auto-syncs to Cloudflare R2.
+- **Automatic Fallback**: Markdown using `.jpg`/`.png` extensions gracefully resolves to the `.webp` versions natively.
 
 ### Dynamic Image Serving
 

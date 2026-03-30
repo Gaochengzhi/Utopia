@@ -42,4 +42,14 @@ config.local.js
 *.tsbuildinfo
 next-env.d.ts
 scripts/d1-seed.sql
+scripts/.content-manifest.json
+scripts/d1-seed-chunks/
 .wrangler/
+.open-next/
+
+# editor / tool artifacts
+.nvimlog
+.gemini/
+
+# image optimization state
+scripts/.image-manifest.json

@@ -1,5 +1,6 @@
 -- Utopia D1 Schema
 -- Generated for Cloudflare migration
+-- content_full removed: article markdown is stored in R2, not D1
 
 -- 文章表
 CREATE TABLE IF NOT EXISTS posts (
@@ -7,11 +8,11 @@ CREATE TABLE IF NOT EXISTS posts (
   slug TEXT UNIQUE NOT NULL,           -- 'post/Writings/car.md'
   title TEXT NOT NULL,
   category TEXT,                        -- 'Writings'
-  content_preview TEXT,                 -- 构建时截断前 1500 字符
-  content_plain TEXT,                   -- 纯文本（FTS 索引用）
-  content_full TEXT,                    -- 完整 markdown（B档受保护文章此字段为空）
+  content_preview TEXT,                 -- 构建时截断前 1500 字符（列表页用）
+  content_plain TEXT,                   -- 纯文本，上限 50KB（FTS 索引用）
   first_image TEXT,                     -- 第一张图片 URL
   is_protected BOOLEAN DEFAULT 0,
+  content_hash TEXT,                    -- SHA256 hash (前16位) 用于增量更新判断
   created_at INTEGER,                   -- 文件创建时间戳 (ms)
   updated_at INTEGER,
   path TEXT NOT NULL                    -- 前端路由路径 '/<slug>'

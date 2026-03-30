@@ -1,36 +1,31 @@
-import { cataList } from "/components/photo/cataList"
-import { getCategoryList } from "/components/util/getCategoryList"
 import { Footer } from "/components/footer"
 import { Pnav } from "/components/photo/Pnav"
 import { Walls } from "/components/photo/Wall"
 import { useEffect, useState } from "react"
 import { firstUpperCase } from "/components/util/treeSort"
+import { getCfEnv } from "/lib/cfContext"
 
-const IMAGE_SERVER_URL = '/.pic/'
+// Photography images use /photography/content/... paths with rewrites
+// Thumbnails use /photography/thumb/content/... and full uses /photography/full/content/...
 
 export default function Wall({ title, categories }) {
     const [paths, setPaths] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
 
-    // 动态获取最新图片列表
     const loadImages = async () => {
         try {
             setLoading(true)
             setError(null)
 
-            // 将slug映射到实际的目录名
             const actualTitle = firstUpperCase(title)
             const response = await fetch(`/api/photography/${actualTitle}`)
             const data = await response.json()
 
             if (data.success && data.images) {
-                // 处理图片路径，根据环境配置替换
-                const processedImages = data.images.map(item => ({
-                    ...item,
-                    path: item.path.replace(/^\/photography\//, IMAGE_SERVER_URL)
-                }))
-                setPaths(processedImages)
+                // Keep /photography/content/... paths as-is
+                // Rewrite rules handle serving from R2/local
+                setPaths(data.images)
             } else {
                 setError(data.error || 'Failed to load images')
             }
@@ -43,12 +38,11 @@ export default function Wall({ title, categories }) {
     }
 
     useEffect(() => {
-        // 加载图片
         if (title) {
             loadImages()
         }
     }, [title])
-    // 加载状态
+
     if (loading) {
         return (
             <div className="bg-black min-h-screen flex items-center justify-center">
@@ -57,7 +51,6 @@ export default function Wall({ title, categories }) {
         )
     }
 
-    // 错误状态
     if (error) {
         return (
             <div className="bg-black min-h-screen flex items-center justify-center">
@@ -72,7 +65,7 @@ export default function Wall({ title, categories }) {
             <div className="w-full px-4">
                 {paths && paths.length > 0 && (
                     <img
-                        src={paths[0].path.replace(IMAGE_SERVER_URL, IMAGE_SERVER_URL + 'full/')}
+                        src={paths[0].path.replace('/photography/content/', '/photography/full/content/')}
                         alt=""
                         className="md:max-h-[60vh] max-h-[40vh]  w-[97%] object-cover mx-auto"
                     />
@@ -91,40 +84,62 @@ export default function Wall({ title, categories }) {
 }
 
 export async function getStaticPaths() {
-    // 使用动态分类生成路径
-    const categories = getCategoryList()
-    const categoryData = categories.length > 0 ? categories : cataList
+    let categoryPaths = []
+
+    try {
+        const env = await getCfEnv()
+        const db = env?.DB
+
+        if (db) {
+            const { results } = await db.prepare(
+                'SELECT DISTINCT category FROM photos ORDER BY category'
+            ).all()
+
+            categoryPaths = (results || []).map(row => ({
+                params: { slug: row.category.toLowerCase() }
+            }))
+        }
+    } catch (e) {
+        console.error('getStaticPaths failed:', e.message)
+    }
 
     return {
-        paths: categoryData.map((i) => ({
-            params: {
-                slug: i.title.toLowerCase(),
-            },
-        })),
-        fallback: 'blocking', // 支持新增分类的动态生成
+        paths: categoryPaths,
+        fallback: 'blocking',
     }
 }
 
 export async function getStaticProps({ params: { slug } }) {
-    // 获取动态分类列表
-    const categories = getCategoryList()
+    let categories = []
 
-    // 验证分类是否存在
-    const categoryExists = categories.find(cat =>
-        cat.title.toLowerCase() === slug.toLowerCase()
-    )
+    try {
+        const env = await getCfEnv()
+        const db = env?.DB
 
-    if (!categoryExists) {
-        return {
-            notFound: true
+        if (db) {
+            const { results: catRows } = await db.prepare(
+                'SELECT DISTINCT category FROM photos ORDER BY category'
+            ).all()
+
+            categories = (catRows || []).map((row, index) => ({
+                index: index.toString(),
+                title: row.category.toLowerCase(),
+                url: `/photographer/${row.category.toLowerCase()}`,
+                coverImage: `/photography/cata/${row.category}.jpg`,
+            }))
+
+            // Verify this category exists
+            const exists = categories.find(c => c.title === slug.toLowerCase())
+            if (!exists) return { notFound: true }
         }
+    } catch (e) {
+        console.error('getStaticProps failed:', e.message)
     }
 
     return {
         props: {
             title: slug,
             categories,
-        }, // 图片列表通过客户端动态加载，不在这里返回
-        revalidate: 1, // 1秒，快速响应新文件夹
+        },
     }
 }

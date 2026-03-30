@@ -6,14 +6,11 @@ import Navbar from "/components/Navbar"
 import MarkdownArticle from "/components/MarkdownArticle"
 import FolderView from "/components/FolderView"
 import PageView from "/components/PageView"
-import fs from "fs"
-import path from "path"
-import matter from "gray-matter"
 import Head from "next/head"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/router"
 import { obseverImg } from "/components/util/handleErrorPic"
-import { normalizeImagePath } from "/components/util/imageUtils"
+import { getCfEnv } from "/lib/cfContext"
 
 // Custom loading spinner to replace antd Spin
 const LoadingSpinner = () => (
@@ -28,11 +25,11 @@ export default function Post({ contents, filename, status, folderContents, folde
     const [path, setPath] = useState({})
     const [isAuthenticated, setIsAuthenticated] = useState(false)
     const [checking, setChecking] = useState(true)
+    const [dynamicContent, setDynamicContent] = useState(null)
 
     useEffect(() => {
         // Check authentication for protected content
         if (isProtected) {
-            // Check if user has valid auth cookie
             const checkAuth = async () => {
                 try {
                     const response = await fetch('/api/auth/check-diary')
@@ -41,13 +38,26 @@ export default function Post({ contents, filename, status, folderContents, folde
                     if (data.authenticated) {
                         setIsAuthenticated(true)
                         setChecking(false)
+
+                        // B-plan: fetch the real content for protected articles
+                        try {
+                            const contentRes = await fetch(
+                                `/api/posts/protected/${encodeURIComponent(folderPath + '/' + filename)}`
+                            )
+                            if (contentRes.ok) {
+                                const contentData = await contentRes.json()
+                                if (contentData.content) {
+                                    setDynamicContent(contentData.content)
+                                }
+                            }
+                        } catch (e) {
+                            console.error('Failed to fetch protected content:', e)
+                        }
                     } else {
-                        // Redirect to auth page
                         const returnUrl = encodeURIComponent(router.asPath)
                         router.push(`/auth/diary?return=${returnUrl}`)
                     }
                 } catch (error) {
-                    // If check fails, redirect to auth page
                     const returnUrl = encodeURIComponent(router.asPath)
                     router.push(`/auth/diary?return=${returnUrl}`)
                 }
@@ -60,15 +70,12 @@ export default function Post({ contents, filename, status, folderContents, folde
     }, [isProtected, router])
 
     useEffect(() => {
-        // Skip if page is still being generated
         if (router.isFallback) return
 
-        // Try to get paths from localStorage first
         const cachedPaths = localStorage.getItem("paths")
         if (cachedPaths) {
             setPath(JSON.parse(cachedPaths))
         } else {
-            // If no cached data, fetch from API
             fetch('/api/paths')
                 .then(res => res.json())
                 .then(data => {
@@ -83,25 +90,24 @@ export default function Post({ contents, filename, status, folderContents, folde
         obseverImg(document.body)
     }, [router.isFallback])
 
-    // Show loading spinner when page is being generated or checking auth
     if (router.isFallback || (isProtected && checking)) {
         return <LoadingSpinner />
     }
 
-    // Don't render protected content if not authenticated
     if (isProtected && !isAuthenticated) {
         return <LoadingSpinner />
     }
+
+    // Use dynamic content (from protected API) if available, otherwise static props content
+    const displayContent = dynamicContent || contents
+
     return (
         <>
             {status === "md" ? (
                 <>
                     <Head>
                         <title>{filename}</title>
-                        <meta
-                            name="viewport"
-                            content="initial-scale=1.0, width=device-width"
-                        />
+                        <meta name="viewport" content="initial-scale=1.0, width=device-width" />
                     </Head>
                     <Navbar folderPath={folderPath} />
                     <div className="main lg:flex lg:mr-9 w-screen bg-white dark:bg-gray-900">
@@ -113,11 +119,11 @@ export default function Post({ contents, filename, status, folderContents, folde
                             <></>
                         )}
                         <div className="hidden lg:flex mr-3 navbar ">
-                            <Toc />
+                            <Toc content={displayContent} />
                         </div>
                         <div className="flex-1 max-w-4xl mx-auto">
                             <div className="lg:flex flex-col items-center justify-center text-3xl mt-10"></div>
-                            <MarkdownArticle content={contents} />
+                            <MarkdownArticle content={displayContent} />
                             <PageView slug={folderPath + '/' + filename} />
                             <div className="pb-10">
                                 <Footer />
@@ -137,10 +143,7 @@ export default function Post({ contents, filename, status, folderContents, folde
                 <>
                     <Head>
                         <title>{folderPath}</title>
-                        <meta
-                            name="viewport"
-                            content="initial-scale=1.0, width=device-width"
-                        />
+                        <meta name="viewport" content="initial-scale=1.0, width=device-width" />
                     </Head>
                     <Navbar folderPath={folderPath} />
                     <div className="main lg:flex lg:mr-9 w-screen bg-white dark:bg-gray-900">
@@ -155,21 +158,56 @@ export default function Post({ contents, filename, status, folderContents, folde
 }
 
 export async function getStaticPaths() {
-    // Don't pre-build any pages at build time
-    // Pages will be generated on-demand and cached with ISR (revalidate: 1)
+    let allPaths = []
+
+    try {
+        const env = await getCfEnv()
+        const db = env?.DB
+
+        if (db) {
+            // Get all post slugs for pre-rendering
+            const { results: posts } = await db.prepare(
+                'SELECT slug FROM posts'
+            ).all()
+
+            if (posts) {
+                for (const post of posts) {
+                    allPaths.push({
+                        params: { slug: post.slug.split('/') }
+                    })
+                }
+            }
+
+            // Get all folder paths (using distinct parent paths from path_tree)
+            const { results: folders } = await db.prepare(
+                "SELECT DISTINCT path FROM path_tree WHERE type = 'folder'"
+            ).all()
+
+            if (folders) {
+                for (const folder of folders) {
+                    allPaths.push({
+                        params: { slug: folder.path.split('/') }
+                    })
+                }
+            }
+        }
+    } catch (e) {
+        console.warn('getStaticPaths D1 fallback:', e.message)
+        // Fallback: don't pre-build, generate on demand
+    }
+
     return {
-        paths: [],
-        fallback: true,
+        paths: allPaths,
+        fallback: 'blocking',
     }
 }
 
 export const getStaticProps = async ({ params: { slug } }) => {
-    // Early return for missing or invalid slug
     if (!slug || !Array.isArray(slug) || slug.length === 0) {
         return { notFound: true }
     }
 
-    // Security: Block suspicious paths (common scanner targets)
+    // Security: Block suspicious paths
     const suspiciousPatterns = [
         /\.php$/i, /\.asp$/i, /\.aspx$/i, /\.jsp$/i, /\.cgi$/i,
         /wp-/i, /wordpress/i, /xmlrpc/i, /phpmyadmin/i,
@@ -182,106 +220,80 @@ export const getStaticProps = async ({ params: { slug } }) => {
         return { notFound: true }
     }
 
-    // Security: Ensure path stays within allowed directories
     if (!fullPath.startsWith('post/') && !fullPath.startsWith('post')) {
         return { notFound: true }
     }
 
-    let reg = /(?:\.([^.]+))?$/
     const folderPath = slug.join("/")
+    const reg = /(?:\.([^.]+))?$/
 
-    if (reg.exec(slug[slug.length - 1])[1] != "md") {
-        // Check if path exists and is a directory
-        try {
-            const fullPath = path.join(process.cwd(), folderPath)
-            const stats = fs.statSync(fullPath)
+    // Check if it's a markdown file
+    if (reg.exec(slug[slug.length - 1])[1] === "md") {
+        // It's a markdown article — data comes exclusively from D1 + R2
+        const env = await getCfEnv()
+        const db = env?.DB
+        if (!db) throw new Error('D1 database not available')
 
-            if (stats.isDirectory()) {
-                // Read directory contents
-                const items = fs.readdirSync(fullPath)
-                const folderContents = items
-                    .filter(item => !item.startsWith('.')) // Filter out hidden files
-                    .map(item => {
-                        const itemPath = path.join(fullPath, item)
-                        const itemStats = fs.statSync(itemPath)
-                        const isFolder = itemStats.isDirectory()
+        const post = await db.prepare(
+            'SELECT slug, title, category, is_protected, created_at, updated_at, path FROM posts WHERE slug = ?'
+        ).bind(folderPath).first()
 
-                        return {
-                            name: item.replace('.md', ''),
-                            path: `/${folderPath}/${item}`,
-                            isFolder: isFolder
-                        }
-                    })
-                    .sort((a, b) => {
-                        // Folders first, then files, alphabetically
-                        if (a.isFolder && !b.isFolder) return -1
-                        if (!a.isFolder && b.isFolder) return 1
-                        return a.name.localeCompare(b.name)
-                    })
+        if (!post) return { notFound: true }
 
-                return {
-                    props: {
-                        status: "folder",
-                        folderPath: folderPath,
-                        folderContents: folderContents
-                    },
-                    revalidate: 1,
-                }
-            }
-        } catch (err) {
-            console.error('Error reading directory:', err)
-            // If path doesn't exist or error occurs, return 404
-            return {
-                notFound: true,
-            }
-        }
-    }
-
-    if (slug.slice(0, 2) == "api") {
-        return {
-            props: {
-                status: "api",
-            },
-        }
-    }
-
-    // Safely read markdown file with error handling
-    try {
-        const filePath = path.join(slug.join("/"))
-
-        // Check if file exists before reading
-        if (!fs.existsSync(filePath)) {
-            console.error('File not found:', filePath)
-            return {
-                notFound: true,
-            }
-        }
-
-        // Check if this is protected content
-        const { isProtectedPath } = require('/lib/auth')
-        const isProtected = isProtectedPath(filePath)
-
-        let rawMarkdown = fs.readFileSync(filePath).toString()
-        const normalizedMarkdown = normalizeImagePath(rawMarkdown)
-
-        const markDownWithoutYarm = matter(normalizedMarkdown)
         const filename = slug[slug.length - 1]
         const articleFolderPath = slug.slice(0, -1).join('/')
+
+        // Fetch full markdown from R2 (the single source of truth for article content)
+        const r2 = env?.IMAGES
+        if (!r2) throw new Error('R2 bucket not available')
+
+        const obj = await r2.get(post.slug)
+        if (!obj) throw new Error(`R2 object not found: ${post.slug}`)
+
+        const matter = require('gray-matter')
+        const { normalizeImagePath } = require('/components/util/imageUtils')
+        let content = normalizeImagePath(matter(await obj.text()).content)
+
+        // For protected articles, serve masked content (B-plan)
+        // Real content is fetched client-side after auth
+        if (post.is_protected) {
+            content = content.replace(/[^\s\n]/g, '*')
+        }
 
         return {
             props: {
                 filename,
-                contents: markDownWithoutYarm.content,
+                contents: content,
                 status: "md",
                 folderPath: articleFolderPath,
-                isProtected: isProtected || false,
+                isProtected: !!post.is_protected,
             },
-            revalidate: 1,
         }
-    } catch (err) {
-        console.error('Error reading markdown file:', err)
+
+    } else {
+        // It might be a folder — data comes exclusively from D1
+        const env = await getCfEnv()
+        const db = env?.DB
+        if (!db) throw new Error('D1 database not available')
+
+        const { results: children } = await db.prepare(
+            'SELECT * FROM path_tree WHERE parent_path = ? ORDER BY type DESC, title'
+        ).bind(folderPath).all()
+
+        if (!children || children.length === 0) return { notFound: true }
+
+        const folderContents = children.map(row => ({
+            name: row.title.replace('.md', ''),
+            path: `/${row.path}`,
+            isFolder: row.type === 'folder',
+        }))
+
         return {
-            notFound: true,
+            props: {
+                status: "folder",
+                folderPath,
+                folderContents,
+            },
         }
     }
 }

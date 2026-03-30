@@ -3,11 +3,9 @@ import { Walls } from "/components/photo/Wall"
 import { Banner } from "/components/photo/Banner"
 import { Pnav } from "/components/photo/Pnav"
 import { Footer } from "/components/footer"
-import { formateTime } from "/components/util/treeSort"
-import { readAllFile } from "/components/util/readAllfile"
-import { getCategoryList } from "/components/util/getCategoryList"
-export default function Index({ path, categories }) {
+import { getCfEnv } from "/lib/cfContext"
 
+export default function Index({ path, categories }) {
     return (
         <div className="bg-black min-h-screen">
             <Pnav select="index" categories={categories} />
@@ -59,19 +57,48 @@ export default function Index({ path, categories }) {
 }
 
 export const getStaticProps = async () => {
-    let infoArray = await readAllFile("public/photography", (i) =>
-        i.replace("public", "")
-    )
-    let picLists = infoArray.SortedInfoArray.slice(0, 50)
+    let picLists = []
+    let categories = []
 
-    // 动态获取分类列表
-    const categories = getCategoryList()
+    try {
+        const env = await getCfEnv()
+        const db = env?.DB
+
+        if (db) {
+            // Get latest 50 photos
+            const { results: photos } = await db.prepare(`
+                SELECT * FROM photos ORDER BY created_at DESC LIMIT 50
+            `).all()
+
+            picLists = (photos || []).map(row => ({
+                path: '/' + row.path,
+                title: row.filename,
+                isLeaf: true,
+                type: 'file',
+                key: String(Math.floor(Math.random() * 9e9)),
+                time: row.created_at,
+            }))
+
+            // Get categories
+            const { results: catRows } = await db.prepare(`
+                SELECT DISTINCT category FROM photos ORDER BY category
+            `).all()
+
+            categories = (catRows || []).map((row, index) => ({
+                index: index.toString(),
+                title: row.category.toLowerCase(),
+                url: `/photographer/${row.category.toLowerCase()}`,
+                coverImage: `/photography/cata/${row.category}.jpg`,
+            }))
+        }
+    } catch (e) {
+        console.error('photographer getStaticProps failed:', e.message)
+    }
 
     return {
         props: {
             path: picLists,
             categories,
         },
-        revalidate: 1,
     }
 }

@@ -3,10 +3,10 @@ import FileTree from "/components/main/FileTree"
 import FolderList from "/components/FolderList"
 import { Info } from "/components/Info"
 import SkillsTags from "/components/SkillsTags"
-import matter from "gray-matter"
 import Head from "next/head"
 import Navbar from "/components/Navbar"
 import { useEffect, useState } from "react"
+import { getCfEnv } from "/lib/cfContext"
 
 export default function Home({ paths, initialPosts, totalPosts, folders }) {
     const [posts, setPosts] = useState(initialPosts)
@@ -74,7 +74,6 @@ export default function Home({ paths, initialPosts, totalPosts, folders }) {
                     {/* 一级目录列表 */}
                     <FolderList folders={folders} />
 
-
                     {/* 瀑布流卡片 */}
                     <WaterfallCards
                         initialPosts={posts}
@@ -87,67 +86,99 @@ export default function Home({ paths, initialPosts, totalPosts, folders }) {
 }
 
 export const getStaticProps = async () => {
-    const fs = require('fs')
-    const path = require('path')
-    const { readAllFile } = require('/components/util/readAllfile')
-    const { normalizeImagePath } = require('/components/util/imageUtils')
-    const { isProtectedPath, maskContent } = require('/lib/auth')
+    // In Cloudflare environment, we use D1 via getCloudflareContext
+    // During build, the adapter provides access to bindings
+    let paths = {}
+    let initialPosts = []
+    let totalPosts = 0
+    let folders = []
 
-    let infoArray = await readAllFile("post", (i) => i)
+    try {
+        const env = await getCfEnv()
+        const db = env?.DB
 
-    // 按时间排序，最新的在前
-    const sortedPosts = infoArray.SortedInfoArray.sort((a, b) =>
-        new Date(b.time) - new Date(a.time)
-    )
+        if (db) {
+            // Get path tree
+            const { results: treeRows } = await db.prepare(
+                'SELECT * FROM path_tree ORDER BY path'
+            ).all()
 
-    // 只加载第一页数据 (前10篇文章)
-    const initialPosts = sortedPosts.slice(0, 10).map((o) => {
-        const fullpath = o.path
-        const rawMarkdown = fs.readFileSync(fullpath).toString()
-        const normalizedMarkdown = normalizeImagePath(rawMarkdown)
-        const markDownWithoutYarm = matter(normalizedMarkdown)
+            if (treeRows && treeRows.length > 0) {
+                // Rebuild tree structure (same as paths API)
+                const nodeMap = {}
+                const childrenMap = {}
 
-        // 增加预览内容长度以适应卡片显示
-        let content =
-            markDownWithoutYarm.content.length > 1500
-                ? markDownWithoutYarm.content.slice(0, 1500) + "..."
-                : markDownWithoutYarm.content
+                for (const row of treeRows) {
+                    const node = {
+                        title: row.title,
+                        path: row.path,
+                        key: row.node_key || String(Math.floor(Math.random() * 9e9)),
+                        isLeaf: !!row.is_leaf,
+                        type: row.type,
+                        time: row.created_at,
+                    }
+                    if (!row.is_leaf) node.children = []
+                    nodeMap[row.path] = node
 
-        // 如果是受保护的文章，标记为加密并遮罩内容
-        const isProtected = isProtectedPath(fullpath)
-        if (isProtected) {
-            content = maskContent(content)
-            o.isProtected = true
-        }
+                    const parentKey = row.parent_path || '__root__'
+                    if (!childrenMap[parentKey]) childrenMap[parentKey] = []
+                    childrenMap[parentKey].push(node)
+                }
 
-        o.content = content
-        return o
-    })
+                for (const [parentPath, children] of Object.entries(childrenMap)) {
+                    if (parentPath === '__root__') continue
+                    if (nodeMap[parentPath]) nodeMap[parentPath].children = children
+                }
 
-    // 读取 post 文件夹的一级子目录（只显示文件夹）
-    const postPath = path.join(process.cwd(), "post")
-    const items = fs.readdirSync(postPath)
-    const folders = items
-        .filter(item => !item.startsWith('.')) // 过滤隐藏文件
-        .map(item => {
-            const itemPath = path.join(postPath, item)
-            const itemStats = fs.statSync(itemPath)
-            return {
-                name: item,
-                path: `/post/${item}`,
-                isFolder: itemStats.isDirectory()
+                const roots = childrenMap['__root__'] || []
+                paths = roots.length === 1 ? roots[0] : {
+                    title: 'content', key: 'myrootkey', isLeaf: false,
+                    type: 'folder', children: roots,
+                }
             }
-        })
-        .filter(item => item.isFolder) // 只保留文件夹
-        .sort((a, b) => a.name.localeCompare(b.name)) // 按字母排序
+
+            // Get initial posts (first page)
+            const countResult = await db.prepare('SELECT COUNT(*) as total FROM posts').first()
+            totalPosts = countResult?.total || 0
+
+            const { results: postRows } = await db.prepare(`
+                SELECT slug, title, category, content_preview, first_image,
+                       is_protected, created_at, path
+                FROM posts
+                ORDER BY created_at DESC
+                LIMIT 10
+            `).all()
+
+            initialPosts = (postRows || []).map(row => ({
+                path: row.slug,
+                title: row.title,
+                time: row.created_at,
+                isLeaf: true,
+                type: 'file',
+                key: String(Math.floor(Math.random() * 9e9)),
+                content: row.is_protected ? '****' : (row.content_preview || ''),
+                isProtected: !!row.is_protected,
+                firstImage: row.first_image || null,
+            }))
+
+            // Get top-level folders from path_tree (preserves hierarchy)
+            const { results: folderRows } = await db.prepare(`
+                SELECT title, path, type FROM path_tree 
+                WHERE parent_path = 'post' AND type = 'folder'
+                ORDER BY title
+            `).all()
+
+            folders = (folderRows || []).map(row => ({
+                name: row.title,
+                path: `/${row.path}`,
+                isFolder: true,
+            }))
+        }
+    } catch (e) {
+        console.error('getStaticProps failed:', e.message)
+    }
 
     return {
-        props: {
-            paths: infoArray.InfoArray,
-            initialPosts,
-            totalPosts: sortedPosts.length,
-            folders,
-        },
-        revalidate: 1,
+        props: { paths, initialPosts, totalPosts, folders },
     }
 }

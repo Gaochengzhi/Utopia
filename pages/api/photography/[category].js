@@ -1,53 +1,55 @@
-import { readAllFile } from "/components/util/readAllfile"
+import { getDB } from '../../../lib/cfContext'
 
 export default async function handler(req, res) {
   try {
     const { category } = req.query
-    
+
     if (!category) {
       return res.status(400).json({ error: 'Category is required' })
     }
 
-    // 直接读取文件系统获取实际目录名
-    const fs = require('fs')
-    const path = require('path')
-    
-    const contentDir = path.join(process.cwd(), 'public/photography/content')
-    const directories = fs.readdirSync(contentDir, { withFileTypes: true })
-      .filter(dirent => dirent.isDirectory())
-      .map(dirent => dirent.name)
-    
-    // 找到与category匹配的实际目录名（不区分大小写）
-    const actualCategory = directories.find(dir => 
-      dir.toLowerCase() === category.toLowerCase()
-    )
-    
-    if (!actualCategory) {
+    const db = await getDB()
+    if (!db) {
+      return res.status(503).json({ error: 'Database not available' })
+    }
+
+    // Query photos from D1 (case-insensitive match)
+    const { results } = await db.prepare(`
+      SELECT * FROM photos 
+      WHERE LOWER(category) = LOWER(?) 
+      ORDER BY sort_order, filename
+    `).bind(category).all()
+
+    if (!results || results.length === 0) {
       return res.status(404).json({ error: 'Category not found' })
     }
 
-    // 实时扫描目录获取最新图片列表
-    let infoArray = await readAllFile(
-      "public/photography" + "/content/" + actualCategory,
-      (i) => i.replace("public", "")
-    )
-    
-    const images = infoArray.SortedInfoArray
+    // Get the actual category name from the first result
+    const actualCategory = results[0].category
 
-    // 设置缓存头，允许短时间缓存但经常检查更新
-    res.setHeader('Cache-Control', 'public, max-age=1, stale-while-revalidate=10')
-    
+    // Transform to match existing frontend contract
+    // The frontend expects: { success, category, images: [{path, title, ...}] }
+    const images = results.map(row => ({
+      path: '/' + row.path,  // e.g., '/photography/content/City/xxx.jpg'
+      title: row.filename,
+      isLeaf: true,
+      type: 'file',
+      key: String(Math.floor(Math.random() * 9e9)),
+      time: row.created_at,
+    }))
+
+    res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300')
+
     return res.status(200).json({
       success: true,
       category: actualCategory,
-      images: images
+      images,
     })
-    
   } catch (error) {
     console.error('Error fetching photography images:', error)
-    return res.status(500).json({ 
+    return res.status(500).json({
       error: 'Failed to fetch images',
-      details: error.message 
+      details: error.message,
     })
   }
 }

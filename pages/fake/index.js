@@ -1,6 +1,6 @@
 import { useEffect } from "react"
-import { readAllFile } from "/components/util/readAllfile"
 import Cookies from "js-cookie"
+
 export default function Index({ path }) {
     useEffect(() => {
         Cookies.set("refreshedP", "true", { expires: 1 })
@@ -14,21 +14,15 @@ export default function Index({ path }) {
         <div className="bg-white">
             {/* insert a picture /fake.jpg  */}
             <img src="/fake.jpg" alt="fake" className="w-full" />
-
         </div>
     )
 }
 
+// Simplified: removed useless readAllFile call (path prop was never used in component)
 export const getStaticProps = async () => {
-    let infoArray = await readAllFile("public/photography", (i) =>
-        i.replace("public", "")
-    )
-    let picLists = infoArray.SortedInfoArray.slice(0, 9)
-
     return {
         props: {
-            path: picLists,
+            path: [],
         },
-        revalidate: 1,
     }
 }

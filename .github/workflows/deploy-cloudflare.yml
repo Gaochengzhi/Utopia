@@ -1,0 +1,86 @@
+name: Deploy to Cloudflare
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build content index
+        run: node scripts/build-content-index.mjs
+
+      - name: Build Next.js
+        run: npm run build
+
+      # D1 database migrations (only on main branch push)
+      - name: Apply D1 schema
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          npx wrangler d1 execute utopia-db --file scripts/d1-schema.sql --remote
+          npx wrangler d1 execute utopia-db --file scripts/d1-seed.sql --remote
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      # Deploy to production (main branch push)
+      - name: Deploy to Production
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: npx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      # Deploy preview (PRs)
+      - name: Deploy Preview
+        if: github.event_name == 'pull_request'
+        run: npx wrangler deploy --env preview
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      # Health check after production deploy
+      - name: Health Check
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          echo "Waiting 15 seconds for deployment to propagate..."
+          sleep 15
+          echo "Checking health..."
+          
+          # Check main page
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" https://gaochengzhi.com/)
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "❌ Main page returned $HTTP_CODE"
+            exit 1
+          fi
+          echo "✅ Main page: $HTTP_CODE"
+          
+          # Check API
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "https://gaochengzhi.com/api/posts?page=1&limit=1")
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "❌ Posts API returned $HTTP_CODE"
+            exit 1
+          fi
+          echo "✅ Posts API: $HTTP_CODE"
+          
+          echo "🎉 All health checks passed!"

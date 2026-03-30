@@ -7,8 +7,6 @@ const CONTENT_TYPE_MAP = {
   '.gif': 'image/gif',
   '.webp': 'image/webp',
   '.svg': 'image/svg+xml',
-  '.bmp': 'image/bmp',
-  '.ico': 'image/x-icon',
 }
 
 function getContentType(filePath) {
@@ -16,19 +14,30 @@ function getContentType(filePath) {
   return CONTENT_TYPE_MAP[ext] || 'application/octet-stream'
 }
 
+/**
+ * Serves photography images from R2 (production) or local filesystem (dev).
+ * Rewrite: /photography/content/:path* → /api/photography-images/:path*
+ */
 export default async function handler(req, res) {
   try {
-    const { path: imagePath } = req.query
+    const { path: imgPath } = req.query
 
-    if (!imagePath || imagePath.length === 0) {
-      return res.status(400).json({ error: 'Image path is required' })
+    if (!imgPath || imgPath.length === 0) {
+      return res.status(400).json({ error: 'Path is required' })
     }
 
     // Build R2 key from path segments
-    // The rewrite sends /.pic/:path* → /api/images/:path*
-    let r2Key = '.pic/' + imagePath.join('/')
+    // Rewrite sends:
+    //   /photography/content/:path* → /api/photography-images/:path*
+    //   /photography/cata/:path* → /api/photography-images/cata/:path*
+    const joinedPath = imgPath.join('/')
+    let r2Key
+    if (joinedPath.startsWith('cata/')) {
+      r2Key = 'photography/' + joinedPath
+    } else {
+      r2Key = 'photography/content/' + joinedPath
+    }
 
-    // Security: block path traversal
     if (r2Key.includes('..') || r2Key.includes('//')) {
       return res.status(403).json({ error: 'Access denied' })
     }
@@ -52,34 +61,23 @@ export default async function handler(req, res) {
         const contentType = getContentType(r2Key)
         res.setHeader('Content-Type', contentType)
         res.setHeader('Cache-Control', 'public, max-age=86400')
-        res.setHeader('Referrer-Policy', 'no-referrer')
         res.setHeader('Access-Control-Allow-Origin', '*')
-        if (object.httpEtag) {
-          res.setHeader('ETag', object.httpEtag)
-        }
+        if (object.httpEtag) res.setHeader('ETag', object.httpEtag)
         const arrayBuffer = await object.arrayBuffer()
         return res.send(Buffer.from(arrayBuffer))
       }
     }
 
-    // Fallback: read from local filesystem (dev mode)
+    // Fallback: local filesystem (dev mode)
     try {
       const fs = require('fs')
-      const path = require('path')
-      
-      // Try project root first, then public/ directory
-      let localPath = path.join(process.cwd(), r2Key)
-      if (!fs.existsSync(localPath)) {
-        localPath = path.join(process.cwd(), 'public', r2Key)
-      }
+      // Try local filesystem fallback
+      let localPath = path.join(process.cwd(), 'public', r2Key)
 
-      // Fallback to .webp locally
+      // Fallback to .webp
       if (!fs.existsSync(localPath) && !r2Key.toLowerCase().endsWith('.webp')) {
         const webpKey = r2Key.replace(/\.(jpe?g|png|gif|bmp)$/i, '.webp')
-        let webpLocalPath = path.join(process.cwd(), webpKey)
-        if (!fs.existsSync(webpLocalPath)) {
-          webpLocalPath = path.join(process.cwd(), 'public', webpKey)
-        }
+        const webpLocalPath = path.join(process.cwd(), 'public', webpKey)
         if (fs.existsSync(webpLocalPath)) {
           localPath = webpLocalPath
           r2Key = webpKey
@@ -98,13 +96,11 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: 'Image not found' })
     }
   } catch (error) {
-    console.error('Error serving image:', error)
+    console.error('Error serving photography image:', error)
     res.status(500).json({ error: 'Internal server error' })
   }
 }
 
 export const config = {
-  api: {
-    responseLimit: '10mb',
-  },
+  api: { responseLimit: '10mb' },
 }

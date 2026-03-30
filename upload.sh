@@ -1,242 +1,267 @@
 #!/bin/bash
+# ============================================
+# upload.sh — Cloudflare 内容同步脚本
+# ============================================
+#
+# 功能: 将本地文章和图片同步到 Cloudflare (R2 + D1)
+#       以本地为准，远端多余的文件会被删除
+#       自动跳过未更改的文件
+#
+# 用法:
+#   ./upload.sh                    # 同步所有内容 (文章 + 图片)
+#   ./upload.sh --articles-only    # 只同步文章
+#   ./upload.sh --images-only      # 只同步图片
+#   ./upload.sh --full             # 全量重建 D1 (跳过增量，重新 seed)
+#   ./upload.sh --dry-run          # 预览模式，不做任何修改
+#   ./upload.sh --skip-images      # 跳过图片优化和同步
+#   ./upload.sh --skip-d1          # 跳过 D1 数据库更新
+#
+# 架构:
+#   ┌─────────────────── 并行执行 ───────────────────┐
+#   │  Images:   optimize-images.mjs → R2             │
+#   │  Articles: sync-r2.mjs --dir post → R2          │
+#   │  Index:    build-content-index.mjs → SQL         │
+#   └────────────────────────────────────────────────┘
+#                         ↓ 全部完成后
+#          D1:   d1-seed-remote.sh → D1 数据库
+#
 
-# 从config.local.js读取服务器配置
-SERVER_IP="74.48.115.131"
-REMOTE_USER="kounarushi"
-REMOTE_PATH="~/web/"
+set -e
 
-# SSH连接选项 - 增加超时时间和重试机制
-SSH_OPTS="-p 22 -o ConnectTimeout=30 -o ServerAliveInterval=60 -o ServerAliveCountMax=3 -o TCPKeepAlive=yes -o Compression=yes"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/.." 2>/dev/null && pwd || cd "$SCRIPT_DIR" && pwd)"
 
-# 需要同步的目录和文件
-SYNC_ITEMS=(
-    "post"
-    "public"
-    "pages"
-    "lib"
-    "components"
-    "contexts"
-    "styles"
-    "next.config.js"
-    "config.local.js"
-    "tailwind.config.js"
-    ".env.local"
-)
-
-# 自动检测系统配置
-AUTO_CONCURRENT=$(nproc 2>/dev/null || echo "4")
-if [ $AUTO_CONCURRENT -gt 8 ]; then
-    MAX_CONCURRENT=8
-elif [ $AUTO_CONCURRENT -lt 2 ]; then
-    MAX_CONCURRENT=2
-else
-    MAX_CONCURRENT=$AUTO_CONCURRENT
+# 如果 SCRIPT_DIR 就是项目根目录 (脚本在根目录)
+if [ -f "$SCRIPT_DIR/package.json" ]; then
+  PROJECT_DIR="$SCRIPT_DIR"
 fi
 
-# 全局变量
-PIDS=()
-ITEMS_STATUS=()
+cd "$PROJECT_DIR"
+
+# ============================================
+# 参数解析
+# ============================================
+ARTICLES_ONLY=false
+IMAGES_ONLY=false
+FULL_REBUILD=false
+DRY_RUN=false
+SKIP_IMAGES=false
+SKIP_D1=false
+
+for arg in "$@"; do
+  case "$arg" in
+    --articles-only) ARTICLES_ONLY=true ;;
+    --images-only)   IMAGES_ONLY=true ;;
+    --full)          FULL_REBUILD=true ;;
+    --dry-run)       DRY_RUN=true ;;
+    --skip-images)   SKIP_IMAGES=true ;;
+    --skip-d1)       SKIP_D1=true ;;
+    *)
+      echo "⚠️  Unknown option: $arg"
+      echo "Usage: ./upload.sh [--articles-only|--images-only|--full|--dry-run|--skip-images|--skip-d1]"
+      exit 1
+      ;;
+  esac
+done
+
+# ============================================
+# 颜色输出
+# ============================================
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+step()    { echo -e "${BLUE}━━━ 🚀 $1${NC}"; }
+success() { echo -e "${GREEN}✅ $1${NC}"; }
+skip_msg(){ echo -e "${YELLOW}⏭️  $1${NC}"; }
+error()   { echo -e "${RED}❌ $1${NC}"; }
+info()    { echo -e "${CYAN}ℹ️  $1${NC}"; }
+
+# ============================================
+# 临时日志目录 (用于并行任务输出)
+# ============================================
+LOG_DIR=$(mktemp -d)
+trap 'rm -rf "$LOG_DIR"' EXIT
+
+# ============================================
+# 开始
+# ============================================
 START_TIME=$(date +%s)
 
-echo "🚀 开始智能异步同步到服务器: $SERVER_IP"
-echo "📊 自动检测并发数: $MAX_CONCURRENT"
+echo ""
+echo -e "${BLUE}╔══════════════════════════════════════════╗${NC}"
+echo -e "${BLUE}║     📤 Cloudflare Content Sync           ║${NC}"
+echo -e "${BLUE}╚══════════════════════════════════════════╝${NC}"
+echo ""
 
-# 测试连接速度并自动调整超时
-test_connection() {
-    echo "🔍 测试服务器连接..."
-    local test_start=$(date +%s)
+if [ "$DRY_RUN" = true ]; then
+  info "DRY RUN — 不会做任何实际修改"
+  DRY_FLAG="--dry-run"
+else
+  DRY_FLAG=""
+fi
 
-    if ssh $SSH_OPTS "$REMOTE_USER@$SERVER_IP" "echo 'connection test'" >/dev/null 2>&1; then
-        local test_end=$(date +%s)
-        local connection_time=$((test_end - test_start))
+if [ "$ARTICLES_ONLY" = true ]; then
+  info "Mode: 仅同步文章"
+elif [ "$IMAGES_ONLY" = true ]; then
+  info "Mode: 仅同步图片"
+else
+  info "Mode: 同步所有内容 (并行)"
+fi
 
-        if [ $connection_time -gt 5 ]; then
-            SSH_OPTS="-p 22 -o ConnectTimeout=90 -o ServerAliveInterval=120 -o ServerAliveCountMax=5 -o TCPKeepAlive=yes -o Compression=yes"
-            echo "⚠️  网络较慢，已自动调整超时设置"
-        else
-            echo "✅ 网络连接良好"
-        fi
-        return 0
-    else
-        echo "❌ 无法连接到服务器"
-        exit 1
+echo ""
+
+# ============================================
+# 并行任务定义
+# ============================================
+PIDS=()
+TASK_NAMES=()
+
+# --- Task A: 图片优化 + 同步到 R2 ---
+run_images() {
+  if [ "$ARTICLES_ONLY" = true ] || [ "$SKIP_IMAGES" = true ]; then
+    echo "[SKIP] 图片处理" > "$LOG_DIR/images.log"
+    return 0
+  fi
+  {
+    echo "━━━ 🖼️  图片优化 + R2 同步"
+    node scripts/optimize-images.mjs $DRY_FLAG 2>&1
+  } > "$LOG_DIR/images.log" 2>&1
+}
+
+# --- Task B: 同步文章 Markdown 到 R2 ---
+run_articles_r2() {
+  if [ "$IMAGES_ONLY" = true ]; then
+    echo "[SKIP] 文章 R2 同步" > "$LOG_DIR/articles_r2.log"
+    return 0
+  fi
+  {
+    echo "━━━ 📄 文章 R2 同步"
+    R2_ARGS="--dir post --delete"
+    if [ "$DRY_RUN" = true ]; then
+      R2_ARGS="$R2_ARGS --dry-run"
     fi
+    node scripts/sync-r2.mjs $R2_ARGS 2>&1
+  } > "$LOG_DIR/articles_r2.log" 2>&1
 }
 
-# 智能选择rsync选项
-get_rsync_opts() {
-    local item="$1"
-    local base_opts="--timeout=600 --delete --compress --partial --inplace"
-
-    # Exclude server-side generated files
-    local exclude_opts="--exclude=pageviews.json"
-
-    # 根据文件类型自动优化
-    if [[ "$item" == *.js ]] || [[ "$item" == *.json ]] || [[ "$item" == *.css ]]; then
-        echo "-av $base_opts $exclude_opts --compress-level=9"
-    elif [[ "$item" == "public" ]] || [[ "$item" == "post" ]]; then
-        # 静态资源，可能包含图片等，适度压缩
-        echo "-avt $base_opts $exclude_opts --compress-level=6"
-    else
-        # 代码文件，高压缩比
-        echo "-avt $base_opts $exclude_opts --compress-level=9"
+# --- Task C: 构建文章索引 ---
+run_build_index() {
+  if [ "$IMAGES_ONLY" = true ] || [ "$SKIP_D1" = true ]; then
+    echo "[SKIP] 文章索引构建" > "$LOG_DIR/build_index.log"
+    return 0
+  fi
+  {
+    echo "━━━ 📝 构建文章索引"
+    BUILD_ARGS=""
+    if [ "$FULL_REBUILD" = false ]; then
+      BUILD_ARGS="--incremental"
     fi
-}
-
-# 异步同步函数
-async_sync() {
-    local item="$1"
-    local index="$2"
-
-    local rsync_opts=$(get_rsync_opts "$item")
-    local temp_log="/tmp/sync_${item//\//_}_$$.log"
-
-    {
-        echo "[$(date '+%H:%M:%S')] [$index] 开始同步: $item"
-
-        if rsync -e "ssh $SSH_OPTS" $rsync_opts "$item" "$REMOTE_USER@$SERVER_IP:$REMOTE_PATH" 2>&1; then
-            echo "[$(date '+%H:%M:%S')] [$index] ✅ $item 同步成功"
-            echo "SUCCESS:$index:$item" >>"$temp_log"
-        else
-            echo "[$(date '+%H:%M:%S')] [$index] ❌ $item 同步失败"
-            echo "FAILED:$index:$item" >>"$temp_log"
-        fi
-    } &
-
-    local pid=$!
-    echo $pid # 返回PID
-}
-
-# 智能进度显示
-show_progress() {
-    local completed=0
-    local total=${#SYNC_ITEMS[@]}
-
-    while [ $completed -lt $total ]; do
-        sleep 2
-        completed=0
-
-        for pid in "${PIDS[@]}"; do
-            if ! kill -0 "$pid" 2>/dev/null; then
-                ((completed++))
-            fi
-        done
-
-        local progress=$((completed * 100 / total))
-        printf "\r📈 进度: %d/%d (%d%%) " $completed $total $progress
-    done
-    echo
-}
-
-# 主执行流程
-main() {
-    # 测试连接
-    test_connection
-
-    # 启动所有异步任务
-    echo "🔄 启动异步同步任务..."
-    local index=1
-
-    for item in "${SYNC_ITEMS[@]}"; do
-        # 检查文件/目录是否存在
-        if [ ! -e "$item" ]; then
-            echo "⚠️  跳过不存在的项目: $item"
-            continue
-        fi
-
-        local pid=$(async_sync "$item" "$index")
-        PIDS+=($pid)
-        ITEMS_STATUS+=("$index:$item:RUNNING")
-
-        echo "🚀 已启动: $item (PID: $pid)"
-        ((index++))
-
-        # 控制并发数
-        if [ ${#PIDS[@]} -ge $MAX_CONCURRENT ]; then
-            echo "⏳ 等待部分任务完成..."
-            # 等待第一个进程完成
-            if [ ${#PIDS[@]} -gt 0 ] && [ -n "${PIDS[0]}" ]; then
-                wait ${PIDS[0]} 2>/dev/null || true
-                # 移除已完成的进程ID
-                PIDS=("${PIDS[@]:1}")
-            fi
-        fi
-    done
-
-    # 显示进度
-    show_progress &
-    local progress_pid=$!
-
-    # 等待所有任务完成
-    echo "⏳ 等待所有同步任务完成..."
-    for pid in "${PIDS[@]}"; do
-        if [ -n "$pid" ]; then
-            wait "$pid" 2>/dev/null || true
-        fi
-    done
-
-    # 停止进度显示
-    kill $progress_pid 2>/dev/null || true
-
-    # 收集结果
-    local success_count=0
-    local failed_count=0
-    local failed_items=()
-
-    for log_file in /tmp/sync_*_$$.log; do
-        if [ -f "$log_file" ]; then
-            while IFS=':' read -r status index item; do
-                if [ "$status" = "SUCCESS" ]; then
-                    ((success_count++))
-                else
-                    ((failed_count++))
-                    failed_items+=("$item")
-                fi
-            done <"$log_file"
-            rm -f "$log_file"
-        fi
-    done
-
-    # 显示最终结果
-    local end_time=$(date +%s)
-    local duration=$((end_time - start_time))
-
-    echo
-    echo "🎯 同步完成报告"
-    echo "=========================="
-    echo "⏱️  总耗时: ${duration}秒"
-    echo "📊 总任务: ${#SYNC_ITEMS[@]}"
-    echo "✅ 成功: $success_count"
-    echo "❌ 失败: $failed_count"
-
-    if [ $failed_count -gt 0 ]; then
-        echo "失败项目:"
-        for item in "${failed_items[@]}"; do
-            echo "  - $item"
-        done
-        echo
-        echo "💡 建议: 检查网络连接或手动重试失败的项目"
-        exit 1
-    else
-        echo "🎉 所有文件同步成功!"
-        echo "🌐 网站已更新: http://$SERVER_IP"
+    if [ "$DRY_RUN" = true ]; then
+      BUILD_ARGS="$BUILD_ARGS --dry-run"
     fi
+    node scripts/build-content-index.mjs $BUILD_ARGS 2>&1
+  } > "$LOG_DIR/build_index.log" 2>&1
 }
 
-# 信号处理 - 优雅退出
-cleanup() {
-    echo
-    echo "🛑 收到中断信号，正在清理..."
-    for pid in "${PIDS[@]}"; do
-        if [ -n "$pid" ]; then
-            kill "$pid" 2>/dev/null || true
-        fi
-    done
-    rm -f /tmp/sync_*_$$.log
-    exit 130
-}
+# ============================================
+# 启动并行任务
+# ============================================
+step "启动并行任务..."
+echo ""
 
-trap cleanup INT TERM
+run_images &
+PIDS+=($!)
+TASK_NAMES+=("🖼️  图片优化+R2")
 
-# 运行主程序
-main
+run_articles_r2 &
+PIDS+=($!)
+TASK_NAMES+=("📄 文章R2同步")
+
+run_build_index &
+PIDS+=($!)
+TASK_NAMES+=("📝 文章索引构建")
+
+info "已启动 ${#PIDS[@]} 个并行任务，等待完成..."
+echo ""
+
+# ============================================
+# 等待所有并行任务完成
+# ============================================
+FAILED=0
+for i in "${!PIDS[@]}"; do
+  pid=${PIDS[$i]}
+  name=${TASK_NAMES[$i]}
+  if wait "$pid"; then
+    success "$name 完成"
+  else
+    error "$name 失败"
+    FAILED=$((FAILED + 1))
+  fi
+done
+
+echo ""
+
+# 输出各任务的详细日志
+for logfile in "$LOG_DIR"/*.log; do
+  [ -f "$logfile" ] || continue
+  content=$(cat "$logfile")
+  # 跳过只有 [SKIP] 的日志
+  if echo "$content" | grep -q "^\[SKIP\]"; then
+    taskname=$(echo "$content" | sed 's/\[SKIP\] //')
+    skip_msg "跳过: $taskname"
+    continue
+  fi
+  echo "$content"
+  echo ""
+done
+
+if [ "$FAILED" -gt 0 ]; then
+  error "有 $FAILED 个任务失败，中止"
+  exit 1
+fi
+
+# ============================================
+# 串行步骤: 上传 SQL 到 D1 (依赖 build_index 完成)
+# ============================================
+if [ "$IMAGES_ONLY" = false ] && [ "$SKIP_D1" = false ]; then
+  step "上传到 D1 数据库"
+  
+  SEED_FILE="scripts/d1-seed.sql"
+  if [ ! -f "$SEED_FILE" ]; then
+    skip_msg "没有找到 d1-seed.sql，跳过 D1 上传"
+  elif [ "$DRY_RUN" = true ]; then
+    SEED_SIZE=$(wc -c < "$SEED_FILE" | tr -d ' ')
+    info "DRY RUN: 会上传 $(( SEED_SIZE / 1024 )) KB 到 D1"
+  else
+    if bash scripts/d1-seed-remote.sh; then
+      success "D1 数据库更新完成"
+    else
+      error "D1 数据库更新失败"
+      exit 1
+    fi
+  fi
+  echo ""
+else
+  skip_msg "跳过 D1 数据库更新"
+  echo ""
+fi
+
+# ============================================
+# 完成报告
+# ============================================
+END_TIME=$(date +%s)
+DURATION=$((END_TIME - START_TIME))
+
+echo -e "${GREEN}╔══════════════════════════════════════════╗${NC}"
+echo -e "${GREEN}║     🎉 同步完成!                         ║${NC}"
+echo -e "${GREEN}╚══════════════════════════════════════════╝${NC}"
+echo ""
+echo -e "   ⏱️  耗时: ${DURATION}s"
+if [ "$DRY_RUN" = true ]; then
+  echo -e "   🔍 DRY RUN — 没有做任何修改"
+fi
+echo ""

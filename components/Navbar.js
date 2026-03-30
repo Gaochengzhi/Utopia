@@ -10,13 +10,11 @@ export default function Navbar({ paths, state, folderPath }) {
       {folderPath ? (
         <Breadcrumb folderPath={folderPath} isNavbar={true} />
       ) : (
-        <Link href="/">
-          <a className="text-black dark:text-white linkable">
+        <Link href="/" className="text-black dark:text-white linkable">
             Utopi
             <div className="inline font-extrabold font-sans text-slate-400 dark:text-slate-500">
               a
             </div>
-          </a>
         </Link>
       )}
       {/* right side */}
