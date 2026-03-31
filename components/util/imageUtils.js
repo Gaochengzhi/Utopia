@@ -54,12 +54,3 @@ export function normalizeImageUrl(url) {
   return dedupePicPrefix(normalized)
 }
 
-/**
- * Process image path for photography pages
- * Maps internal paths to image server URLs
- */
-export function processPhotographyPath(path) {
-  if (!path) return path
-
-  return path.replace(/^\/photography\//, IMAGE_SERVER_URL)
-}

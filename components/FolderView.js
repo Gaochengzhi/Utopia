@@ -50,9 +50,18 @@ export default function FolderView({ folderPath, folderContents }) {
                             const relTime = formatRelativeTime(item.time)
                             return (
                                 <Link key={item.path} href={item.path}>
-                                    <div className="group cursor-pointer inline-flex items-center space-x-2 px-4 py-2.5 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md hover:scale-[1.02] hover:border-blue-400 dark:hover:border-blue-500 transition-all duration-300 ease-out">
-                                        <span className="text-base flex-shrink-0">📄</span>
-                                        <span className="text-base font-medium text-gray-700 dark:text-gray-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300 whitespace-nowrap">
+                                    <div className="group cursor-pointer inline-flex items-start space-x-2 px-4 py-2.5 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md hover:scale-[1.02] hover:border-blue-400 dark:hover:border-blue-500 transition-all duration-300 ease-out">
+                                        <span className="text-base flex-shrink-0 mt-0.5">📄</span>
+                                        <span
+                                            className="text-base font-medium text-gray-700 dark:text-gray-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300"
+                                            style={{
+                                                maxWidth: '19em',
+                                                overflow: 'hidden',
+                                                display: '-webkit-box',
+                                                WebkitBoxOrient: 'vertical',
+                                                WebkitLineClamp: 2,
+                                            }}
+                                        >
                                             {item.name}
                                         </span>
                                         {relTime && (

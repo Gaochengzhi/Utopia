@@ -93,10 +93,20 @@ error()   { echo -e "${RED}❌ $1${NC}"; }
 info()    { echo -e "${CYAN}ℹ️  $1${NC}"; }
 
 # ============================================
-# 临时日志目录 (用于并行任务输出)
+# 临时日志目录 (用于并行任务退出码)
 # ============================================
 LOG_DIR=$(mktemp -d)
 trap 'rm -rf "$LOG_DIR"' EXIT
+
+# stream_task <prefix> <color_code> <log_file> -- 将子进程输出实时加前缀打印
+# 用法: { some_command; } | stream_task "🖼️  图片" "$CYAN" "$LOG_DIR/images.log"
+stream_task() {
+  local prefix="$1"
+  local color="$2"
+  local logfile="$3"
+  awk -v p="$prefix" -v c="$color" -v r='\033[0m' \
+    '{ print c "[" p "]" r " " $0; fflush() }' | tee -a "$logfile"
+}
 
 # ============================================
 # 开始
@@ -134,49 +144,46 @@ TASK_NAMES=()
 
 # --- Task A: 图片优化 + 同步到 R2 ---
 run_images() {
+  set -o pipefail
   if [ "$ARTICLES_ONLY" = true ] || [ "$SKIP_IMAGES" = true ]; then
-    echo "[SKIP] 图片处理" > "$LOG_DIR/images.log"
-    return 0
+    skip_msg "跳过: 图片处理"
+    exit 0
   fi
-  {
-    echo "━━━ 🖼️  图片优化 + R2 同步"
-    node scripts/optimize-images.mjs $DRY_FLAG 2>&1
-  } > "$LOG_DIR/images.log" 2>&1
+  node scripts/optimize-images.mjs $DRY_FLAG 2>&1 \
+    | stream_task "🖼️ 图片" "$CYAN" "$LOG_DIR/images.log"
 }
 
 # --- Task B: 同步文章 Markdown 到 R2 ---
 run_articles_r2() {
+  set -o pipefail
   if [ "$IMAGES_ONLY" = true ]; then
-    echo "[SKIP] 文章 R2 同步" > "$LOG_DIR/articles_r2.log"
-    return 0
+    skip_msg "跳过: 文章 R2 同步"
+    exit 0
   fi
-  {
-    echo "━━━ 📄 文章 R2 同步"
-    R2_ARGS="--dir post --delete"
-    if [ "$DRY_RUN" = true ]; then
-      R2_ARGS="$R2_ARGS --dry-run"
-    fi
-    node scripts/sync-r2.mjs $R2_ARGS 2>&1
-  } > "$LOG_DIR/articles_r2.log" 2>&1
+  local R2_ARGS="--dir post --delete"
+  if [ "$DRY_RUN" = true ]; then
+    R2_ARGS="$R2_ARGS --dry-run"
+  fi
+  node scripts/sync-r2.mjs $R2_ARGS 2>&1 \
+    | stream_task "📄 文章" "$BLUE" "$LOG_DIR/articles_r2.log"
 }
 
 # --- Task C: 构建文章索引 ---
 run_build_index() {
+  set -o pipefail
   if [ "$IMAGES_ONLY" = true ] || [ "$SKIP_D1" = true ]; then
-    echo "[SKIP] 文章索引构建" > "$LOG_DIR/build_index.log"
-    return 0
+    skip_msg "跳过: 文章索引构建"
+    exit 0
   fi
-  {
-    echo "━━━ 📝 构建文章索引"
-    BUILD_ARGS=""
-    if [ "$FULL_REBUILD" = false ]; then
-      BUILD_ARGS="--incremental"
-    fi
-    if [ "$DRY_RUN" = true ]; then
-      BUILD_ARGS="$BUILD_ARGS --dry-run"
-    fi
-    node scripts/build-content-index.mjs $BUILD_ARGS 2>&1
-  } > "$LOG_DIR/build_index.log" 2>&1
+  local BUILD_ARGS=""
+  if [ "$FULL_REBUILD" = false ]; then
+    BUILD_ARGS="--incremental"
+  fi
+  if [ "$DRY_RUN" = true ]; then
+    BUILD_ARGS="$BUILD_ARGS --dry-run"
+  fi
+  node scripts/build-content-index.mjs $BUILD_ARGS 2>&1 \
+    | stream_task "📝 索引" "$YELLOW" "$LOG_DIR/build_index.log"
 }
 
 # ============================================
@@ -197,7 +204,7 @@ run_build_index &
 PIDS+=($!)
 TASK_NAMES+=("📝 文章索引构建")
 
-info "已启动 ${#PIDS[@]} 个并行任务，等待完成..."
+info "已启动 ${#PIDS[@]} 个并行任务，实时输出如下:"
 echo ""
 
 # ============================================
@@ -216,20 +223,6 @@ for i in "${!PIDS[@]}"; do
 done
 
 echo ""
-
-# 输出各任务的详细日志
-for logfile in "$LOG_DIR"/*.log; do
-  [ -f "$logfile" ] || continue
-  content=$(cat "$logfile")
-  # 跳过只有 [SKIP] 的日志
-  if echo "$content" | grep -q "^\[SKIP\]"; then
-    taskname=$(echo "$content" | sed 's/\[SKIP\] //')
-    skip_msg "跳过: $taskname"
-    continue
-  fi
-  echo "$content"
-  echo ""
-done
 
 if [ "$FAILED" -gt 0 ]; then
   error "有 $FAILED 个任务失败 (继续执行后续步骤)"

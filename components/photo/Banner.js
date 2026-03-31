@@ -17,26 +17,56 @@ function SimpleCarousel({ children, autoplaySpeed = 4000, onSlideChange }) {
     const [currentIndex, setCurrentIndex] = useState(0)
     const [isTransitioning, setIsTransitioning] = useState(false)
     const timerRef = useRef(null)
+    const touchStartX = useRef(null)
     const count = children.length
 
     const goTo = useCallback((index) => {
         if (isTransitioning) return
         setIsTransitioning(true)
-        setCurrentIndex(index)
-        onSlideChange?.(index)
+        const nextIndex = (index + count) % count
+        setCurrentIndex(nextIndex)
+        onSlideChange?.(nextIndex)
         setTimeout(() => setIsTransitioning(false), 500)
-    }, [isTransitioning, onSlideChange])
+    }, [isTransitioning, onSlideChange, count])
+
+    const next = useCallback(() => goTo(currentIndex + 1), [goTo, currentIndex])
+    const prev = useCallback(() => goTo(currentIndex - 1), [goTo, currentIndex])
 
     // Auto play
     useEffect(() => {
         timerRef.current = setInterval(() => {
-            goTo((currentIndex + 1) % count)
+            next()
         }, autoplaySpeed)
         return () => clearInterval(timerRef.current)
-    }, [currentIndex, count, autoplaySpeed, goTo])
+    }, [next, autoplaySpeed])
+
+    const handleTouchStart = (e) => {
+        touchStartX.current = e.touches[0].clientX
+    }
+
+    const handleTouchEnd = (e) => {
+        if (!touchStartX.current) return
+        
+        const touchEndX = e.changedTouches[0].clientX
+        const diffX = touchStartX.current - touchEndX
+        
+        // threshold for swipe
+        if (diffX > 50) {
+            next()
+        } else if (diffX < -50) {
+            prev()
+        }
+        
+        touchStartX.current = null
+    }
 
     return (
-        <div className="relative w-full overflow-hidden">
+        <div 
+            className="relative w-full overflow-hidden group"
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+        >
+            {/* Images */}
             {children.map((child, index) => (
                 <div
                     key={index}
@@ -50,6 +80,46 @@ function SimpleCarousel({ children, autoplaySpeed = 4000, onSlideChange }) {
                     {child}
                 </div>
             ))}
+
+            {/* Left/Right Arrows */}
+            {count > 1 && (
+                <>
+                    <button 
+                        className="absolute left-2 top-1/2 -translate-y-1/2 z-10 p-2 bg-black/30 hover:bg-black/60 text-white rounded-full opacity-0 group-hover:opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 backdrop-blur-sm"
+                        onClick={(e) => { e.stopPropagation(); prev() }}
+                        title="Previous image"
+                    >
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="15 18 9 12 15 6"></polyline>
+                        </svg>
+                    </button>
+                    <button 
+                        className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-2 bg-black/30 hover:bg-black/60 text-white rounded-full opacity-0 group-hover:opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 backdrop-blur-sm"
+                        onClick={(e) => { e.stopPropagation(); next() }}
+                        title="Next image"
+                    >
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </button>
+                </>
+            )}
+
+            {/* Bottom Capsule Indicators */}
+            {count > 1 && (
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full flex gap-2 items-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <span className="text-white/80 text-xs font-medium mr-1">{currentIndex + 1} / {count}</span>
+                    {children.map((_, i) => (
+                        <button
+                            key={i}
+                            className={`w-2 h-2 rounded-full transition-all duration-300 ${i === currentIndex ? 'bg-white scale-125' : 'bg-white/40 hover:bg-white/80'}`}
+                            onClick={(e) => { e.stopPropagation(); goTo(i) }}
+                            title={`Go to image ${i + 1}`}
+                            aria-label={`Go to image ${i + 1}`}
+                        />
+                    ))}
+                </div>
+            )}
         </div>
     )
 }

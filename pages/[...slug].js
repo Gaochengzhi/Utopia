@@ -11,6 +11,7 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/router"
 
 import { getCfEnv } from "/lib/cfContext"
+import { normalizeImagePath } from "/components/util/imageUtils"
 
 // Custom loading spinner to replace antd Spin
 const LoadingSpinner = () => (
@@ -253,7 +254,6 @@ export const getStaticProps = async ({ params: { slug } }) => {
         const raw = await obj.text()
         // Lightweight frontmatter strip (avoids heavy gray-matter library that exceeds Worker CPU limits)
         const stripped = raw.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, '')
-        const { normalizeImagePath } = require('/components/util/imageUtils')
         let content = normalizeImagePath(stripped)
 
         // For protected articles, serve masked content (B-plan)

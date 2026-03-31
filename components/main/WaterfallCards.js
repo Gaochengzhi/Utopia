@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback, useRef } from "react"
 import { useRouter } from "next/router"
 import ViewBadge from "/components/ViewBadge"
 import { normalizeImageUrl } from "/components/util/imageUtils"
+import { CDN_BASE, handleCdnError } from "/lib/cdnUrl"
 
 export default function WaterfallCards({ initialPosts, totalPosts, isAuthenticated }) {
     const router = useRouter()
@@ -288,16 +289,18 @@ export default function WaterfallCards({ initialPosts, totalPosts, isAuthenticat
                         // Prefer pre-extracted firstImage from D1, fallback to extracting from content
                         const firstImage = normalizeImageUrl(post.firstImage || extractFirstImage(post.content))
                         const imageBlocked = brokenImagePosts.has(post.path)
-                        // Convert /.pic/xxx to thumbnail URL: /.pic/thumb/.pic/xxx
-                        // so rewrite rule strips /.pic/thumb/ prefix and API receives .pic/xxx
-                        const thumbUrl = !imageBlocked && firstImage && firstImage.startsWith('/.pic/')
-                            ? firstImage.replace('/.pic/', '/.pic/thumb/.pic/')
-                            : (!imageBlocked ? firstImage : null)
+                        // Same logic as MarkdownArticle.js:
+                        //   R2 (/.pic/...)  → prepend CDN_BASE for direct edge delivery
+                        //   External URLs   → use as-is, <img> has no CORS restriction
+                        //   null / blocked  → fall back to text-only card
+                        const previewImage = !imageBlocked && firstImage
+                            ? (CDN_BASE && firstImage.startsWith('/.pic/') ? CDN_BASE + firstImage : firstImage)
+                            : null
 
                         // 使用预先计算好的宽度
                         const widthRatio = cardWidths[index]
                         // For image cards, cap width at 50% (1.5x of min 33.3%) to avoid overly wide images
-                        const effectiveRatio = thumbUrl && !isTabletOrBelow && widthRatio > 1 / 2
+                        const effectiveRatio = previewImage && !isTabletOrBelow && widthRatio > 1 / 2
                             ? 1 / 2
                             : widthRatio
                         let flexBasis
@@ -319,16 +322,17 @@ export default function WaterfallCards({ initialPosts, totalPosts, isAuthenticat
                                 <Link href={post.path} prefetch={false} className="block" onClick={(e) => handlePostClick(e, post)}>
                                         <div className="relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg pb-4 hover:shadow-xl hover:border-gray-400 dark:hover:border-gray-500 transition-all duration-300 cursor-pointer">
                                             <ViewBadge views={viewCounts[post.path.replace(/^\//, '')]} />
-                                            {thumbUrl ? (
+                                            {previewImage ? (
                                                 <>
                                                     {/* Image card */}
                                                     <div className="relative overflow-hidden rounded-t-lg" style={{ height: '140px' }}>
                                                         <img
-                                                            src={thumbUrl}
+                                                            src={previewImage}
                                                             alt={title}
                                                             loading="lazy"
                                                             className="w-full h-full object-cover"
-                                                            onError={() => {
+                                                            onError={(e) => {
+                                                                handleCdnError(e)
                                                                 setBrokenImagePosts((prev) => {
                                                                     if (prev.has(post.path)) return prev
                                                                     const next = new Set(prev)
