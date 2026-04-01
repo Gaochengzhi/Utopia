@@ -1,11 +1,6 @@
 import { getDB } from '../../lib/cfContext'
-import { normalizeImageUrl } from '../../components/util/imageUtils'
 import { verifyAuthCookieAsync } from '../../lib/auth'
-
-function maskContent(content) {
-  if (!content) return content
-  return content.replace(/[^\s\n]/g, '*')
-}
+import { getPaginatedPosts } from '../../lib/data/posts'
 
 export default async function handler(req, res) {
   try {
@@ -31,45 +26,11 @@ export default async function handler(req, res) {
 
     const isAuthenticated = await verifyAuthCookieAsync(req.cookies)
 
-    // Get total count
-    const countResult = await db.prepare(
-      'SELECT COUNT(*) as total FROM posts'
-    ).first()
-    const totalPosts = countResult?.total || 0
-
-    // Paginated query
-    const offset = (pageNum - 1) * limitNum
-    const { results } = await db.prepare(`
-      SELECT slug, title, category, content_preview, first_image,
-             is_protected, created_at, updated_at, path
-      FROM posts
-      ORDER BY created_at DESC
-      LIMIT ? OFFSET ?
-    `).bind(limitNum, offset).all()
-
-    // Transform to match existing frontend API contract
-    const posts = (results || []).map(row => {
-      let content = row.content_preview || ''
-      const isProtected = !!row.is_protected
-
-      if (isProtected && !isAuthenticated) {
-        content = maskContent(content)
-      }
-
-      return {
-        path: row.slug,
-        title: row.title,
-        time: row.created_at,
-        isLeaf: true,
-        type: 'file',
-        key: String(Math.floor(Math.random() * 9e9)),
-        content,
-        isProtected: isProtected && !isAuthenticated,
-        firstImage: normalizeImageUrl(row.first_image) || null,
-      }
+    const { posts, totalPosts, totalPages } = await getPaginatedPosts(db, {
+      page: pageNum,
+      limit: limitNum,
+      isAuthenticated,
     })
-
-    const totalPages = Math.ceil(totalPosts / limitNum)
 
     res.status(200).json({
       posts,

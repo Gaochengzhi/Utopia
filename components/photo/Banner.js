@@ -4,6 +4,7 @@ import { PhotoProvider, PhotoView } from "react-photo-view"
 import "react-photo-view/dist/react-photo-view.css"
 import Link from "next/link"
 import { getCdnUrl, handleCdnError } from "/lib/cdnUrl"
+import { LiquidGoldCanvas } from "/components/photo/LiquidGoldCanvas"
 
 // Inline SVG icons
 const BankIcon = ({ className }) => (
@@ -169,15 +170,7 @@ export function Banner({ }) {
     return (
         <div
             ref={bannerRef}
-            className="w-full flex flex-col-reverse md:flex-row items-center relative overflow-hidden"
-            style={{
-                background: `linear-gradient(135deg, 
-          rgba(0,0,0,0.9) 0%, 
-          rgba(20,20,20,0.95) 25%, 
-          rgba(40,40,40,0.9) 50%, 
-          rgba(20,20,20,0.95) 75%, 
-          rgba(0,0,0,0.9) 100%)`
-            }}
+            className="w-full flex flex-col-reverse md:flex-row items-stretch relative overflow-hidden"
         >
             {/* 背景动态装饰 */}
             <div className="absolute inset-0 pointer-events-none">
@@ -216,45 +209,48 @@ export function Banner({ }) {
                 ))}
             </div>
 
-            {/* 文字内容区域 */}
+            {/* 文字内容区域 — 液态金背景 */}
             <div
                 ref={textRef}
-                className="w-full md:w-[50%] h-60 flex flex-col justify-center items-center text-white relative z-10 p-6 pb-20"
-                style={{
-                    transform: `translateY(${scrollY * 0.1}px)`
-                }}
+                className="w-full md:w-[50%] min-h-[420px] flex flex-col justify-center items-center text-white relative p-6 pb-20 overflow-hidden"
             >
-                <div
-                    className="text-4xl md:text-5xl mt-9 font-serif bg-gradient-to-r from-white to-white bg-clip-text text-transparent"
-                    style={getTextAnimation(100)}
-                >
-                    Taitan_Pascal
+                {/* 液态金 WebGL 背景（遮罩透明度在 PARAMS 面板内调） */}
+                <div className="absolute inset-0" style={{ zIndex: 0 }}>
+                    <LiquidGoldCanvas className="w-full h-full" />
                 </div>
-
-
-                <div
-                    className="flex flex-col justify-center items-center mt-6"
-                    style={getTextAnimation(300)}
-                >
-                    <div className="font-serif mb-4 text-lg text-gray-300">
-                        联系我: 点击下面图标 👇
+                {/* 文字内容层 */}
+                <div className="relative flex flex-col justify-center items-center w-full h-full gap-6" style={{ zIndex: 1 }}>
+                    <div
+                        className="text-4xl md:text-5xl font-serif bg-gradient-to-r from-white to-white bg-clip-text text-transparent"
+                        style={getTextAnimation(100)}
+                    >
+                        Taitan_Pascal
                     </div>
-                    <div className="flex space-x-4 text-2xl transform hover:scale-110 transition-transform duration-300">
-                        <ShareLInk />
-                    </div>
-                </div>
 
-                <div
-                    className="mt-6 mb-2 p-4 flex items-center border-2 border-gradient-to-r from-purple-500 to-blue-500 rounded-lg border-dashed backdrop-blur-sm bg-white/5 hover:bg-white/10 transition-all duration-300 group"
-                    style={getTextAnimation(400)}
-                >
-                    <BankIcon className="text-green-400 group-hover:animate-pulse" />
-                    <div className="inline px-2 text-gray-300">常驻 seu.edu.cn 接受</div>
-                    <Link className="cursor-pointer" href="/photographer/order">
-                        <div className="inline text-sky-400 cursor-pointer hover:text-sky-300 transition-colors duration-200 font-medium">
-                            预约
+                    <div
+                        className="flex flex-col justify-center items-center"
+                        style={getTextAnimation(300)}
+                    >
+                        <div className="font-serif mb-4 text-lg text-gray-300">
+                            联系我: 点击下面图标 👇
                         </div>
-                    </Link>
+                        <div className="flex space-x-4 text-2xl transform hover:scale-110 transition-transform duration-300">
+                            <ShareLInk />
+                        </div>
+                    </div>
+
+                    <div
+                        className="p-4 flex items-center rounded-lg border-dashed border border-white/30 backdrop-blur-sm bg-white/5 hover:bg-white/10 transition-all duration-300 group"
+                        style={getTextAnimation(400)}
+                    >
+                        <BankIcon className="text-green-400 group-hover:animate-pulse" />
+                        <div className="inline px-2 text-gray-300">常驻 seu.edu.cn 接受</div>
+                        <Link className="cursor-pointer" href="/photographer/order">
+                            <div className="inline text-sky-400 cursor-pointer hover:text-sky-300 transition-colors duration-200 font-medium">
+                                预约
+                            </div>
+                        </Link>
+                    </div>
                 </div>
             </div>
 
@@ -297,11 +293,11 @@ export function Banner({ }) {
                         </div>
                     )}
                 >
-                    <div className="relative overflow-hidden rounded-2xl shadow-2xl">
+                    <div className="relative overflow-hidden shadow-2xl">
                         {/* 渐变边框 */}
-                        <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 rounded-2xl opacity-75 blur-sm"></div>
+                        <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 opacity-75 blur-sm"></div>
 
-                        <div className="relative bg-black rounded-2xl overflow-hidden">
+                        <div className="relative bg-black overflow-hidden">
                             <SimpleCarousel
                                 autoplaySpeed={4000}
                                 onSlideChange={setCurrentSlide}
@@ -353,7 +349,7 @@ export function Banner({ }) {
                                             </div>
 
                                             {/* 点击时的涟漪效果 */}
-                                            <div className="absolute inset-0 overflow-hidden rounded-lg">
+                                            <div className="absolute inset-0 overflow-hidden">
                                                 <div className="absolute inset-0 scale-0 group-active:scale-100 bg-white/20 rounded-full transition-transform duration-300"></div>
                                             </div>
                                         </div>

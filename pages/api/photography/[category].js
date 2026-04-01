@@ -1,5 +1,5 @@
 import { getDB } from '../../../lib/cfContext'
-import { normalizePhotoKey, toPublicPath } from '../../../lib/photoUtils'
+import { getPhotosByCategory } from '../../../lib/data/photos'
 
 export default async function handler(req, res) {
   try {
@@ -14,30 +14,11 @@ export default async function handler(req, res) {
       return res.status(503).json({ error: 'Database not available' })
     }
 
-    // Query photos from D1 (case-insensitive match)
-    const { results } = await db.prepare(`
-      SELECT * FROM photos 
-      WHERE LOWER(category) = LOWER(?) 
-      ORDER BY sort_order, filename
-    `).bind(category).all()
+    const { images, actualCategory } = await getPhotosByCategory(db, category)
 
-    if (!results || results.length === 0) {
+    if (!images || images.length === 0) {
       return res.status(404).json({ error: 'Category not found' })
     }
-
-    // Get the actual category name from the first result
-    const actualCategory = results[0].category
-
-    // Transform to match existing frontend contract
-    // The frontend expects: { success, category, images: [{path, title, ...}] }
-    const images = results.map(row => ({
-      path: toPublicPath(normalizePhotoKey(row.path, row.category, row.filename)),
-      title: row.filename,
-      isLeaf: true,
-      type: 'file',
-      key: String(Math.floor(Math.random() * 9e9)),
-      time: row.created_at,
-    }))
 
     res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=3600, stale-while-revalidate=86400')
 

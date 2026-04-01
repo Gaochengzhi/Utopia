@@ -10,6 +10,8 @@ function ParallaxImage({ src, speed = -0.3, className, onLoad, onError, loadingS
     const containerRef = useRef(null)
     const [offset, setOffset] = useState(0)
     const [isInView, setIsInView] = useState(false)
+    const PARALLAX_BLEED_RATIO = 0.45
+    const MAX_OFFSET_RATIO = 0.4
 
     useEffect(() => {
         const el = containerRef.current
@@ -28,7 +30,10 @@ function ParallaxImage({ src, speed = -0.3, className, onLoad, onError, loadingS
         const rect = containerRef.current.getBoundingClientRect()
         const windowH = window.innerHeight
         const progress = 1 - (rect.top + rect.height) / (windowH + rect.height)
-        setOffset(progress * speed * rect.height)
+        const rawOffset = progress * speed * rect.height
+        const maxOffset = rect.height * MAX_OFFSET_RATIO
+        const clampedOffset = Math.max(-maxOffset, Math.min(maxOffset, rawOffset))
+        setOffset(clampedOffset)
     }, [isInView, speed])
 
     useEffect(() => {
@@ -44,7 +49,7 @@ function ParallaxImage({ src, speed = -0.3, className, onLoad, onError, loadingS
                 <div
                     style={{
                         position: "absolute",
-                        inset: "-20% 0",
+                        inset: `-${PARALLAX_BLEED_RATIO * 100}% 0`,
                         transform: `translate3d(0, ${offset}px, 0)`,
                         willChange: "transform",
                     }}
@@ -118,7 +123,7 @@ export function CataContainer({ categories, eagerCount = 2 }) {
 
                             <ParallaxImage
                                 src={imageSrc}
-                                speed={-0.3}
+                                speed={-0.6}
                                 loadingStrategy={index < eagerCount ? 'eager' : 'lazy'}
                                 className="w-full h-full transition-transform duration-500 group-hover:scale-105"
                                 onLoad={() => markLoaded(item.index)}
@@ -130,12 +135,12 @@ export function CataContainer({ categories, eagerCount = 2 }) {
                                 {/* 标题区域 */}
                                 <div className="absolute inset-0 z-10 flex items-center justify-center">
                                     <div className="relative">
-                                        <div className="text-white font-extralight tracking-wider group-hover:scale-110 transition-transform duration-500">
+                                        <div className="text-white font-extralight tracking-wider uppercase group-hover:scale-110 transition-transform duration-500">
                                             {item.title}
                                         </div>
 
                                         {/* 悬停发光效果 */}
-                                        <div className="absolute inset-0 text-white font-extralight tracking-wider opacity-0 group-hover:opacity-30 blur-sm transition-opacity duration-500">
+                                        <div className="absolute inset-0 text-white font-extralight tracking-wider uppercase opacity-0 group-hover:opacity-30 blur-sm transition-opacity duration-500">
                                             {item.title}
                                         </div>
                                     </div>

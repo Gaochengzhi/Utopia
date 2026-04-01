@@ -7,7 +7,8 @@ import Head from "next/head"
 import Navbar from "/components/Navbar"
 import { useEffect, useState } from "react"
 import { getCfEnv } from "/lib/cfContext"
-import { normalizeImageUrl } from "/components/util/imageUtils"
+import { getPathTree, getTopLevelFolders } from "/lib/data/paths"
+import { getPaginatedPosts } from "/lib/data/posts"
 
 export default function Home({ paths: staticPaths, initialPosts, totalPosts: staticTotalPosts, folders: staticFolders }) {
     const [posts, setPosts] = useState(initialPosts || [])
@@ -118,8 +119,6 @@ export default function Home({ paths: staticPaths, initialPosts, totalPosts: sta
 }
 
 export const getStaticProps = async () => {
-    // In Cloudflare environment, we use D1 via getCloudflareContext
-    // During build, the adapter provides access to bindings
     let paths = {}
     let initialPosts = []
     let totalPosts = 0
@@ -130,81 +129,16 @@ export const getStaticProps = async () => {
         const db = env?.DB
 
         if (db) {
-            // Get path tree
-            const { results: treeRows } = await db.prepare(
-                'SELECT * FROM path_tree ORDER BY path'
-            ).all()
+            // Get path tree (shared logic from lib/data/paths.js)
+            paths = await getPathTree(db)
 
-            if (treeRows && treeRows.length > 0) {
-                // Rebuild tree structure (same as paths API)
-                const nodeMap = {}
-                const childrenMap = {}
+            // Get initial posts (shared logic from lib/data/posts.js)
+            const result = await getPaginatedPosts(db, { page: 1, limit: 10 })
+            initialPosts = result.posts
+            totalPosts = result.totalPosts
 
-                for (const row of treeRows) {
-                    const node = {
-                        title: row.title,
-                        path: row.path,
-                        key: row.node_key || String(Math.floor(Math.random() * 9e9)),
-                        isLeaf: !!row.is_leaf,
-                        type: row.type,
-                        time: row.created_at,
-                    }
-                    if (!row.is_leaf) node.children = []
-                    nodeMap[row.path] = node
-
-                    const parentKey = row.parent_path || '__root__'
-                    if (!childrenMap[parentKey]) childrenMap[parentKey] = []
-                    childrenMap[parentKey].push(node)
-                }
-
-                for (const [parentPath, children] of Object.entries(childrenMap)) {
-                    if (parentPath === '__root__') continue
-                    if (nodeMap[parentPath]) nodeMap[parentPath].children = children
-                }
-
-                const roots = childrenMap['__root__'] || []
-                paths = roots.length === 1 ? roots[0] : {
-                    title: 'content', key: 'myrootkey', isLeaf: false,
-                    type: 'folder', children: roots,
-                }
-            }
-
-            // Get initial posts (first page)
-            const countResult = await db.prepare('SELECT COUNT(*) as total FROM posts').first()
-            totalPosts = countResult?.total || 0
-
-            const { results: postRows } = await db.prepare(`
-                SELECT slug, title, category, content_preview, first_image,
-                       is_protected, created_at, path
-                FROM posts
-                ORDER BY created_at DESC
-                LIMIT 10
-            `).all()
-
-            initialPosts = (postRows || []).map(row => ({
-                path: row.slug,
-                title: row.title,
-                time: row.created_at,
-                isLeaf: true,
-                type: 'file',
-                key: String(Math.floor(Math.random() * 9e9)),
-                content: row.is_protected ? '****' : (row.content_preview || ''),
-                isProtected: !!row.is_protected,
-                firstImage: normalizeImageUrl(row.first_image) || null,
-            }))
-
-            // Get top-level folders from path_tree (preserves hierarchy)
-            const { results: folderRows } = await db.prepare(`
-                SELECT title, path, type FROM path_tree 
-                WHERE parent_path = 'post' AND type = 'folder'
-                ORDER BY title
-            `).all()
-
-            folders = (folderRows || []).map(row => ({
-                name: row.title,
-                path: `/${row.path}`,
-                isFolder: true,
-            }))
+            // Get top-level folders (shared logic from lib/data/paths.js)
+            folders = await getTopLevelFolders(db)
         }
     } catch (e) {
         console.error('getStaticProps failed:', e.message)

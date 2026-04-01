@@ -5,8 +5,8 @@ import { useCallback, useEffect, useState } from "react"
 import { firstUpperCase } from "/components/util/treeSort"
 import { getCfEnv } from "/lib/cfContext"
 import { getCdnFullUrl, handleCdnError } from "/lib/cdnUrl"
-import { normalizePhotoKey, toPublicPath, normalizeCategoryName, findManualCoverPath } from "/lib/photoUtils"
-import { getPhotoCategories } from "/lib/data/photos"
+import { normalizeCategoryName } from "/lib/photoUtils"
+import { getPhotoCategories, getPhotosByCategory } from "/lib/data/photos"
 
 export default function Wall({ title, categories: initialCategories, initialImages }) {
     const [paths, setPaths] = useState(initialImages || [])
@@ -165,20 +165,8 @@ export async function getStaticProps({ params: { slug } }) {
             if (!exists) return { notFound: true }
 
             // Pre-fetch images for this category (SSG — no client waterfall!)
-            const { results: photoRows } = await db.prepare(`
-                SELECT * FROM photos
-                WHERE LOWER(category) = LOWER(?)
-                ORDER BY sort_order, filename
-            `).bind(slug).all()
-
-            initialImages = (photoRows || []).map(row => ({
-                path: toPublicPath(normalizePhotoKey(row.path, row.category, row.filename)),
-                title: row.filename,
-                isLeaf: true,
-                type: 'file',
-                key: String(Math.floor(Math.random() * 9e9)),
-                time: row.created_at,
-            }))
+            const { images } = await getPhotosByCategory(db, slug)
+            initialImages = images
         }
     } catch (e) {
         console.error('getStaticProps failed:', e.message)

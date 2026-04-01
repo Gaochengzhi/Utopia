@@ -2,8 +2,6 @@
 
 2025年12月11日
 
-![result image](file:///Users/kounarushi/mycode/web-blog/public/.pic/3A550AC4-8986-4A16-B279-1711C593BCFD.png)
-
 
 
 > 哥德尔不完备性是自举在递归不动点上的元性质

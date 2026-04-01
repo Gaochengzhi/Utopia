@@ -12,6 +12,7 @@ import { useRouter } from "next/router"
 
 import { getCfEnv } from "/lib/cfContext"
 import { normalizeImagePath } from "/components/util/imageUtils"
+import { getFolderContents } from "/lib/data/paths"
 
 // Custom loading spinner to replace antd Spin
 const LoadingSpinner = () => (
@@ -278,44 +279,8 @@ export const getStaticProps = async ({ params: { slug } }) => {
         const db = env?.DB
         if (!db) throw new Error('D1 database not available')
 
-        const { results: children } = await db.prepare(`
-            SELECT pt.*, p.title AS article_title, p.created_at AS article_created_at, p.content_preview
-            FROM path_tree pt
-            LEFT JOIN posts p ON p.slug = pt.path
-            WHERE pt.parent_path = ?
-            ORDER BY pt.type DESC, p.created_at DESC, pt.title
-        `).bind(folderPath).all()
-
-        if (!children || children.length === 0) return { notFound: true }
-
-        const extractTitle = (content, fallback) => {
-            if (!content || typeof content !== 'string') return fallback
-            const h1Match = content.match(/^#\s+(.+)$/m)
-            if (h1Match) return h1Match[1]
-            const lines = content.split('\n').slice(0, 5)
-            for (const line of lines) {
-                const h2Match = line.match(/^##\s+(.+)$/)
-                if (h2Match) return h2Match[1]
-            }
-            for (const line of lines) {
-                const trimmed = line.trim()
-                if (trimmed && !trimmed.startsWith('!')) {
-                    const parsed = trimmed.replace(/[#*_~`\[\]]/g, '').trim()
-                    if (parsed) return parsed
-                }
-            }
-            return fallback
-        }
-
-        const folderContents = children.map(row => {
-            const fallbackName = (row.article_title || row.title).replace(/\.md$/i, '')
-            return {
-                name: row.type === 'folder' ? fallbackName : extractTitle(row.content_preview, fallbackName),
-                path: `/${row.path}`,
-                isFolder: row.type === 'folder',
-                time: row.article_created_at || null,
-            }
-        })
+        const folderContents = await getFolderContents(db, folderPath)
+        if (!folderContents) return { notFound: true }
 
         return {
             props: {
