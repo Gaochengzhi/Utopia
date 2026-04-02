@@ -73,7 +73,14 @@ export default function PostList({ posts, rest }) {
                             </SyntaxHighlighter>
                           ) : (
                             <code
-                              className="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-1 py-0.5 rounded"
+                              style={{
+                                background: 'rgba(229, 231, 235, 0.9)',
+                                color: '#c7254e',
+                                padding: '0.15em 0.4em',
+                                borderRadius: '4px',
+                                fontSize: '0.9em',
+                                fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                              }}
                               {...props}
                             >
                               {children}
