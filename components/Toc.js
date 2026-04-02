@@ -54,18 +54,11 @@ function parseHeadingsFromMarkdown(markdown) {
     headings.push({ title, id: slug, level })
   }
 
-  // Hide the top-most heading level in TOC (usually the article main title level)
-  if (headings.length === 0) return []
-  const minLevel = Math.min(...headings.map((h) => h.level))
-  const withoutTopLevel = headings.filter((h) => h.level > minLevel)
-
-  // Fallback: if an article only has one heading level, keep it so TOC is not empty
-  const visibleHeadings = withoutTopLevel.length > 0 ? withoutTopLevel : headings
-  const visibleMinLevel = Math.min(...visibleHeadings.map((h) => h.level))
-
-  return visibleHeadings.map((h) => ({
+  // The regex above already skips h1 (only matches #{2,5}).
+  // Indent is simply level - 2: h2 → 0, h3 → 1, h4 → 2, h5 → 3.
+  return headings.map((h) => ({
     ...h,
-    indent: h.level - visibleMinLevel,
+    indent: h.level - 2,
   }))
 }
 
