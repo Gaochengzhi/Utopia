@@ -22,7 +22,7 @@ function slugify(text) {
 function parseHeadingsFromMarkdown(markdown) {
   if (!markdown) return []
 
-  const lines = markdown.split("\n")
+  const lines = markdown.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n")
   const headings = []
   const seenSlugs = {}
   let inCodeBlock = false

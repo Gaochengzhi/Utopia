@@ -562,7 +562,16 @@
     border-color: #525252 !important;
 }
 
-.dark .markdown-body code {
+/* Light-mode inline code: ensure visible text on any background */
+.markdown-body code:not(pre code) {
+    background-color: rgba(229, 231, 235, 0.85) !important;
+    color: #c7254e !important;
+    padding: 0.15em 0.4em !important;
+    border-radius: 4px !important;
+    font-size: 0.9em !important;
+}
+
+.dark .markdown-body code:not(pre code) {
     background-color: rgba(55, 65, 81, 0.8) !important;
     color: #f9fafb !important;
 }
@@ -1054,26 +1063,36 @@ pre .token-line,
     background-color: transparent !important;
 }
 
-/* 更彻底的修复：覆盖所有可能的代码块行背景样式 */
+/* 更彻底的修复：覆盖所有可能的代码块行背景样式 — 仅限 pre 内部的代码块 */
 .mylist pre *,
 .mylist pre span,
-.mylist pre div,
-.mylist code *,
-.mylist code span,
-.mylist code div {
+.mylist pre div {
     background: transparent !important;
     background-color: transparent !important;
 }
 
-/* 专门针对 react-syntax-highlighter 生成的元素 */
+/* 专门针对 react-syntax-highlighter 生成的元素 — 仅限 pre 内部 */
 .dark .mylist pre *,
 .dark .mylist pre span,
-.dark .mylist pre div,
-.dark .mylist code *,
-.dark .mylist code span,
-.dark .mylist code div {
+.dark .mylist pre div {
     background: transparent !important;
     background-color: transparent !important;
+}
+
+/* Light-mode inline code inside .mylist: ensure visible text/background */
+.mylist > code,
+.mylist code:not(pre code) {
+    background-color: rgba(229, 231, 235, 0.85) !important;
+    color: #c7254e !important;
+    padding: 0.15em 0.4em !important;
+    border-radius: 4px !important;
+    font-size: 0.9em !important;
+}
+
+.dark .mylist > code,
+.dark .mylist code:not(pre code) {
+    background-color: rgba(55, 65, 81, 0.8) !important;
+    color: #fca5a5 !important;
 }
 
 .mynav {

@@ -160,7 +160,10 @@ export async function getStaticProps({ params: { slug } }) {
         if (db) {
             categories = await getPhotoCategories(db)
 
-            // Verify this category exists
+            // Only 404 if DB is available but category genuinely doesn't exist.
+            // When db is null (build-time D1 unavailable), skip the check so
+            // fallback: 'blocking' can re-run getStaticProps at request time on
+            // the worker where D1 IS available.
             const exists = categories.find(c => c.title === slug.toLowerCase())
             if (!exists) return { notFound: true }
 
@@ -168,6 +171,8 @@ export async function getStaticProps({ params: { slug } }) {
             const { images } = await getPhotosByCategory(db, slug)
             initialImages = images
         }
+        // If db is null: return empty props; the component's useEffect will
+        // fetch client-side via /api/photography/[category].
     } catch (e) {
         console.error('getStaticProps failed:', e.message)
     }
