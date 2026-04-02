@@ -97,6 +97,24 @@ export function middleware(request) {
   response.headers.set('X-XSS-Protection', '1; mode=block')
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
 
+  // Explicit CSP: allowing same-origin fetches (including _next/data/* for SSG
+  // hydration) plus our R2 CDN.  This first-party header prevents the browser
+  // from acting on any externally-injected Report-Only CSP with an incomplete
+  // connect-src that would flag _next/data requests.
+  response.headers.set(
+    'Content-Security-Policy',
+    [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com",   // Next.js inline scripts + CF Analytics
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "font-src 'self' https://fonts.gstatic.com data:",
+      "img-src 'self' data: blob: https://cdn.gaochengzhi.com https://gaochengzhi.com",
+      "connect-src 'self' https://gaochengzhi.com https://cdn.gaochengzhi.com https://cloudflareinsights.com",
+      "media-src 'self' https://cdn.gaochengzhi.com",
+      "frame-ancestors 'none'",
+    ].join('; ')
+  )
+
   return response
 }
 
