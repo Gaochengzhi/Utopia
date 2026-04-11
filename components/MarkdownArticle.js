@@ -9,6 +9,22 @@ import "github-markdown-css/github-markdown-light.css"
 import "katex/dist/katex.min.css"
 import { useRef } from "react"
 import { CDN_BASE, handleCdnError } from "/lib/cdnUrl"
+import dynamic from "next/dynamic"
+
+// Lazy-load MermaidDiagram — mermaid requires browser APIs so must skip SSR
+const MermaidDiagram = dynamic(() => import("./MermaidDiagram"), {
+    ssr: false,
+    loading: () => (
+        <div className="mermaid-container">
+            <div className="mermaid-loading">
+                <div className="mermaid-loading-spinner" />
+                <span>Loading diagram…</span>
+            </div>
+        </div>
+    ),
+})
+
+const BARE_IMAGE_FILENAME_PATTERN = /^[^/?#]+\.(?:jpe?g|png|gif|webp|svg|bmp|ico)(?:[?#].*)?$/i
 
 /**
  * Generate a URL-friendly slug from heading text.
@@ -73,15 +89,34 @@ export default function MarkdownArticle({ content }) {
                 h3: HeadingRenderer,
                 h4: HeadingRenderer,
                 h5: HeadingRenderer,
-                pre: ({ node, inline, className, ...props }) => (
-                    <pre className={className} {...props} />
-                ),
+                pre: ({ node, children, className, ...props }) => {
+                    // If pre contains a mermaid code block, don't wrap it in <pre>
+                    // (MermaidDiagram handles its own container)
+                    const codeChild = node?.children?.[0]
+                    if (
+                        codeChild?.tagName === "code" &&
+                        /language-mermaid/.test(
+                            (codeChild.properties?.className || []).join(" ")
+                        )
+                    ) {
+                        return <>{children}</>
+                    }
+                    return <pre className={className} {...props}>{children}</pre>
+                },
                 code({ node, inline, className, children, ...props }) {
                     const match = /language-(\w+)/.exec(className || "")
+                    const lang = match?.[1]
+
+                    // ── Mermaid diagrams ──
+                    if (!inline && lang === "mermaid") {
+                        const chart = String(children).replace(/\n$/, "")
+                        return <MermaidDiagram chart={chart} />
+                    }
+
                     return !inline && match ? (
                         <SyntaxHighlighter
                             style={vscDarkPlus}
-                            language={match[1]}
+                            language={lang}
                             PreTag="div"
                             wrapLines={false}
                             showLineNumbers={false}
@@ -121,8 +156,13 @@ export default function MarkdownArticle({ content }) {
                 img({ src, alt, ...props }) {
                     // Rewrite /.pic/ paths directly to CDN, skipping Worker proxy
                     let resolvedSrc = src
+                    if (src && BARE_IMAGE_FILENAME_PATTERN.test(src)) {
+                        resolvedSrc = '/.pic/' + src.replace(/^\/+/, '')
+                    }
                     if (CDN_BASE && src && src.startsWith('/.pic/')) {
                         resolvedSrc = CDN_BASE + src
+                    } else if (CDN_BASE && resolvedSrc && resolvedSrc.startsWith('/.pic/')) {
+                        resolvedSrc = CDN_BASE + resolvedSrc
                     }
                     return (
                         <img
