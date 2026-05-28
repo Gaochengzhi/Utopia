@@ -111,6 +111,7 @@ export function middleware(request) {
       "img-src 'self' data: blob: https://cdn.gaochengzhi.com https://gaochengzhi.com",
       "connect-src 'self' https://gaochengzhi.com https://cdn.gaochengzhi.com https://cloudflareinsights.com",
       "media-src 'self' https://cdn.gaochengzhi.com",
+      "frame-src 'self' https://www.youtube.com https://youtube.com https://www.youtube-nocookie.com https://player.bilibili.com",
       "frame-ancestors 'none'",
     ].join('; ')
   )
