@@ -90,6 +90,10 @@ function normalizeImagePath(content) {
       /(https?:\/\/(?:www\.)?gaochengzhi\.com)?\/api\/images\//gm,
       "/.pic/"
     )
+    .replace(
+      /https?:\/\/(?:www\.)?notion\.soimage\//gm,
+      "https://www.notion.so/image/"
+    )
     .replace(/\/\.pic\/\.pic\//gm, "/.pic/")
 }
 
@@ -270,6 +274,7 @@ function buildFull() {
   console.log('🔍 Scanning content directories... (FULL REBUILD)')
   
   const sqlStatements = []
+  const errors = []
   
   // Header
   sqlStatements.push('-- D1 Seed Data (metadata only, full content in R2)')
@@ -302,6 +307,7 @@ function buildFull() {
       postCount++
     } catch (err) {
       console.error(`  ⚠ Error processing ${file.relativePath}:`, err.message)
+      errors.push(`post:${file.relativePath}: ${err.message}`)
     }
   }
   console.log(`  ✅ ${postCount} posts indexed`)
@@ -380,10 +386,11 @@ function buildFull() {
             mergedViews[key] = (mergedViews[key] || 0) + value
           }
         }
-      } catch (err) {
-        console.error(`  ⚠ Error reading ${source}:`, err.message)
-      }
+    } catch (err) {
+      console.error(`  ⚠ Error reading ${source}:`, err.message)
+      errors.push(`pageviews:${source}: ${err.message}`)
     }
+  }
   }
   
   for (const [slug, count] of Object.entries(mergedViews)) {
@@ -395,6 +402,10 @@ function buildFull() {
   console.log(`  ✅ ${viewCount} pageview entries`)
   
   // Write output
+  if (errors.length > 0) {
+    throw new Error(`Content index build failed with ${errors.length} error(s)`)
+  }
+
   const output = sqlStatements.join('\n') + '\n'
   if (!DRY_RUN) {
     fs.writeFileSync(OUTPUT_FILE, output, 'utf-8')
@@ -417,6 +428,7 @@ function buildIncremental() {
   const oldManifest = loadContentManifest()
   const newManifest = { version: 1, posts: {} }
   const sqlStatements = []
+  const errors = []
   
   sqlStatements.push('-- D1 Incremental Update')
   sqlStatements.push('-- Generated at ' + new Date().toISOString())
@@ -470,6 +482,7 @@ function buildIncremental() {
       }
     } catch (err) {
       console.error(`  ⚠ Error processing ${file.relativePath}:`, err.message)
+      errors.push(`post:${file.relativePath}: ${err.message}`)
     }
   }
   
@@ -535,6 +548,10 @@ function buildIncremental() {
   }
   
   // Check if there are actual changes
+  if (errors.length > 0) {
+    throw new Error(`Content index build failed with ${errors.length} error(s)`)
+  }
+
   const hasPostChanges = newCount > 0 || updatedCount > 0 || deletedCount > 0
   
   if (!hasPostChanges) {

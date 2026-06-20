@@ -20,6 +20,7 @@
  * Usage:
  *   node scripts/sync-r2.mjs                    # Full sync (all dirs)
  *   node scripts/sync-r2.mjs --dry-run          # Preview only
+ *   node scripts/sync-r2.mjs --file public/.pic/example.webp  # Upload one file
  *   node scripts/sync-r2.mjs --dir post         # Sync only post/
  *   node scripts/sync-r2.mjs --dir .pic         # Sync only .pic/
  *   node scripts/sync-r2.mjs --dir photography  # Sync only photography/
@@ -43,6 +44,7 @@ const SECRET_KEY = process.env.R2_SECRET_ACCESS_KEY
 const DRY_RUN = process.argv.includes('--dry-run')
 const DO_DELETE = process.argv.includes('--delete')
 const DIR_FILTER = process.argv.find((_, i, arr) => arr[i - 1] === '--dir')
+const FILE_FILTER = process.argv.find((_, i, arr) => arr[i - 1] === '--file')
 
 const CONTENT_TYPE_MAP = {
   '.jpg': 'image/jpeg',
@@ -61,6 +63,59 @@ const CONTENT_TYPE_MAP = {
 function getContentType(filePath) {
   const ext = path.extname(filePath).toLowerCase()
   return CONTENT_TYPE_MAP[ext] || 'application/octet-stream'
+}
+
+function toPosixPath(filePath) {
+  return filePath.split(path.sep).join('/')
+}
+
+function resolveSingleFile(fileSpec) {
+  if (!fileSpec) return null
+
+  const candidates = path.isAbsolute(fileSpec)
+    ? [fileSpec]
+    : [
+        path.join(ROOT, fileSpec),
+        path.join(ROOT, 'public', fileSpec),
+      ]
+
+  const uniqueCandidates = [...new Set(candidates)]
+  const matchedPath = uniqueCandidates.find(candidate => fs.existsSync(candidate) && fs.statSync(candidate).isFile())
+  if (!matchedPath) {
+    throw new Error(`File not found: ${fileSpec}`)
+  }
+
+  const roots = [
+    {
+      localDir: path.join(ROOT, 'post'),
+      r2Prefix: 'post/',
+      label: 'Markdown articles (post/)',
+    },
+    {
+      localDir: path.join(ROOT, 'public', '.pic'),
+      r2Prefix: '.pic/',
+      label: 'Article images (.pic/)',
+    },
+    {
+      localDir: path.join(ROOT, 'public', 'photography'),
+      r2Prefix: 'photography/',
+      label: 'Photography images',
+    },
+  ]
+
+  for (const root of roots) {
+    const relative = path.relative(root.localDir, matchedPath)
+    if (!relative || (!relative.startsWith('..') && !path.isAbsolute(relative))) {
+      return {
+        fullPath: matchedPath,
+        size: fs.statSync(matchedPath).size,
+        label: root.label,
+        r2Key: root.r2Prefix + toPosixPath(relative || path.basename(matchedPath)),
+      }
+    }
+  }
+
+  throw new Error(`Unsupported file location for R2 sync: ${matchedPath}`)
 }
 
 function scanFiles(dirPath, extRegex) {
@@ -113,6 +168,62 @@ async function listRemoteObjects(s3, prefix) {
   return objects
 }
 
+async function uploadSingleFile(s3, fileSpec) {
+  if (DO_DELETE) {
+    throw new Error('--delete cannot be combined with --file')
+  }
+
+  const file = resolveSingleFile(fileSpec)
+  const contentType = getContentType(file.fullPath)
+  const remoteLabel = `${file.label} → ${file.r2Key}`
+
+  let remote = null
+  try {
+    remote = await s3.send(new HeadObjectCommand({
+      Bucket: BUCKET,
+      Key: file.r2Key,
+    }))
+  } catch (err) {
+    if (err?.$metadata?.httpStatusCode !== 404 && err?.name !== 'NotFound') {
+      throw err
+    }
+  }
+
+  if (remote && Number(remote.ContentLength || 0) === file.size) {
+    console.log(`⏭️  Skipped unchanged file: ${remoteLabel}`)
+    console.log(`\n✨ Sync complete!`)
+    console.log(`   Uploaded: 0`)
+    console.log(`   Skipped (unchanged): 1`)
+    console.log(`   Errors: 0`)
+    return
+  }
+
+  if (DRY_RUN) {
+    const action = remote ? 'UPDATE' : 'NEW'
+    console.log(`[DRY ${action}] ${remoteLabel} (${(file.size / 1024).toFixed(1)} KB)`)
+    console.log(`\n✨ Sync complete!`)
+    console.log(`   Uploaded: 1`)
+    console.log(`   Skipped (unchanged): 0`)
+    console.log(`   Errors: 0`)
+    console.log(`   🔍 DRY RUN - no changes were made`)
+    return
+  }
+
+  const body = fs.readFileSync(file.fullPath)
+  await s3.send(new PutObjectCommand({
+    Bucket: BUCKET,
+    Key: file.r2Key,
+    Body: body,
+    ContentType: contentType,
+  }))
+
+  console.log(`✅ Uploaded file: ${remoteLabel}`)
+  console.log(`\n✨ Sync complete!`)
+  console.log(`   Uploaded: 1`)
+  console.log(`   Skipped (unchanged): 0`)
+  console.log(`   Errors: 0`)
+}
+
 async function main() {
   if (!ACCOUNT_ID || !ACCESS_KEY || !SECRET_KEY) {
     console.error('❌ Missing R2 credentials. Set values in .env or .env.local:')
@@ -133,6 +244,11 @@ async function main() {
       secretAccessKey: SECRET_KEY,
     },
   })
+
+  if (FILE_FILTER) {
+    await uploadSingleFile(s3, FILE_FILTER)
+    return
+  }
 
   // Define sync directories
   const syncDirs = []
@@ -281,6 +397,10 @@ async function main() {
   if (DO_DELETE) console.log(`   Deleted: ${totalDeleted}`)
   console.log(`   Errors: ${totalErrors}`)
   if (DRY_RUN) console.log(`   🔍 DRY RUN - no changes were made`)
+
+  if (totalErrors > 0) {
+    process.exitCode = 1
+  }
 }
 
 main().catch(err => {
