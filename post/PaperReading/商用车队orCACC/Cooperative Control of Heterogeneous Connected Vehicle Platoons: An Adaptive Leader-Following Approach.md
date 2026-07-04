@@ -44,7 +44,7 @@ Alexander Lanzon , Senior Member, IEEE, and Barry Lennox , Senior Member, IEEE
 
 没有超车，排队穿过密集的交通流。
 
-<img src="file:///Users/kounarushi/mycode/web-blog/public/.pic/sscmofo1247198u9387HOHhkh24.jpg" alt="sscmofo1247198u9387HOHhkh24" style="zoom: 33%;" />
+<img src="file:///Users/kounarushi/mycode/web-blog/public/.pic/sscmofo1247198u9387HOHhkh24.webp" alt="sscmofo1247198u9387HOHhkh24" style="zoom: 33%;" />
 
 许多论文中对于车辆的双积分动力学简化方式不足以处理异质车辆编队的真实情况，在本文中，针对车辆的完整非线性模型设计了一个控制器。一个feedback linearizing control law 将非线性模型转化为线性模型
 
@@ -58,7 +58,7 @@ Alexander Lanzon , Senior Member, IEEE, and Barry Lennox , Senior Member, IEEE
 
 Matlab/Simulink，6 车编队，速度和间距曲线如下：
 
-<img src="file:///Users/kounarushi/mycode/web-blog/public/.pic/skdjfhsdkljc.jpg" alt="skdjfhsdkljc" style="zoom:33%;" />
+<img src="file:///Users/kounarushi/mycode/web-blog/public/.pic/skdjfhsdkljc.webp" alt="skdjfhsdkljc" style="zoom:33%;" />
 
 还设计了6 机器人的“实车实验”：
 

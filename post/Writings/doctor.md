@@ -2,9 +2,9 @@
 
 ## TLDR：
 
-![日本动漫风格医疗行业今昔对比图 (3)](file:///Users/kounarushi/mycode/web-blog/public/.pic/4BEFBB28-7DAE-4B1C-9E9E-E30CE037EB6D.png)
+![日本动漫风格医疗行业今昔对比图 (3)](file:///Users/kounarushi/mycode/web-blog/public/.pic/4BEFBB28-7DAE-4B1C-9E9E-E30CE037EB6D.webp)
 
-![生成特定风格对比图片 (2)](file:///Users/kounarushi/mycode/web-blog/public/.pic/9AE781D2-12A0-4828-AF00-A36BA40FB888.png)
+![生成特定风格对比图片 (2)](file:///Users/kounarushi/mycode/web-blog/public/.pic/9AE781D2-12A0-4828-AF00-A36BA40FB888.webp)
 
 2025年，医疗圈流传着一句话："临床医学在2025年已死，劝人学医，天打雷劈。"
 

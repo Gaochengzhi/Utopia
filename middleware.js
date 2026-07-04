@@ -108,9 +108,11 @@ export function middleware(request) {
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com",   // Next.js inline scripts + CF Analytics
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com data:",
-      "img-src 'self' data: blob: https://cdn.gaochengzhi.com https://gaochengzhi.com",
+      // Blog posts contain external image links; allow HTTPS image sources.
+      "img-src 'self' data: blob: https:",
       "connect-src 'self' https://gaochengzhi.com https://cdn.gaochengzhi.com https://cloudflareinsights.com",
       "media-src 'self' https://cdn.gaochengzhi.com",
+      // Explicitly allow embedded video frames (e.g., YouTube in markdown).
       "frame-src 'self' https://www.youtube.com https://youtube.com https://www.youtube-nocookie.com https://player.bilibili.com",
       "frame-ancestors 'none'",
     ].join('; ')

@@ -22,13 +22,10 @@ const nextConfig = {
     unoptimized: true,
   },
   async rewrites() {
-    // In production the frontend uses CDN URLs directly (lib/cdnUrl.js).
-    // These rewrites are only needed as a dev/fallback path when
-    // NEXT_PUBLIC_R2_CDN_URL is not configured.
-    if (process.env.NEXT_PUBLIC_R2_CDN_URL) {
-      return []
-    }
-
+    // Keep image rewrites enabled in every environment.
+    // Most requests should go straight to the CDN, but if a page or user
+    // requests origin paths like /.pic/* directly, the API routes can still
+    // redirect to CDN (or proxy from R2 when CDN is unavailable).
     return [
       // Photography images (content, thumb, full, cata)
       {

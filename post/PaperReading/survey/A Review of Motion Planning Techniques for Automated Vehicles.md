@@ -29,7 +29,7 @@ by David González, Joshué Pérez, Vicente Milanés, and Fawzi Nashashibi
 
 ## introduction
 
-![大声道撒旦撒撒](/Users/kounarushi/mycode/web-blog/public/.pic/%E5%A4%A7%E5%A3%B0%E9%81%93%E6%92%92%E6%97%A6%E6%92%92%E6%92%92.png)
+![大声道撒旦撒撒](/Users/kounarushi/mycode/web-blog/public/.pic/%E5%A4%A7%E5%A3%B0%E9%81%93%E6%92%92%E6%97%A6%E6%92%92%E6%92%92.webp)
 
 Fig. 1 shows a **general architecture** for automated vehicles
 
@@ -43,7 +43,7 @@ Fig. 1 shows a **general architecture** for automated vehicles
 
 ## MOTION PLANNING STATE-OF-THE-ART
 
-![](file:///Users/kounarushi/mycode/web-blog/public/.pic/ScreenShot2022-10-20at12.06.44.png)
+![](file:///Users/kounarushi/mycode/web-blog/public/.pic/ScreenShot2022-10-20at12.06.44.webp)
 
 ![dashdaskdhbckajdh](/Users/kounarushi/mycode/web-blog/public/.pic/dashdaskdhbckajdh.png)
 

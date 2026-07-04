@@ -37,7 +37,7 @@ Krauss: despite producing unrealistic acceleration and jerk patterns.
 
 注意： leader 才是n 
 
-<img src="file:///Users/kounarushi/mycode/web-blog/public/.pic/6B2A3CCF-CC53-40F9-B32A-2466CDF4BC50.jpg" alt="Screen Shot 2023-02-27 at 17.14.51" style="zoom: 33%;" />  
+<img src="file:///Users/kounarushi/mycode/web-blog/public/.pic/6B2A3CCF-CC53-40F9-B32A-2466CDF4BC50.webp" alt="Screen Shot 2023-02-27 at 17.14.51" style="zoom: 33%;" />  
 
 - the desired time headway $T$,
 

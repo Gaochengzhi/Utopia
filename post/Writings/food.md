@@ -2,7 +2,7 @@
 
 # 祛魅与重构：减肥饮食的12个认知陷阱与执行策略
 
-![IMG_0588](file:///Users/kounarushi/mycode/web-blog/public/.pic/E15B1403-1E49-4C36-9883-BD93D4026F28.JPG)
+![IMG_0588](file:///Users/kounarushi/mycode/web-blog/public/.pic/E15B1403-1E49-4C36-9883-BD93D4026F28.webp)
 
 在减肥这件事上，大众常被伪科学和过时的营养学教条裹挟。人体是一台精密的生化机器，而非简单的热量燃烧炉。以下是对12个常见饮食误区的病理生理学解构，以及基于科学的执行策略。
 

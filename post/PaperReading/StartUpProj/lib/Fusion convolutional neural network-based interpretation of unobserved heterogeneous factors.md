@@ -56,19 +56,19 @@ See [A latent class approach for <u>driver injury severity analysis</u> in <u>hi
 
 * one-hot variables -> zero inputs do make interactions with other variables -> each categorical variable has a sub-NN to deal with relationships among the alternatives within a variable ->  only affect the value of the sub-NN’s output
 
-  ![fasa](/Users/kounarushi/mycode/web-blog/public/.pic/fasa.png)
+  ![fasa](/Users/kounarushi/mycode/web-blog/public/.pic/fasa.webp)
 
 * random generator : captured unobserved heterogeneity for each record
 
 23 sub-NNs + randomly generated parameter 24-element vector represents the crash features 
 
-![img](file:///Users/kounarushi/mycode/web-blog/public/.pic/v2-3c906624089f59e671515ac18ab0761a_b.jpg)
+![img](file:///Users/kounarushi/mycode/web-blog/public/.pic/v2-3c906624089f59e671515ac18ab0761a_b.webp)
 
 ### Multiple hidden layers
 
 * convolutional layer ( learnable filters ) + pooling ( max-pooling ) layer
 
-  ![dasdadasda](file:///Users/kounarushi/mycode/web-blog/public/.pic/dasdadasda.jpg)
+  ![dasdadasda](file:///Users/kounarushi/mycode/web-blog/public/.pic/dasdadasda.webp)
 
 * output layer contains three cells associated with the three injury severity levels, respectively, and the driver injury severity for the input crash record is the injury severity level with the most substantial output value.
 

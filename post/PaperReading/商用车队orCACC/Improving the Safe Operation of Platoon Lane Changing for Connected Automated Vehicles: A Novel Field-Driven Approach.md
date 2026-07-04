@@ -49,9 +49,9 @@ TFV: targert following, TPV:targert preceding
 
 碰撞事故有多种类型，包括横向擦伤（scuffing）、侧面碰撞和追尾碰撞。当车队变道时，车队车辆与 𝑇𝐹𝑉/𝑇𝑃𝑉/𝑃𝑉 之间可能出现后两种碰撞形式，而对FV 几乎没有影响：
 
-<img src="file:///Users/kounarushi/mycode/web-blog/public/.pic/KGIUEH.jpg" alt="KGIUEH" style="zoom:33%;" />
+<img src="file:///Users/kounarushi/mycode/web-blog/public/.pic/KGIUEH.webp" alt="KGIUEH" style="zoom:33%;" />
 
-<img src="file:///Users/kounarushi/mycode/web-blog/public/.pic/KUGHFEUKB.jpg" alt="KUGHFEUKB" style="zoom:33%;" />
+<img src="file:///Users/kounarushi/mycode/web-blog/public/.pic/KUGHFEUKB.webp" alt="KUGHFEUKB" style="zoom:33%;" />
 
 本研究的重点是避免图 f、g 中的两种冲突，这些冲突发生在队内车辆中。
 
@@ -100,13 +100,13 @@ $$
 
 该模型可以动态反馈车队车辆在不同运动状态下的重力势场分布。 生成风险图，如下图所示。绿色等高线表示将具有相同势场的点投影到平面上形成的水平曲线。 从青色到紫色的颜色表示势场的强度。 当某一点的颜色越接近紫色时，表明引力势场的值越大，即引力惩罚越大。 相反，颜色越接近青色，引力损失越小。
 
-![IYGGBiui876](file:///Users/kounarushi/mycode/web-blog/public/.pic/IYGGBiui876.jpg)
+![IYGGBiui876](file:///Users/kounarushi/mycode/web-blog/public/.pic/IYGGBiui876.webp)
 
 ## 不同临界条件下的临界安全距离
 
 本节讨论了车队变道流程图的设计和临界安全距离建模。
 
-![UYGBISsi](file:///Users/kounarushi/mycode/web-blog/public/.pic/UYGBISsi.jpg)
+![UYGBISsi](file:///Users/kounarushi/mycode/web-blog/public/.pic/UYGBISsi.webp)
 
 如果答案是“N”，则排将保持跟车状态，直到找到合适的间隙。 一旦目标车道中的间隙满足临界间隙标准，车队将首先准备使用𝐿𝑉进行换道。
 
@@ -120,7 +120,7 @@ $$
 
 
 
-<img src="file:///Users/kounarushi/mycode/web-blog/public/.pic/UEGHKUb.jpg" alt="UEGHKUb" style="zoom:33%;" />
+<img src="file:///Users/kounarushi/mycode/web-blog/public/.pic/UEGHKUb.webp" alt="UEGHKUb" style="zoom:33%;" />
 
 在图5a中内圆相切的场景中，可以理解为保证本车在变道过程中和变道后避免与前车发生碰撞，本车与本车之间的最小车头时距 前车应该大于𝐷𝑚𝑖𝑛。 其公式如下：
 $$
@@ -152,7 +152,7 @@ $$
 
 ### 避免侧面碰撞的安全距离阈值
 
-<img src="file:///Users/kounarushi/mycode/web-blog/public/.pic/GYEBCKH.jpg" alt="GYEBCKH" style="zoom:33%;" />
+<img src="file:///Users/kounarushi/mycode/web-blog/public/.pic/GYEBCKH.webp" alt="GYEBCKH" style="zoom:33%;" />
 
 为保证本车在变道过程中和变道后不与前车发生碰撞，本车与前车的最小车头时距应为 大于𝐷𝑚𝑖𝑛(𝜃)：
 $$
@@ -173,6 +173,6 @@ APF：车辆质心之间的最小纵向距离。
 
 数值模拟分析结果，仿真过程中，本研究设置加速度取值范围为−2 m/s2 至 2 m/s2，转向角取值范围为 2° 至 5°。 还考虑了相关车辆的四种不同运动状态，即速度和加速度方面的四种不同运动状态组合。
 
-![IGHS2342](file:///Users/kounarushi/mycode/web-blog/public/.pic/IGHS2342.jpg)
+![IGHS2342](file:///Users/kounarushi/mycode/web-blog/public/.pic/IGHS2342.webp)
 
 所需车头时距 (DTH)，对比安全势场 (SPF) 模型。

@@ -102,7 +102,7 @@ $$ h_{k}^{'}=\frac{h_{k-l}+2h_{k-l}+\dots+lh_{k}+\dots+2h_{k+l-1}+h_{k+l}}{2l+1}
 
 在较为窄的valley 中选择谷的中心，以便在机器人的每一侧保持相等的间隙。如果选择的山谷非常宽（例如，当只有一个障碍物靠近机器人时），算法选择几个扇区“深入”山谷，但不一定在其中心。
 
-![ksjfhsdkjfhsdfsd](file:///Users/kounarushi/mycode/web-blog/public/.pic/ksjfhsdkjfhsdfsd.jpg)
+![ksjfhsdkjfhsdfsd](file:///Users/kounarushi/mycode/web-blog/public/.pic/ksjfhsdkjfhsdfsd.webp)
 
 ### Speed Control
 

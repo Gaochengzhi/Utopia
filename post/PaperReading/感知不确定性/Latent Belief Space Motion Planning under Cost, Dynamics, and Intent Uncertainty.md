@@ -57,7 +57,7 @@ state space S = X × Z，X 为连续状态空间。
 
 系统处于连续的状态-动作-观测空间中，而系统的状态转移除了受到上一时刻的状态和动作影响，还由一个离散的隐变量$Z$ 决定.
 
-![12染gwehbarnjyfdtmdu](file:///Users/kounarushi/mycode/web-blog/public/.pic/12染gwehbarnjyfdtmdu.jpg)
+![12染gwehbarnjyfdtmdu](file:///Users/kounarushi/mycode/web-blog/public/.pic/12染gwehbarnjyfdtmdu.webp)
 
 使用递归贝叶斯过滤来更新隐变量：
 $$
@@ -84,7 +84,7 @@ PODDP 也把流程分为了前向过程（Forward Pass）和后向过程（Backw
 
 在确定性系统中，由于状态转移过程是确定的，故给定的动作序列将衍生出一条链式的状态序列。但由于多模态不确定性的存在，类比于离散空间下的 POMDP 问题，每一个节点都可以根据隐变量 z 的不同取值可能性，延伸出多个分支，最终形成一个树状的轨迹推演，即轨迹树（trajectory tree）
 
-![ytsgahdflsdk](file:///Users/kounarushi/mycode/web-blog/public/.pic/ytsgahdflsdk.jpg)
+![ytsgahdflsdk](file:///Users/kounarushi/mycode/web-blog/public/.pic/ytsgahdflsdk.webp)
 
 ### 后向过程
 
@@ -103,11 +103,11 @@ PODDP 也把流程分为了前向过程（Forward Pass）和后向过程（Backw
 - **本体系统运动学规律不确定（Muddy Track 场景）**：车辆在一条泥泞的道路上朝一个目标地点行驶，但右侧的道路有一定的可能性会更加平滑。而车辆必须在行驶中探索右侧道路是否真的更平滑，从而规划出一条最优的行进路线。
 - **其他个体意图不确定 （Lane Change 场景）**：车辆希望并线到左侧车道，可是那里已经有另一辆车了。需要时刻评估对方是比较合作的，还是比较冲动激进的，进而确定应该超车并线，还是等待对方先向前走远再并线到它后方。
 
-![askdhaskj](file:///Users/kounarushi/mycode/web-blog/public/.pic/askdhaskj.jpg)
+![askdhaskj](file:///Users/kounarushi/mycode/web-blog/public/.pic/askdhaskj.webp)
 
-![akdhsakjdhau87697](file:///Users/kounarushi/mycode/web-blog/public/.pic/akdhsakjdhau87697.jpg)
+![akdhsakjdhau87697](file:///Users/kounarushi/mycode/web-blog/public/.pic/akdhsakjdhau87697.webp)
 
-![asdisagiudgia13243](file:///Users/kounarushi/mycode/web-blog/public/.pic/asdisagiudgia13243.jpg)
+![asdisagiudgia13243](file:///Users/kounarushi/mycode/web-blog/public/.pic/asdisagiudgia13243.webp)
 
 ## 术语
 

@@ -100,7 +100,7 @@ we make a simplified assumption that when we predict the motion for a traffic pa
 
 自动驾驶汽车在左车道行驶，另一辆车在右车道行驶，第三辆汽车停在路边突出到右车道
 
-<img src="file:///Users/kounarushi/mycode/web-blog/public/.pic/sdhfkdsjhfls.jpg" alt="sdhfkdsjhfls" style="zoom:33%;" />
+<img src="file:///Users/kounarushi/mycode/web-blog/public/.pic/sdhfkdsjhfls.webp" alt="sdhfkdsjhfls" style="zoom:33%;" />
 
 ## Improvement
 

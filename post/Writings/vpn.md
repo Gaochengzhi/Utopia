@@ -4,7 +4,7 @@
 
 ## 一、 诱饵与杀熟：服务“屎化”的必然性
 
-![38bnEf1iutyl8x2yjbaGRtxp8XI](file:///Users/kounarushi/mycode/web-blog/public/.pic/EA9F7157-7865-4A5A-A2AE-5049F0A8B45F.png)
+![38bnEf1iutyl8x2yjbaGRtxp8XI](file:///Users/kounarushi/mycode/web-blog/public/.pic/EA9F7157-7865-4A5A-A2AE-5049F0A8B45F.webp)
 
 所有的技术服务，最终都会走向烂尾。这不是什么诅咒，而是财务报表上的数学必然。
 
@@ -32,7 +32,7 @@
 
 ## 二、 长期主义的陷阱：交出枪权的愚蠢
 
-![38bmJyAjzsib3BR02jaB4INe9gB](file:///Users/kounarushi/mycode/web-blog/public/.pic/B42B5767-BD34-47DE-BB63-0E51F9E0E683.png)
+![38bmJyAjzsib3BR02jaB4INe9gB](file:///Users/kounarushi/mycode/web-blog/public/.pic/B42B5767-BD34-47DE-BB63-0E51F9E0E683.webp)
 
 在这个语境下，任何形式的“年费订阅”和“长期合约”，本质上都是消费者主动交出惩罚权的愚蠢行为。
 
@@ -49,7 +49,7 @@
 
 ## 三、 宏观映射：被复利追杀的资本主义
 
-![38bnP2isWuL5lEGUgTh52a5skZl](file:///Users/kounarushi/mycode/web-blog/public/.pic/971D28D9-DAD4-419F-A1FB-BDE2239E54C0.png)
+![38bnP2isWuL5lEGUgTh52a5skZl](file:///Users/kounarushi/mycode/web-blog/public/.pic/971D28D9-DAD4-419F-A1FB-BDE2239E54C0.webp)
 
 把镜头拉远。这种微观层面的“杀熟”和“短视”，其实是宏观经济逻辑的全息映射。
 
@@ -78,9 +78,9 @@
 
 ## 四、 重启与赖账：系统的默认设置
 
-![38bnZTsnH7wVkdx70BYVhzMciUa](file:///Users/kounarushi/mycode/web-blog/public/.pic/454FDAA0-16DD-4E96-96D3-9713FFE7976C.png)
+![38bnZTsnH7wVkdx70BYVhzMciUa](file:///Users/kounarushi/mycode/web-blog/public/.pic/454FDAA0-16DD-4E96-96D3-9713FFE7976C.webp)
 
-![38bnZfBWStegat4BdJr1olhWiya](file:///Users/kounarushi/mycode/web-blog/public/.pic/549A98AC-1216-48A2-8C06-C17563A682D9.png)
+![38bnZfBWStegat4BdJr1olhWiya](file:///Users/kounarushi/mycode/web-blog/public/.pic/549A98AC-1216-48A2-8C06-C17563A682D9.webp)
 
 当债务的黑洞大到全人类打工一万年都还不清的时候，系统就必须进行一次“重启” （王朝更迭）
 
@@ -97,7 +97,7 @@
 
 ## 五、 热力学视角：为什么“稳定”是金融的死敌？
 
-![38bntaWJSeJiYlhyAKSWTj4uqhK](file:///Users/kounarushi/mycode/web-blog/public/.pic/BEC30CB3-B5D9-42C9-AF16-5584514C385D.png)
+![38bntaWJSeJiYlhyAKSWTj4uqhK](file:///Users/kounarushi/mycode/web-blog/public/.pic/BEC30CB3-B5D9-42C9-AF16-5584514C385D.webp)
 
 有人会问：既然增长这么难，能不能让系统维持在一个“不涨也不跌”的稳定状态？
 
@@ -143,7 +143,7 @@
 
 ## 七、 浮士德的交易
 
-![38bpAKq4jWN5kTBtAbJO0w7lvb0](file:///Users/kounarushi/mycode/web-blog/public/.pic/5F23BBCA-4934-49E6-B7E3-E4E2486DA380.png)
+![38bpAKq4jWN5kTBtAbJO0w7lvb0](file:///Users/kounarushi/mycode/web-blog/public/.pic/5F23BBCA-4934-49E6-B7E3-E4E2486DA380.webp)
 
 虽然我们将这个系统批判得体无完肤，但必须保持一种冰冷的诚实：**这是一体两面的。**
 
@@ -166,7 +166,7 @@
 
 ## 八、 行动指南：流动的游牧民
 
-![38bpXTQfHDN5tPNqFz5rgwtT3aK](file:///Users/kounarushi/mycode/web-blog/public/.pic/B5E3BE38-4ABA-4614-9171-5CEDDFC43822.png)
+![38bpXTQfHDN5tPNqFz5rgwtT3aK](file:///Users/kounarushi/mycode/web-blog/public/.pic/B5E3BE38-4ABA-4614-9171-5CEDDFC43822.webp)
 
 看清了这个“崩坏前夜”的局势，我们作为个体，该如何自处？
 

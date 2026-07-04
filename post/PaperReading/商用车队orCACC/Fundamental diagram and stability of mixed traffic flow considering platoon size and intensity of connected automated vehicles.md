@@ -59,7 +59,7 @@ $$
 a_{n}(t)=\frac{k_{p}\left(\Delta x_{n}(t)-l-S_{0}-T_{A A \_ \text {intra }} v_{n}(t)\right)+k_{d} \Delta v_{n}(t)}{\Delta t+k_{d} T_{A A \_i n t r a}}
 $$
 
-![Screen Shot 2023-03-06 at 19.28.14](file:///Users/kounarushi/mycode/web-blog/public/.pic/4106D2AF-9729-4B5E-85D4-6FE06A8616FE.jpg)
+![Screen Shot 2023-03-06 at 19.28.14](file:///Users/kounarushi/mycode/web-blog/public/.pic/4106D2AF-9729-4B5E-85D4-6FE06A8616FE.webp)
 
 ## Fundamental diagram
 
