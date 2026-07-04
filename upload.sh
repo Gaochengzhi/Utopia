@@ -17,13 +17,17 @@
 #   ./upload.sh --skip-d1          # 跳过 D1 数据库更新
 #
 # 架构:
-#   ┌─────────────────── 并行执行 ───────────────────┐
-#   │  Images:   optimize-images.mjs → R2             │
-#   │  Articles: sync-r2.mjs --dir post → R2          │
-#   │  Index:    build-content-index.mjs → SQL         │
-#   └────────────────────────────────────────────────┘
+#   Phase 0: preflight-sync-check.mjs — 本地/远端内容数量对比,
+#            内容不全的机器直接拒绝同步 (防误删线上内容)
+#   Phase 1: optimize-images.mjs --no-sync — 本地图片转 webp
+#            (必须在索引构建之前完成,否则 D1 会记录已被转换删除的 .jpg)
+#   ┌─────────────────── Phase 2: 并行执行 ──────────────────┐
+#   │  Images:   sync-r2.mjs --dir .pic / photography → R2   │
+#   │  Articles: sync-r2.mjs --dir post → R2                 │
+#   │  Index:    build-content-index.mjs → SQL               │
+#   └────────────────────────────────────────────────────────┘
 #                         ↓ 全部完成后
-#          D1:   d1-seed-remote.sh → D1 数据库
+#   Phase 3: d1-seed-remote.sh → D1 数据库
 #
 
 # Note: NOT using set -e — individual task failures are handled gracefully
@@ -68,6 +72,7 @@ FULL_REBUILD=false
 DRY_RUN=false
 SKIP_IMAGES=false
 SKIP_D1=false
+FORCE_DELETE=false
 
 for arg in "$@"; do
   case "$arg" in
@@ -77,9 +82,10 @@ for arg in "$@"; do
     --dry-run)       DRY_RUN=true ;;
     --skip-images)   SKIP_IMAGES=true ;;
     --skip-d1)       SKIP_D1=true ;;
+    --force-delete)  FORCE_DELETE=true ;;
     *)
       echo "⚠️  Unknown option: $arg"
-      echo "Usage: ./upload.sh [--articles-only|--images-only|--full|--dry-run|--skip-images|--skip-d1]"
+      echo "Usage: ./upload.sh [--articles-only|--images-only|--full|--dry-run|--skip-images|--skip-d1|--force-delete]"
       exit 1
       ;;
   esac
@@ -146,20 +152,60 @@ fi
 echo ""
 
 # ============================================
-# 并行任务定义
+# Phase 0: 预检 — 内容不全的机器直接拒绝同步
 # ============================================
+step "Phase 0: 预检 (本地 vs 远端内容对比)"
+
+PREFLIGHT_ARGS=""
+if [ "$ARTICLES_ONLY" = true ]; then PREFLIGHT_ARGS="--articles-only"; fi
+if [ "$IMAGES_ONLY" = true ]; then PREFLIGHT_ARGS="--images-only"; fi
+if [ "$FORCE_DELETE" = true ]; then PREFLIGHT_ARGS="$PREFLIGHT_ARGS --force"; fi
+
+if ! "$NODE_BIN" scripts/preflight-sync-check.mjs $PREFLIGHT_ARGS; then
+  error "预检失败: 本机内容不完整，同步会删除线上内容。已中止。"
+  error "如确认要以本机为准，请使用 --force-delete 重新运行。"
+  exit 1
+fi
+echo ""
+
+# ============================================
+# Phase 1: 图片本地优化 (必须在索引构建之前)
+# ============================================
+# 优化会把 .jpg 转成 .webp 并删除原文件。如果和索引构建并行，
+# D1 索引会记录已被删除的 .jpg 路径，导致图片 404。
+if [ "$ARTICLES_ONLY" = true ] || [ "$SKIP_IMAGES" = true ]; then
+  skip_msg "Phase 1: 跳过图片优化"
+else
+  step "Phase 1: 图片本地优化 (webp 转换)"
+  if ! ( set -o pipefail; "$NODE_BIN" scripts/optimize-images.mjs --scope all --no-sync $DRY_FLAG 2>&1 \
+      | stream_task "🖼️ 优化" "$CYAN" "$LOG_DIR/optimize.log" ); then
+    error "图片优化失败，中止上传"
+    exit 1
+  fi
+fi
+echo ""
+
+# ============================================
+# Phase 2: 并行任务定义
+# ============================================
+SYNC_EXTRA=""
+if [ "$DRY_RUN" = true ]; then SYNC_EXTRA="$SYNC_EXTRA --dry-run"; fi
+if [ "$FORCE_DELETE" = true ]; then SYNC_EXTRA="$SYNC_EXTRA --force-delete"; fi
+
 PIDS=()
 TASK_NAMES=()
 
-# --- Task A: 图片优化 + 同步到 R2 ---
-run_images() {
+# --- Task A: 同步图片到 R2 ---
+run_images_sync() {
   set -o pipefail
   if [ "$ARTICLES_ONLY" = true ] || [ "$SKIP_IMAGES" = true ]; then
-    skip_msg "跳过: 图片处理"
+    skip_msg "跳过: 图片 R2 同步"
     exit 0
   fi
-  "$NODE_BIN" scripts/optimize-images.mjs --scope all $DRY_FLAG 2>&1 \
-    | stream_task "🖼️ 图片" "$CYAN" "$LOG_DIR/images.log"
+  {
+    "$NODE_BIN" scripts/sync-r2.mjs --dir .pic --delete $SYNC_EXTRA \
+      && "$NODE_BIN" scripts/sync-r2.mjs --dir photography --delete $SYNC_EXTRA
+  } 2>&1 | stream_task "🖼️ 图片" "$CYAN" "$LOG_DIR/images.log"
 }
 
 # --- Task B: 同步文章 Markdown 到 R2 ---
@@ -169,11 +215,7 @@ run_articles_r2() {
     skip_msg "跳过: 文章 R2 同步"
     exit 0
   fi
-  local R2_ARGS="--dir post --delete"
-  if [ "$DRY_RUN" = true ]; then
-    R2_ARGS="$R2_ARGS --dry-run"
-  fi
-  "$NODE_BIN" scripts/sync-r2.mjs $R2_ARGS 2>&1 \
+  "$NODE_BIN" scripts/sync-r2.mjs --dir post --delete $SYNC_EXTRA 2>&1 \
     | stream_task "📄 文章" "$BLUE" "$LOG_DIR/articles_r2.log"
 }
 
@@ -196,14 +238,14 @@ run_build_index() {
 }
 
 # ============================================
-# 启动并行任务
+# Phase 2: 启动并行任务
 # ============================================
-step "启动并行任务..."
+step "Phase 2: 启动并行任务..."
 echo ""
 
-run_images &
+run_images_sync &
 PIDS+=($!)
-TASK_NAMES+=("🖼️  图片优化+R2")
+TASK_NAMES+=("🖼️  图片R2同步")
 
 run_articles_r2 &
 PIDS+=($!)

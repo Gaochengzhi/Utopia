@@ -26,6 +26,12 @@
  *   node scripts/sync-r2.mjs --dir photography  # Sync only photography/
  *   node scripts/sync-r2.mjs --delete           # Also delete remote files not present locally
  *   node scripts/sync-r2.mjs --delete --dry-run # Preview what would be deleted
+ *   node scripts/sync-r2.mjs --delete --force-delete  # Bypass the mass-deletion safety guard
+ *
+ * Safety: with --delete, deletion is refused (exit code 1) when the local
+ * dir is empty/missing or when it would remove more than max(50, 25%) of
+ * the remote objects under a prefix — this protects against running the
+ * sync on a machine that doesn't hold the full content set.
  */
 
 import { S3Client, PutObjectCommand, HeadObjectCommand, ListObjectsV2Command, DeleteObjectCommand } from '@aws-sdk/client-s3'
@@ -43,6 +49,7 @@ const SECRET_KEY = process.env.R2_SECRET_ACCESS_KEY
 
 const DRY_RUN = process.argv.includes('--dry-run')
 const DO_DELETE = process.argv.includes('--delete')
+const FORCE_DELETE = process.argv.includes('--force-delete')
 const DIR_FILTER = process.argv.find((_, i, arr) => arr[i - 1] === '--dir')
 const FILE_FILTER = process.argv.find((_, i, arr) => arr[i - 1] === '--file')
 
@@ -127,14 +134,21 @@ function scanFiles(dirPath, extRegex) {
     if (item.startsWith('.') && item !== '.pic') continue
 
     const fullPath = path.join(dirPath, item)
-    const stats = fs.statSync(fullPath)
+    try {
+      // Skip symlinks (e.g. public/.pic/photography -> ../photography) so the
+      // same files are never uploaded twice under a second key prefix.
+      const lstat = fs.lstatSync(fullPath)
+      if (lstat.isSymbolicLink()) continue
 
-    if (stats.isDirectory()) {
-      results.push(...scanFiles(fullPath, extRegex))
-    } else {
-      if (extRegex.test(item)) {
+      const stats = fs.statSync(fullPath)
+      if (stats.isDirectory()) {
+        results.push(...scanFiles(fullPath, extRegex))
+      } else if (extRegex.test(item)) {
         results.push({ fullPath, size: stats.size })
       }
+    } catch (e) {
+      if (e.code === 'ENOENT') continue // file vanished mid-scan
+      throw e
     }
   }
   return results
@@ -363,6 +377,26 @@ async function main() {
 
     // Delete remote files not present locally (if --delete flag)
     if (DO_DELETE) {
+      const deleteCandidates = [...remoteMap.keys()].filter(k => !localMap.has(k))
+
+      // Safety guards: "local wins" deletion is catastrophic when run on a
+      // machine that doesn't hold the full content set (e.g. the dev machine
+      // without public/.pic). Refuse suspicious mass deletions.
+      const massDeleteThreshold = Math.max(50, Math.ceil(remoteMap.size * 0.25))
+      if (!FORCE_DELETE && deleteCandidates.length > 0 && localMap.size === 0) {
+        console.warn(`   🛑 REFUSED to delete ${deleteCandidates.length} remote files under "${dir.r2Prefix}":`)
+        console.warn(`      local directory is empty or missing (${dir.localDir}).`)
+        console.warn(`      This machine probably doesn't hold this content. Use --force-delete to override.`)
+        totalErrors++
+        continue
+      }
+      if (!FORCE_DELETE && deleteCandidates.length > massDeleteThreshold) {
+        console.warn(`   🛑 REFUSED to delete ${deleteCandidates.length}/${remoteMap.size} remote files under "${dir.r2Prefix}":`)
+        console.warn(`      exceeds safety threshold (${massDeleteThreshold}). If intentional, re-run with --force-delete.`)
+        totalErrors++
+        continue
+      }
+
       let dirDeleted = 0
       for (const [remoteKey] of remoteMap) {
         if (!localMap.has(remoteKey)) {

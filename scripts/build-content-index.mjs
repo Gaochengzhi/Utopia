@@ -78,12 +78,9 @@ function stripMarkdown(content) {
 function normalizeImagePath(content) {
   if (!content) return content
   return content
+    // Any absolute local path ending in /public/.pic/, on any machine
     .replace(
-      new RegExp("(file://)?/Users/kounarushi/mycode/web-blog/public/.pic/", "gm"),
-      "/.pic/"
-    )
-    .replace(
-      new RegExp("(file://)?/Users/[^/]+/[^/]+/web-blog/public/.pic/", "gm"),
+      new RegExp("(file://)?/(?:Users|home)/[^\\s)\"'`]*?/public/\\.pic/", "gm"),
       "/.pic/"
     )
     .replace(
@@ -282,7 +279,8 @@ function buildFull() {
   sqlStatements.push('')
   sqlStatements.push('DELETE FROM posts;')
   sqlStatements.push('DELETE FROM posts_fts;')
-  sqlStatements.push('DELETE FROM photos;')
+  // NOTE: 'DELETE FROM photos;' is emitted in the photography section below,
+  // and only when the local photography directory actually exists.
   sqlStatements.push('DELETE FROM path_tree;')
   sqlStatements.push('DELETE FROM pageviews;')
   sqlStatements.push('')
@@ -318,33 +316,44 @@ function buildFull() {
   // 2. Photography
   console.log('📸 Processing photography...')
   let photoCount = 0
-  
+
   if (fs.existsSync(PHOTO_DIR)) {
+    // Only rebuild the photos table when the local library actually exists —
+    // otherwise a machine without public/photography would wipe it in D1.
+    sqlStatements.push('DELETE FROM photos;')
     const categories = fs.readdirSync(PHOTO_DIR, { withFileTypes: true })
       .filter(d => d.isDirectory())
       .map(d => d.name)
-    
+
     for (const category of categories) {
       const catDir = path.join(PHOTO_DIR, category)
       const files = fs.readdirSync(catDir)
         .filter(f => /\.(jpg|jpeg|png|webp|gif)$/i.test(f))
         .sort()
-      
+
       files.forEach((filename, index) => {
         const filePath = `photography/content/${category}/${filename}`
         const fullFilePath = path.join(catDir, filename)
-        const stats = fs.statSync(fullFilePath)
+        let stats
+        try {
+          stats = fs.statSync(fullFilePath)
+        } catch (e) {
+          if (e.code === 'ENOENT') return // file vanished mid-scan
+          throw e
+        }
         const createdAt = Math.floor(stats.birthtimeMs)
-        
+
         sqlStatements.push(
           `INSERT INTO photos (category, filename, path, sort_order, created_at) VALUES (${escSQL(category)}, ${escSQL(filename)}, ${escSQL(filePath)}, ${index}, ${createdAt});`
         )
         photoCount++
       })
     }
+    console.log(`  ✅ ${photoCount} photos indexed`)
+  } else {
+    console.warn('  ⚠ public/photography/content not found — leaving the D1 photos table untouched')
   }
-  console.log(`  ✅ ${photoCount} photos indexed`)
-  
+
   // 3. Path Tree
   console.log('🌳 Building path tree...')
   const treeNodes = buildPathTree(POST_DIR, 'post')
@@ -517,12 +526,13 @@ function buildIncremental() {
     )
   }
   
-  // Photography — always rebuild (scan-based, fast)
+  // Photography — rebuild from local scan, but only when the local library
+  // exists (a machine without public/photography must not wipe it in D1)
   sqlStatements.push('')
-  sqlStatements.push('DELETE FROM photos;')
   let photoCount = 0
-  
+
   if (fs.existsSync(PHOTO_DIR)) {
+    sqlStatements.push('DELETE FROM photos;')
     const categories = fs.readdirSync(PHOTO_DIR, { withFileTypes: true })
       .filter(d => d.isDirectory())
       .map(d => d.name)
@@ -536,7 +546,13 @@ function buildIncremental() {
       files.forEach((filename, index) => {
         const filePath = `photography/content/${category}/${filename}`
         const fullFilePath = path.join(catDir, filename)
-        const stats = fs.statSync(fullFilePath)
+        let stats
+        try {
+          stats = fs.statSync(fullFilePath)
+        } catch (e) {
+          if (e.code === 'ENOENT') return // file vanished mid-scan
+          throw e
+        }
         const createdAt = Math.floor(stats.birthtimeMs)
         
         sqlStatements.push(
