@@ -95,7 +95,7 @@
 
 中国人很喜欢贷款买豪车，大马路上乍一看还以为是超级发达国家，老家小县城路虎迈巴赫满街跑，我都怀疑是假的！
 
-![E920941A-0034-4DB0-8070-B782C52F0F8E_1_105_c](file:///Users/kounarushi/mycode/web-blog/public/.pic/3749401A-FA68-4A36-BEC7-5ED17ECB2D7E.jpeg)
+![E920941A-0034-4DB0-8070-B782C52F0F8E_1_105_c](file:///Users/kounarushi/mycode/web-blog/public/.pic/3749401A-FA68-4A36-BEC7-5ED17ECB2D7E.webp)
 
 破烂小区门口全是超级豪车！
 

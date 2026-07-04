@@ -2,7 +2,7 @@ import fs from 'fs'
 import path from 'path'
 import crypto from 'crypto'
 import os from 'os'
-import { execSync } from 'child_process'
+import { execFileSync } from 'child_process'
 import sharp from 'sharp'
 import pLimit from 'p-limit'
 import { loadProjectEnv } from './load-env.mjs'
@@ -12,6 +12,7 @@ loadProjectEnv(ROOT)
 const MANIFEST_PATH = path.join(ROOT, 'scripts', '.image-manifest.json')
 const PUBLIC_DIR = path.join(ROOT, 'public')
 const MAX_WIDTH = 2560
+const NODE_BIN = process.execPath
 
 // CLI args
 const args = process.argv.slice(2)
@@ -115,6 +116,23 @@ function hashBuffer(buffer) {
   return crypto.createHash('sha256').update(buffer).digest('hex').substring(0, 16)
 }
 
+function getSyncDirFilter(scope) {
+  if (scope === 'blog') return '.pic'
+  if (scope === 'photography') return 'photography'
+  return null
+}
+
+function runSyncR2({ scope }) {
+  const dirFilters = scope === 'all'
+    ? ['.pic', 'photography']
+    : [getSyncDirFilter(scope)].filter(Boolean)
+
+  for (const dirFilter of dirFilters) {
+    const args = ['scripts/sync-r2.mjs', '--delete', '--dir', dirFilter]
+    execFileSync(NODE_BIN, args, { stdio: 'inherit' })
+  }
+}
+
 function scanFiles(dirPath, extRegex) {
   const results = []
   if (!fs.existsSync(dirPath)) return results
@@ -179,10 +197,14 @@ async function processImage(filePath, manifest, relativePath) {
 
   try {
     const meta = await sharp(filePath).metadata()
+    const orientation = Number(meta.orientation || 1)
+    const isQuarterTurn = orientation >= 5 && orientation <= 8
+    const displayWidth =
+      isQuarterTurn && Number.isFinite(meta.height) ? meta.height : meta.width
     let needResize = false
-    let targetWidth = meta.width
+    let targetWidth = displayWidth
 
-    if (meta.width > MAX_WIDTH) {
+    if (targetWidth > MAX_WIDTH) {
       needResize = true
       targetWidth = MAX_WIDTH
     }
@@ -194,7 +216,9 @@ async function processImage(filePath, manifest, relativePath) {
       quality = 85
     }
 
-    let pipeline = sharp(filePath)
+    // rotate() with no args applies EXIF orientation so exported pixels
+    // always have the correct direction.
+    let pipeline = sharp(filePath).rotate()
     if (needResize) {
       pipeline = pipeline.resize({ width: targetWidth, withoutEnlargement: true })
     }
@@ -270,7 +294,7 @@ async function main() {
   if (SYNC_ONLY) {
     if (!DRY_RUN) {
       console.log('🔄 Running sync to R2...')
-      execSync('node scripts/sync-r2.mjs --delete' + (TARGET_SCOPE !== 'all' ? ` --dir ${TARGET_SCOPE}` : ''), { stdio: 'inherit' })
+      runSyncR2({ scope: TARGET_SCOPE })
     }
     return
   }
@@ -438,14 +462,16 @@ async function main() {
 
   if (!NO_SYNC && !DRY_RUN) {
     console.log('\n🔄 Syncing to R2...')
-    try {
-      execSync('node scripts/sync-r2.mjs --delete' + (TARGET_SCOPE !== 'all' ? ` --dir ${TARGET_SCOPE}` : ''), { stdio: 'inherit' })
-    } catch (e) {
-      console.error('❌ R2 sync failed:', e.message)
-    }
+    runSyncR2({ scope: TARGET_SCOPE })
+  }
+
+  if (counts.error > 0) {
+    process.exitCode = 1
   }
 }
 
 
-main().catch(console.error)
-
+main().catch(error => {
+  console.error(error)
+  process.exit(1)
+})

@@ -51,7 +51,7 @@ This paper presents a **self-evolving decisionmaking system** based on the **Int
 
 本文在IDC架构下构建了一个自我进化的决策系统：
 
-![ScreenShot2022-11-04](file:///Users/kounarushi/mycode/web-blog/public/.pic/ScreenShot2022-11-04.jpg)
+![ScreenShot2022-11-04](file:///Users/kounarushi/mycode/web-blog/public/.pic/ScreenShot2022-11-04.webp)
 
 这些贡献有三个部分：
 

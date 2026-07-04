@@ -100,7 +100,7 @@ https://zhuanlan.zhihu.com/p/138597214
 
 Hard-parameter sharing & soft-parameter sharing
 
-![img](file:///Users/kounarushi/mycode/web-blog/public/.pic/v2-5ae0af56b0b18ee348eed50bbd313611_b.jpg)
+![img](file:///Users/kounarushi/mycode/web-blog/public/.pic/v2-5ae0af56b0b18ee348eed50bbd313611_b.webp)
 
 任一 MTL 网络设计可以看做是找 hard 和 soft parameter sharing 的平衡点：1. 如何网络设计可以小巧轻便。2. 如何网络设计可以最大幅度的让不同任务去共享信息。
 

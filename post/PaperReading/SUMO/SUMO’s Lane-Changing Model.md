@@ -76,7 +76,7 @@ ego vehicle 触发变道的条件：there is enough physical space on the target
 2. For every lane on the current edge, the traffic density along the bestLanes (occupation)
 3. For every lane on the current edge, the offset in lane index to the lane which is strategically advisable (bestLaneOffset) 车道索引到战略上可取的车道的偏移量
 
-![akjhfcaksjdhc](file:///Users/kounarushi/mycode/web-blog/public/.pic/akjhfcaksjdhc.jpg)
+![akjhfcaksjdhc](file:///Users/kounarushi/mycode/web-blog/public/.pic/akjhfcaksjdhc.webp)
 
 ### **Determining urgency**
 
@@ -117,11 +117,11 @@ leader remains sufficiently high
 
 difference *dv*
 
-![376416398739hkh](file:///Users/kounarushi/mycode/web-blog/public/.pic/376416398739hkh.jpg)
+![376416398739hkh](file:///Users/kounarushi/mycode/web-blog/public/.pic/376416398739hkh.webp)
 
 ### **Preventing deadlock**
 
-![udysgfsdkhflkh](file:///Users/kounarushi/mycode/web-blog/public/.pic/udysgfsdkhflkh.jpg)
+![udysgfsdkhflkh](file:///Users/kounarushi/mycode/web-blog/public/.pic/udysgfsdkhflkh.webp)
 
 SUMO 中的车辆不能倒退！
 
@@ -141,7 +141,7 @@ SUMO 中的车辆不能倒退！
 
 避免前车慢的现象，需要平衡变道带来的预期速度增益与变道的努力。
 
-![asdhgsakh](file:///Users/kounarushi/mycode/web-blog/public/.pic/asdhgsakh.jpg)
+![asdhgsakh](file:///Users/kounarushi/mycode/web-blog/public/.pic/asdhgsakh.webp)
 
 ## Regulatory lane-changing
 

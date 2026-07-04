@@ -332,7 +332,7 @@ $$
 
 ## 最初的元语言：创世纪的物理学
 
-![result image](file:///Users/kounarushi/mycode/web-blog/public/.pic/501E0F90-BA42-4AA3-BE8D-713C17D9513C.png)
+![result image](file:///Users/kounarushi/mycode/web-blog/public/.pic/501E0F90-BA42-4AA3-BE8D-713C17D9513C.webp)
 
 如果我们一层层剥开计算机语言的洋葱，剥到最后，没有任何语言，只剩下电流的通与断：
 

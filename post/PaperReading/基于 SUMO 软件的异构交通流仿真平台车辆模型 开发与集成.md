@@ -66,9 +66,9 @@ SUMO 软件本身的横向控制方式有 2 种：
 
 当换道即将结束时，ea ( k ) 越来越小，导致方向盘转角过小，使得换道过程需较长时间结束。驾驶员驾驶车辆时，存在一定的操纵误差，离该车道的道 路中心线会有一定程度的偏离。为解决上述问题， 设定:当 C>0. 9 时，即认为换道完成。
 
-![8173298h23riu23h](file:///Users/kounarushi/mycode/web-blog/public/.pic/8173298h23riu23h.jpg)
+![8173298h23riu23h](file:///Users/kounarushi/mycode/web-blog/public/.pic/8173298h23riu23h.webp)
 
-![123454367465](file:///Users/kounarushi/mycode/web-blog/public/.pic/123454367465.jpg)
+![123454367465](file:///Users/kounarushi/mycode/web-blog/public/.pic/123454367465.webp)
 
 可以看出，优化后车辆模型速度和加速度变 化平缓，尤其加速度控制更加接近实际驾驶状态。
 

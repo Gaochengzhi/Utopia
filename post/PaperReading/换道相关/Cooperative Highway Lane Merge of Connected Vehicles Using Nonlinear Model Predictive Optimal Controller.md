@@ -38,7 +38,7 @@ systems. In Proceedings of the 2005 IEEE Intelligent Transportation Systems, Vie
 
 美国三种类型的高速公路车道合并配置:1）平行加速车道，2）锥形加速车道，3）辅助三叶草车道
 
-<img src="file:///Users/kounarushi/mycode/web-blog/public/.pic/1254673891098hsjagdbgjhasdb.jpg" alt="1254673891098hsjagdbgjhasdb" style="zoom: 33%;" />
+<img src="file:///Users/kounarushi/mycode/web-blog/public/.pic/1254673891098hsjagdbgjhasdb.webp" alt="1254673891098hsjagdbgjhasdb" style="zoom: 33%;" />
 
 
 

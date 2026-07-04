@@ -45,7 +45,16 @@ if ! command -v node &>/dev/null; then
   # Try loading nvm explicitly
   [ -s "$HOME/.nvm/nvm.sh" ] && source "$HOME/.nvm/nvm.sh"
 fi
-if ! command -v node &>/dev/null; then
+
+# Resolve node executable once, and reuse it (important for GUI/non-login shells).
+NODE_BIN="${NODE_BIN:-$(command -v node 2>/dev/null || true)}"
+if [ -z "$NODE_BIN" ] && [ -x "/opt/homebrew/bin/node" ]; then
+  NODE_BIN="/opt/homebrew/bin/node"
+fi
+if [ -z "$NODE_BIN" ] && [ -x "/usr/local/bin/node" ]; then
+  NODE_BIN="/usr/local/bin/node"
+fi
+if [ -z "$NODE_BIN" ]; then
   echo -e "\033[0;31m❌ node not found in PATH. Install Node.js or check your shell config.\033[0m"
   exit 1
 fi
@@ -149,7 +158,7 @@ run_images() {
     skip_msg "跳过: 图片处理"
     exit 0
   fi
-  node scripts/optimize-images.mjs $DRY_FLAG 2>&1 \
+  "$NODE_BIN" scripts/optimize-images.mjs --scope all $DRY_FLAG 2>&1 \
     | stream_task "🖼️ 图片" "$CYAN" "$LOG_DIR/images.log"
 }
 
@@ -164,7 +173,7 @@ run_articles_r2() {
   if [ "$DRY_RUN" = true ]; then
     R2_ARGS="$R2_ARGS --dry-run"
   fi
-  node scripts/sync-r2.mjs $R2_ARGS 2>&1 \
+  "$NODE_BIN" scripts/sync-r2.mjs $R2_ARGS 2>&1 \
     | stream_task "📄 文章" "$BLUE" "$LOG_DIR/articles_r2.log"
 }
 
@@ -182,7 +191,7 @@ run_build_index() {
   if [ "$DRY_RUN" = true ]; then
     BUILD_ARGS="$BUILD_ARGS --dry-run"
   fi
-  node scripts/build-content-index.mjs $BUILD_ARGS 2>&1 \
+  "$NODE_BIN" scripts/build-content-index.mjs $BUILD_ARGS 2>&1 \
     | stream_task "📝 索引" "$YELLOW" "$LOG_DIR/build_index.log"
 }
 
@@ -225,7 +234,8 @@ done
 echo ""
 
 if [ "$FAILED" -gt 0 ]; then
-  error "有 $FAILED 个任务失败 (继续执行后续步骤)"
+  error "有 $FAILED 个任务失败，停止后续 D1 更新"
+  exit 1
 fi
 
 # ============================================

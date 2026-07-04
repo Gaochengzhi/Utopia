@@ -6,16 +6,17 @@
 # Usage:
 #   bash scripts/d1-seed-remote.sh [--dry-run]
 
-set -e
+set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SEED_FILE="$SCRIPT_DIR/d1-seed.sql"
-CHUNK_DIR="$SCRIPT_DIR/d1-seed-chunks"
 DB_NAME="utopia-db"
 MAX_CHUNK_BYTES=800000  # ~800KB per chunk
+CHUNK_DIR=""
+WRANGLER_ENV_FILE=""
 
 DRY_RUN=false
-if [ "$1" = "--dry-run" ]; then
+if [ "${1:-}" = "--dry-run" ]; then
   DRY_RUN=true
 fi
 
@@ -25,11 +26,65 @@ if [ ! -f "$SEED_FILE" ]; then
   exit 1
 fi
 
+SEED_SIZE=$(wc -c < "$SEED_FILE" | tr -d ' ')
+
+cleanup() {
+  if [ -n "${CHUNK_DIR:-}" ] && [ -d "$CHUNK_DIR" ]; then
+    rm -rf "$CHUNK_DIR"
+  fi
+  if [ -n "${WRANGLER_ENV_FILE:-}" ] && [ -f "$WRANGLER_ENV_FILE" ]; then
+    rm -f "$WRANGLER_ENV_FILE"
+  fi
+}
+trap cleanup EXIT
+
+# Wrangler auto-loads .env by default. Keep D1 uploads on OAuth auth even when
+# the project .env contains CLOUDFLARE_API_TOKEN for other scripts.
+WRANGLER_ENV_FILE=$(mktemp "${TMPDIR:-/tmp}/wrangler-empty-env.XXXXXX")
+
+upload_sql_file() {
+  local sql_file="$1"
+  local label="$2"
+
+  echo -n "   ⬆️  Uploading $label... "
+  if npx wrangler d1 execute "$DB_NAME" --remote --file "$sql_file" --yes --env-file "$WRANGLER_ENV_FILE" 2>&1; then
+    echo "✅"
+    return 0
+  fi
+
+  echo "❌ FAILED"
+  echo "   ⚠️  Stopping due to failure. Fix the issue and re-run."
+  return 1
+}
+
+if [ "$SEED_SIZE" -le "$MAX_CHUNK_BYTES" ]; then
+  echo "📦 Seed file is $(( SEED_SIZE / 1024 )) KB, uploading directly without chunking..."
+  echo ""
+
+  if [ "$DRY_RUN" = true ]; then
+    echo "🏁 Dry run complete. Would upload: $SEED_FILE"
+    exit 0
+  fi
+
+  echo "🚀 Uploading seed file to D1 (${DB_NAME})..."
+  echo ""
+  if upload_sql_file "$SEED_FILE" "$(basename "$SEED_FILE")"; then
+    echo ""
+    echo "🎉 Seed file uploaded successfully!"
+    echo "✨ Done!"
+    exit 0
+  fi
+
+  echo ""
+  echo "❌ Upload failed."
+  exit 1
+fi
+
 echo "📦 Splitting $SEED_FILE into chunks (max ${MAX_CHUNK_BYTES} bytes each)..."
 
-# Clean up old chunks
-rm -rf "$CHUNK_DIR"
-mkdir -p "$CHUNK_DIR"
+# Use a unique temp dir to avoid overlapping upload jobs deleting each
+# other's chunks while Wrangler is still reading them.
+CHUNK_DIR=$(mktemp -d "${TMPDIR:-/tmp}/d1-seed-chunks.XXXXXX")
 
 # Split the SQL file into chunks, respecting statement boundaries.
 # Key challenge: INSERT statements contain multi-line blog content with
@@ -124,6 +179,11 @@ PYTHON_SCRIPT
 CHUNK_COUNT=$(ls "$CHUNK_DIR"/chunk_*.sql 2>/dev/null | wc -l | tr -d ' ')
 echo "✅ Created $CHUNK_COUNT chunk files"
 
+if [ "$CHUNK_COUNT" -eq 0 ]; then
+  echo "❌ No chunk files were created."
+  exit 1
+fi
+
 # Show chunk sizes
 echo ""
 echo "📊 Chunk sizes:"
@@ -145,15 +205,15 @@ echo ""
 
 FAILED=0
 for chunk in "$CHUNK_DIR"/chunk_*.sql; do
-  name=$(basename "$chunk")
-  echo -n "   ⬆️  Uploading $name... "
-  
-  if npx wrangler d1 execute "$DB_NAME" --remote --file "$chunk" --yes 2>&1; then
-    echo "✅"
-  else
-    echo "❌ FAILED"
+  if [ ! -f "$chunk" ]; then
+    echo "❌ Missing chunk file before upload: $chunk"
     FAILED=$((FAILED + 1))
-    echo "   ⚠️  Stopping due to failure. Fix the issue and re-run."
+    break
+  fi
+
+  name=$(basename "$chunk")
+  if ! upload_sql_file "$chunk" "$name"; then
+    FAILED=$((FAILED + 1))
     break
   fi
 done
@@ -166,7 +226,5 @@ else
   exit 1
 fi
 
-# Cleanup
 echo "🧹 Cleaning up chunk files..."
-rm -rf "$CHUNK_DIR"
 echo "✨ Done!"

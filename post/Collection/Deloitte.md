@@ -2,7 +2,7 @@
 
 # 德勤，价值 740 亿美元的癌症已转移到美国各地 Deloitte, a \$74 billion cancer metastasized across America
 
-![Image](file:///Users/kounarushi/mycode/web-blog/public/.pic/7BDF2DC7-329F-462A-9A2A-FAE7261F9CBF.jpeg)
+![Image](file:///Users/kounarushi/mycode/web-blog/public/.pic/7BDF2DC7-329F-462A-9A2A-FAE7261F9CBF.webp)
 
 You were never meant to hear the name "Deloitte" and you were never meant to know that the government has wasted \$74 billion by working with them. Quietly, Deloitte is one of the largest contractors "building" American government IT systems. Medicaid enrollment, unemployment insurance, child welfare case management, food assistance eligibility. When you interact with a state benefits system, theres a decent chance Deloitte built it. 
 

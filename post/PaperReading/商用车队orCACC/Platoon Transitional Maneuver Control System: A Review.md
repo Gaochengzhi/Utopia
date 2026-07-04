@@ -21,7 +21,7 @@ from IEEE Access, 2021, 9: 88327-88347.
 
 design the control system of the platoon based on five control layers:
 
-![iihkjfHKHUHK8762487](file:///Users/kounarushi/mycode/web-blog/public/.pic/iihkjfHKHUHK8762487.jpg)
+![iihkjfHKHUHK8762487](file:///Users/kounarushi/mycode/web-blog/public/.pic/iihkjfHKHUHK8762487.webp)
 
 - *Network Layer:* 控制进入的流量和路由流量。它负责优化道路容量和每辆车的平均行驶时间，减少瞬态拥堵。
 - *Link Layer:* 控制链路的交通流量，使其达到最大容量，并最大限度地减少车辆的行驶时间和交通拥堵。
@@ -155,7 +155,7 @@ https://www.zhihu.com/question/553411411/answer/2747465823
 
 * 因为MPC用来预测的被控系统模型在每一个采样时刻都可以不同，所以MPC可以处理被控模型非线性以及模型动态混了离散和连续状态的情况（但LQR是针对线性系统的）。
 
-* 如果存在一个硬约束，那么PID控制器的参考位置就必须设得远离这个硬约束（上半部分图），因为考虑到过冲恐怕会碰到硬约束（毕竟PID对这个硬约束比如墙壁，地面一无所知）。但是MPC是知道这个硬约束存在的（这个硬约束可直接写进MPC优化问题中）![img](file:///Users/kounarushi/mycode/web-blog/public/.pic/v2-6e529603e53ae040a9a70db994abdd8b_1440w.jpeg)
+* 如果存在一个硬约束，那么PID控制器的参考位置就必须设得远离这个硬约束（上半部分图），因为考虑到过冲恐怕会碰到硬约束（毕竟PID对这个硬约束比如墙壁，地面一无所知）。但是MPC是知道这个硬约束存在的（这个硬约束可直接写进MPC优化问题中）![img](file:///Users/kounarushi/mycode/web-blog/public/.pic/v2-6e529603e53ae040a9a70db994abdd8b_1440w.webp)
 
 * 其实LQR也是一种MPC，对于所有的MPC来说系统要想绝对稳定就必须要有李雅普诺夫函数存在，但只有时域无穷大的时候才会有李雅普诺夫函数，而时域无穷大的时候常规MPC是解不出来的。但是LQR是一种特殊的情况，他可以保证你的时域无穷大（系统绝对稳定）时依然可以解出解析解来。
 

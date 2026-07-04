@@ -81,7 +81,7 @@ We consider below two types of cooperation: 1. vehicle-to-vehicle 2.vehicle-to-p
 
   #### Swarm Behaviours for Dynamic Traffic Flows
 
-  ![kfhdskjhc](file:///Users/kounarushi/mycode/web-blog/public/.pic/kfhdskjhc.jpg)
+  ![kfhdskjhc](file:///Users/kounarushi/mycode/web-blog/public/.pic/kfhdskjhc.webp)
 
   * 无信号路口导航
 
@@ -141,7 +141,7 @@ We consider below two types of cooperation: 1. vehicle-to-vehicle 2.vehicle-to-p
 
 #### 总结
 
-![1623747329fghsdjjvc](file:///Users/kounarushi/mycode/web-blog/public/.pic/1623747329fghsdjjvc.jpg)
+![1623747329fghsdjjvc](file:///Users/kounarushi/mycode/web-blog/public/.pic/1623747329fghsdjjvc.webp)
 
 ### *B. Vehicle-to-Pedestrian Cooperation*
 

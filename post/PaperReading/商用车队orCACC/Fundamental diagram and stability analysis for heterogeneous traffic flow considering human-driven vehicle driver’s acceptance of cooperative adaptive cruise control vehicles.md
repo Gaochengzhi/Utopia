@@ -27,7 +27,7 @@ Researchers assumed the behavior of HV following CACC is consistent with that of
 
 ## Car-following rule and model analysis
 
-![Screen Shot 2023-03-03 at 10.51.30](file:///Users/kounarushi/mycode/web-blog/public/.pic/168C1B21-ECC0-4380-89AD-B084FFCBF6E9.jpg)
+![Screen Shot 2023-03-03 at 10.51.30](file:///Users/kounarushi/mycode/web-blog/public/.pic/168C1B21-ECC0-4380-89AD-B084FFCBF6E9.webp)
 
 ### Vehicle composition rule of the heterogeneous traffic flow
 
@@ -76,7 +76,7 @@ e_{n}(t)=h_{n}(t)-l-s_{0}-t_{c} v_{n}(t)
 $$
 
 
-<img src="file:///Users/kounarushi/mycode/web-blog/public/.pic/3B2E7D06-71F2-485E-8271-08CD88F68859.jpg" alt="Screen Shot 2023-03-03 at 20.23.37" style="zoom:33%;" />
+<img src="file:///Users/kounarushi/mycode/web-blog/public/.pic/3B2E7D06-71F2-485E-8271-08CD88F68859.webp" alt="Screen Shot 2023-03-03 at 20.23.37" style="zoom:33%;" />
 
 $e_{n}(t)$ is the error between the actual space headway and the desired space headway of the vehicle $n$ at time $t, \dot{e}_{n}(t)$ is the differential of $e_{n}(t), t_{c}$ is the headway that CACC expects to maintain, $k_{p}$ and $k_{d}$ are the control error parameters. The values of the coefficients are determined in the results of the real vehicle calibration in California PATH in Table 5 [18].
 
@@ -149,7 +149,7 @@ f_{H i}^{h}=2 a_{m i} \frac{\left[1-\left(v / v_{0}\right)^{4}\right]^{\frac{3}{
 \end{array}\right.
 $$
 
-![Screen Shot 2023-03-04 at 09.36.35](file:///Users/kounarushi/mycode/web-blog/public/.pic/B0017020-117C-470D-83A0-6429AE793967.jpg)
+![Screen Shot 2023-03-04 at 09.36.35](file:///Users/kounarushi/mycode/web-blog/public/.pic/B0017020-117C-470D-83A0-6429AE793967.webp)
 
 CACC ff value 始终大于0
 

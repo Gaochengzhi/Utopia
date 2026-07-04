@@ -25,7 +25,7 @@ Lee Y, Ahn T, Lee C, et al. A novel path planning algorithm for truck platooning
 
 ## intro 
 
-![Sensors 20 07022 g001 550](file:///Users/kounarushi/mycode/web-blog/public/.pic/sensors-20-07022-g001-550.jpg)
+![Sensors 20 07022 g001 550](file:///Users/kounarushi/mycode/web-blog/public/.pic/sensors-20-07022-g001-550.webp)
 
 后车使用雷达、摄像头等环境传感器感知前方车辆和车道，通过车辆纵向和横向控制进行自动驾驶。
 
@@ -61,7 +61,7 @@ Lee Y, Ahn T, Lee C, et al. A novel path planning algorithm for truck platooning
   * 由于编队行驶时车辆间距离较短，因此存在无法在高速获得足够前视距离的问题。 
   * 如果是半挂卡车（semi-trailer truck），在转向过程中，**跑偏（Off-tracking）现象**，即牵引车的转向轴和拖车后部保险杠之间的路径不同，会导致在跟随前车时出现跟踪错误。
 
-![Sensors 20 07022 g003 550](file:///Users/kounarushi/mycode/web-blog/public/.pic/sensors-20-07022-g003-550.jpg)
+![Sensors 20 07022 g003 550](file:///Users/kounarushi/mycode/web-blog/public/.pic/sensors-20-07022-g003-550.webp)
 
 克服跑偏问题：后车需要用**前车的牵引车**而不是拖车的轨迹来确定自己的目标路径。 
 
@@ -75,7 +75,7 @@ Lee Y, Ahn T, Lee C, et al. A novel path planning algorithm for truck platooning
 
 **Overall architecture of truck platooning lateral controller.**
 
-![Sensors 20 07022 g006 550](file:///Users/kounarushi/mycode/web-blog/public/.pic/sensors-20-07022-g006-550.jpg)
+![Sensors 20 07022 g006 550](file:///Users/kounarushi/mycode/web-blog/public/.pic/sensors-20-07022-g006-550.webp)
 
 All vehicles participating in the fleet perform V2V communication among each other using DSRC/802.11p WAVE (Wireless Access in Vehicular Environment) protocol
 
@@ -99,7 +99,7 @@ All vehicles participating in the fleet perform V2V communication among each oth
 
 后车路径规划框架：
 
-![Sensors 20 07022 g011 550](file:///Users/kounarushi/mycode/web-blog/public/.pic/sensors-20-07022-g011-550.jpg)
+![Sensors 20 07022 g011 550](file:///Users/kounarushi/mycode/web-blog/public/.pic/sensors-20-07022-g011-550.webp)
 
 挑战在于没有全局坐标概念的情况下将LV viewpoint 的坐标系统转换成 FV 的。
 
@@ -109,7 +109,7 @@ All vehicles participating in the fleet perform V2V communication among each oth
 
 ![Sensors 20 07022 g014 550](file:///Users/kounarushi/mycode/web-blog/public/.pic/sensors-20-07022-g014-550.jpg)
 
-![Sensors 20 07022 g015 550](file:///Users/kounarushi/mycode/web-blog/public/.pic/sensors-20-07022-g015-550.jpg)
+![Sensors 20 07022 g015 550](file:///Users/kounarushi/mycode/web-blog/public/.pic/sensors-20-07022-g015-550.webp)
 
 后车能看到后保险杠，前车发送tractor 中心坐标，由此计算（Kabsch算法）转移坐标。
 

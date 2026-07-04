@@ -10,6 +10,9 @@ const LOCAL_PIC_URL_PATTERNS = [
 ]
 const LEGACY_API_IMAGE_CONTENT_PATTERN = /(https?:\/\/(?:www\.)?gaochengzhi\.com)?\/api\/images\//gm
 const LEGACY_API_IMAGE_URL_PATTERN = /^(https?:\/\/(?:www\.)?gaochengzhi\.com)?\/api\/images\//i
+const LEGACY_NOTION_IMAGE_CONTENT_PATTERN = /https?:\/\/(?:www\.)?notion\.soimage\//gm
+const LEGACY_NOTION_IMAGE_URL_PATTERN = /^https?:\/\/(?:www\.)?notion\.soimage\//i
+const BARE_IMAGE_FILENAME_PATTERN = /^[^/?#]+\.(?:jpe?g|png|gif|webp|svg|bmp|ico)(?:[?#].*)?$/i
 
 function dedupePicPrefix(value) {
   return value
@@ -31,6 +34,7 @@ export function normalizeImagePath(content) {
 
   // Legacy image URLs: /api/images/* and https://gaochengzhi.com/api/images/*
   normalized = normalized.replace(LEGACY_API_IMAGE_CONTENT_PATTERN, IMAGE_SERVER_URL)
+  normalized = normalized.replace(LEGACY_NOTION_IMAGE_CONTENT_PATTERN, 'https://www.notion.so/image/')
 
   return dedupePicPrefix(normalized)
 }
@@ -51,6 +55,15 @@ export function normalizeImageUrl(url) {
     normalized = normalized.replace(LEGACY_API_IMAGE_URL_PATTERN, IMAGE_SERVER_URL)
   }
 
+  if (LEGACY_NOTION_IMAGE_URL_PATTERN.test(normalized)) {
+    normalized = normalized.replace(LEGACY_NOTION_IMAGE_URL_PATTERN, 'https://www.notion.so/image/')
+  }
+
+  // Some legacy rows store only file names in D1 first_image (e.g. "ABC123.jpg").
+  // Map them to the blog image root so cards request the correct path.
+  if (BARE_IMAGE_FILENAME_PATTERN.test(normalized)) {
+    normalized = IMAGE_SERVER_URL + normalized.replace(/^\/+/, '')
+  }
+
   return dedupePicPrefix(normalized)
 }
-

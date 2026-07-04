@@ -44,7 +44,7 @@ Data received by vehicles in Veins can be fed to the CACCs in SUMO
 1. 车辆的队列能力和基本机动的实现，主要需要在SUMO 中进行扩展。
 2. 协议的实现以支持应用程序和程序逻辑在OMNeT++/Veins 加一些小变化，以增强双向耦合能力。
 
-<img src="file:///Users/kounarushi/mycode/web-blog/public/.pic/UGIUSHBi987098.jpg" alt="UGIUSHBi987098" style="zoom:33%;" />
+<img src="file:///Users/kounarushi/mycode/web-blog/public/.pic/UGIUSHBi987098.webp" alt="UGIUSHBi987098" style="zoom:33%;" />
 
 ### *A. Implementing Platooning Capabilities in SUMO*
 
@@ -107,6 +107,6 @@ $C_{1}$ is a weighting factor between the accelerations of the leader and the pr
 
 ## 队列机动
 
-<img src="file:///Users/kounarushi/mycode/web-blog/public/.pic/iasucyfiuas.jpg" alt="iasucyfiuas" style="zoom:33%;" />
+<img src="file:///Users/kounarushi/mycode/web-blog/public/.pic/iasucyfiuas.webp" alt="iasucyfiuas" style="zoom:33%;" />
 
 join 的协议发送过程……
