@@ -3,7 +3,10 @@ import remarkMath from "remark-math"
 import rehypeKatex from "rehype-katex"
 import remarkGfm from "remark-gfm"
 import rehypeRaw from "rehype-raw"
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter"
+// PrismAsyncLight loads language grammars on demand instead of bundling the
+// full Prism registry. The full build was a major memory cost in the
+// Cloudflare Worker (SSR) and dominated this route's client bundle.
+import { PrismAsyncLight as SyntaxHighlighter } from "react-syntax-highlighter"
 import { vscDarkPlus } from "react-syntax-highlighter/dist/cjs/styles/prism"
 import "github-markdown-css/github-markdown-light.css"
 import "katex/dist/katex.min.css"

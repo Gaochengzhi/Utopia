@@ -294,7 +294,7 @@ export function Walls({ path, scrollDirection = 'horizontal' }) {
             <PhotoView
                 key={`${item.key}-${index}`}
                 src={getFullSizeUrl(item.path)}
-                render={({ attrs }) => <img {...attrs} />}
+                render={({ attrs }) => <img {...attrs} onError={handleCdnError} />}
             >
                 <div
                     data-photo-idx={index}
@@ -384,7 +384,7 @@ export function Walls({ path, scrollDirection = 'horizontal' }) {
                             {path.map((item, index) => {
                                 const isLoaded = loadedImages.has(index)
                                 return (
-                                    <PhotoView key={item.key} src={getFullSizeUrl(item.path)} render={({ attrs }) => <img {...attrs} />}>
+                                    <PhotoView key={item.key} src={getFullSizeUrl(item.path)} render={({ attrs }) => <img {...attrs} onError={handleCdnError} />}>
                                         <div className="aspect-square group cursor-pointer relative overflow-hidden rounded-lg hover:scale-105 transition-transform duration-300">
                                             {!isLoaded && (
                                                 <div className="absolute inset-0 bg-gray-800 flex items-center justify-center rounded-lg">

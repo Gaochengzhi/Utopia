@@ -135,6 +135,9 @@ export const getStaticProps = async () => {
             path: picLists,
             categories,
         },
+        // ISR: photos change rarely; a 5-minute window keeps the page cached
+        // while still picking up new uploads without a redeploy.
+        revalidate: 300,
     }
 }
 

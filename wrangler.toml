@@ -2,6 +2,14 @@ name = "utopia-blog"
 compatibility_date = "2026-03-28"
 compatibility_flags = ["nodejs_compat"]
 main = ".open-next/worker.js"
+workers_dev = true
+
+# Custom domain routing (must stay above any [section] — TOML keys placed
+# after [vars] would be parsed as env vars instead of top-level config)
+routes = [
+  { pattern = "gaochengzhi.com/*", zone_name = "gaochengzhi.com" },
+  { pattern = "www.gaochengzhi.com/*", zone_name = "gaochengzhi.com" }
+]
 
 [assets]
 directory = ".open-next/assets"
@@ -18,13 +26,12 @@ database_id = "4aaec7d3-885e-46b4-97f5-ac6a8989fad2"
 binding = "IMAGES"
 bucket_name = "utopia-images"
 
+# R2 bucket for the OpenNext incremental cache (ISR/SSG page cache).
+# Kept separate from utopia-images so content sync scripts never touch it.
+[[r2_buckets]]
+binding = "NEXT_INC_CACHE_R2_BUCKET"
+bucket_name = "utopia-cache"
+
 [vars]
 NEXT_PUBLIC_IMAGE_URL = "/.pic/"
 NEXT_PUBLIC_R2_CDN_URL = "https://cdn.gaochengzhi.com"
-
-# Custom domain routing
-routes = [
-  { pattern = "gaochengzhi.com/*", zone_name = "gaochengzhi.com" },
-  { pattern = "www.gaochengzhi.com/*", zone_name = "gaochengzhi.com" }
-]
-workers_dev = true

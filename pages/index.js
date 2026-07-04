@@ -146,5 +146,9 @@ export const getStaticProps = async () => {
 
     return {
         props: { paths, initialPosts, totalPosts, folders },
+        // ISR: serve from cache, refresh in the background at most once a
+        // minute. Keeps "run upload.sh → content is live" working without
+        // paying a full SSR on every request.
+        revalidate: 60,
     }
 }

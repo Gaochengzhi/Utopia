@@ -250,7 +250,13 @@ export const getStaticProps = async ({ params: { slug } }) => {
         if (!r2) throw new Error('R2 bucket not available')
 
         const obj = await r2.get(post.slug)
-        if (!obj) throw new Error(`R2 object not found: ${post.slug}`)
+        if (!obj) {
+            // D1 row exists but R2 object is missing (e.g. half-finished
+            // upload). 404 with a short revalidate heals automatically once
+            // the object lands, instead of caching a 500.
+            console.warn(`R2 object not found for post: ${post.slug}`)
+            return { notFound: true, revalidate: 60 }
+        }
 
         const raw = await obj.text()
         // Lightweight frontmatter strip (avoids heavy gray-matter library that exceeds Worker CPU limits)
@@ -271,6 +277,7 @@ export const getStaticProps = async ({ params: { slug } }) => {
                 folderPath: articleFolderPath,
                 isProtected: !!post.is_protected,
             },
+            revalidate: 60,
         }
 
     } else {
@@ -280,7 +287,7 @@ export const getStaticProps = async ({ params: { slug } }) => {
         if (!db) throw new Error('D1 database not available')
 
         const folderContents = await getFolderContents(db, folderPath)
-        if (!folderContents) return { notFound: true }
+        if (!folderContents) return { notFound: true, revalidate: 60 }
 
         return {
             props: {
@@ -288,6 +295,7 @@ export const getStaticProps = async ({ params: { slug } }) => {
                 folderPath,
                 folderContents,
             },
+            revalidate: 60,
         }
     }
 }

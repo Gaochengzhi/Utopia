@@ -12,14 +12,23 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Path is required' })
     }
 
-    // Build R2 key from path segments
-    // Rewrite sends:
-    //   /photography/content/:path* → /api/photography-images/:path*
-    //   /photography/cata/:path*    → /api/photography-images/cata/:path*
+    // Build R2 key from path segments.
+    // The rewrite keeps the variant in the destination:
+    //   /photography/:variant(content|thumb|full|cata|banner)/:path*
+    //     → /api/photography-images/:variant/:path*
+    // R2 only stores content/, cata/ and banner/ — thumb/ and full/ are
+    // legacy URL shapes that map back to the content/ original.
     const joinedPath = imgPath.join('/')
-    const r2Key = joinedPath.startsWith('cata/')
-      ? 'photography/' + joinedPath
-      : 'photography/content/' + joinedPath
+    const [variant, ...rest] = imgPath
+    let r2Key
+    if (variant === 'content' || variant === 'cata' || variant === 'banner') {
+      r2Key = 'photography/' + joinedPath
+    } else if (variant === 'thumb' || variant === 'full') {
+      r2Key = 'photography/content/' + rest.join('/')
+    } else {
+      // Bare path without a variant segment (defensive fallback)
+      r2Key = 'photography/content/' + joinedPath
+    }
 
     const nodePath = require('path')
     await serveImage(req, res, r2Key, {

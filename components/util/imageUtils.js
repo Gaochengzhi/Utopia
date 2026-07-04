@@ -1,12 +1,12 @@
 // Image path constants - uses environment variable or default
 const IMAGE_SERVER_URL = process.env.NEXT_PUBLIC_IMAGE_URL || '/.pic/'
+// Any absolute local path ending in /public/.pic/ — machine- and
+// repo-layout-agnostic (covers /Users/<anyone>/<any/depth>/public/.pic/).
 const LOCAL_PIC_CONTENT_PATTERNS = [
-  new RegExp("(file://)?/Users/kounarushi/mycode/web-blog/public/.pic/", "gm"),
-  new RegExp("(file://)?/Users/[^/]+/[^/]+/web-blog/public/.pic/", "gm"),
+  new RegExp("(file://)?/(?:Users|home)/[^\\s)\"'`]*?/public/\\.pic/", "gm"),
 ]
 const LOCAL_PIC_URL_PATTERNS = [
-  new RegExp("^(file://)?/Users/kounarushi/mycode/web-blog/public/.pic/", "i"),
-  new RegExp("^(file://)?/Users/[^/]+/[^/]+/web-blog/public/.pic/", "i"),
+  new RegExp("^(file://)?/(?:Users|home)/[^\\s)\"'`]*?/public/\\.pic/", "i"),
 ]
 const LEGACY_API_IMAGE_CONTENT_PATTERN = /(https?:\/\/(?:www\.)?gaochengzhi\.com)?\/api\/images\//gm
 const LEGACY_API_IMAGE_URL_PATTERN = /^(https?:\/\/(?:www\.)?gaochengzhi\.com)?\/api\/images\//i

@@ -165,7 +165,7 @@ export async function getStaticProps({ params: { slug } }) {
             // fallback: 'blocking' can re-run getStaticProps at request time on
             // the worker where D1 IS available.
             const exists = categories.find(c => c.title === slug.toLowerCase())
-            if (!exists) return { notFound: true }
+            if (!exists) return { notFound: true, revalidate: 300 }
 
             // Pre-fetch images for this category (SSG — no client waterfall!)
             const { images } = await getPhotosByCategory(db, slug)
@@ -183,5 +183,6 @@ export async function getStaticProps({ params: { slug } }) {
             categories,
             initialImages,
         },
+        revalidate: 300,
     }
 }
