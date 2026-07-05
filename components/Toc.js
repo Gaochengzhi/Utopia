@@ -201,10 +201,17 @@ export function Toc({ content }) {
   useEffect(() => {
     activeIdxRef.current = toc.findIndex((o) => o.id === activeId)
     schedule()
-    return () => {
-      if (rafRef.current != null) cancelAnimationFrame(rafRef.current)
-    }
   }, [toc, activeId, schedule])
+
+  // 只在卸载时取消挂起的帧。不能放进上面的 effect：
+  // 每次 activeId 变化清理函数都会执行，cancel 后 rafRef 残留
+  // 旧 id 不为 null，schedule() 从此永久空转（帧已死无人复位）
+  useEffect(() => () => {
+    if (rafRef.current != null) {
+      cancelAnimationFrame(rafRef.current)
+      rafRef.current = null
+    }
+  }, [])
 
   const handleMove = useCallback((e) => {
     if (!railRef.current) return
@@ -271,6 +278,8 @@ export function MobileToc({ content }) {
   const rafRef = useRef(null)
   const activeIdxRef = useRef(-1)
   const reducedMotionRef = useRef(false)
+  // 按压中：标题浮现区域垫上半透明纸底，避免和正文混在一起
+  const [pressing, setPressing] = useState(false)
 
   // 文章太长时细线列只保留 h2，避免撑出屏幕
   const railToc = toc.length > 26 ? toc.filter((o) => o.indent === 0) : toc
@@ -305,10 +314,15 @@ export function MobileToc({ content }) {
   useEffect(() => {
     activeIdxRef.current = railToc.findIndex((o) => o.id === activeId)
     schedule()
-    return () => {
-      if (rafRef.current != null) cancelAnimationFrame(rafRef.current)
-    }
   }, [railToc, activeId, schedule])
+
+  // 同桌面端：只在卸载时取消挂起帧并复位（防 schedule 永久空转）
+  useEffect(() => () => {
+    if (rafRef.current != null) {
+      cancelAnimationFrame(rafRef.current)
+      rafRef.current = null
+    }
+  }, [])
 
   const setPressY = useCallback((e) => {
     if (!railRef.current) return
@@ -318,6 +332,7 @@ export function MobileToc({ content }) {
 
   const onPointerDown = useCallback((e) => {
     railRef.current?.setPointerCapture?.(e.pointerId)
+    setPressing(true)
     setPressY(e)
   }, [setPressY])
 
@@ -329,6 +344,7 @@ export function MobileToc({ content }) {
   const onPointerUp = useCallback(() => {
     const y = pressYRef.current
     pressYRef.current = null
+    setPressing(false)
     schedule()
     if (y == null) return
     // 松手：跳到离手指最近的章节
@@ -348,6 +364,7 @@ export function MobileToc({ content }) {
 
   const onPointerCancel = useCallback(() => {
     pressYRef.current = null
+    setPressing(false)
     schedule()
   }, [schedule])
 
@@ -356,7 +373,7 @@ export function MobileToc({ content }) {
   return (
     <nav
       ref={railRef}
-      className="tocrail-m"
+      className={`tocrail-m ${pressing ? "pressing" : ""}`}
       aria-label="目录"
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}

@@ -15,8 +15,8 @@
         --c-ink: 23 23 23;
         --c-ink2: 115 115 115;
         --c-rule: 212 212 212;
-        --c-accent: 30 64 175;
-        --c-ledger: 29 78 216;
+        --c-accent: 84 98 120;
+        --c-ledger: 71 92 122;
     }
 
     .dark {
@@ -26,8 +26,8 @@
         --c-ink: 229 229 229;
         --c-ink2: 163 163 163;
         --c-rule: 64 64 64;
-        --c-accent: 100 145 200;
-        --c-ledger: 130 165 210;
+        --c-accent: 132 144 160;
+        --c-ledger: 142 156 176;
     }
 
     html {
@@ -1217,6 +1217,24 @@ pre .token-line,
     align-items: flex-end;
     padding: 12px 8px 12px 20px;    /* 左侧留出手指热区 */
     touch-action: none;             /* 按压滑动时不带动页面滚动 */
+}
+
+/* 按压时标题浮现区域垫半透明纸底，与正文隔开 */
+.tocrail-m::before {
+    content: "";
+    position: absolute;
+    top: -1.5rem;
+    bottom: -1.5rem;
+    right: 0;
+    width: 74vw;
+    background: linear-gradient(to left, rgb(var(--c-paper) / 0.94) 62%, rgb(var(--c-paper) / 0));
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+}
+
+.tocrail-m.pressing::before {
+    opacity: 1;
 }
 
 .tocrail-m-item {
