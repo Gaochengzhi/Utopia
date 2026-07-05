@@ -128,7 +128,8 @@ function scrollToHeading(id) {
  */
 function makeFisheyePaint(itemRefs, activeIdxRef, reducedMotionRef, opts) {
   const { tickGrow, labelIdle } = opts
-  return (focusY) => {
+  // amp：鱼眼幅度。hover/按压 = 1；滚动跟随的气泡弱一档（0.6）
+  return (focusY, amp = 1) => {
     itemRefs.current.forEach((refs, i) => {
       if (!refs || !refs.el || !refs.tick || !refs.label) return
       let g = 0
@@ -137,18 +138,19 @@ function makeFisheyePaint(itemRefs, activeIdxRef, reducedMotionRef, opts) {
         // offsetTop 不受 transform 影响，位移后力场依然稳定
         const cy = refs.el.offsetTop + refs.el.offsetHeight / 2
         d = (cy - focusY) / 56
-        g = Math.exp(-d * d)
+        g = Math.exp(-d * d) * amp
       }
       const on = i === activeIdxRef.current
       refs.tick.style.width = `${refs.base + g * tickGrow + (on ? 8 : 0)}px`
-      // 密度形变：光标附近的条目被挤向两侧（Time Machine 的呼吸感）
+      // 密度形变：焦点附近的条目被挤向两侧（Time Machine 的呼吸感）
       refs.el.style.transform = `translateY(${(d * g * 9).toFixed(1)}px)`
 
-      // 基准态：当前大而深，其余小而淡（h3 再淡一档，字号见 CSS）
+      // 基准态：当前大而深，其余小而淡（h3 再淡一档，字号见 CSS）；
+      // 当前章节的「大」主要来自气泡驻留（焦点停在它上面），on 只加一点
       const baseOp = labelIdle ? (on ? 1 : refs.lv3 ? 0.5 : 0.75) : 0
       const hidden = !labelIdle && focusY == null
       const opacity = hidden ? 0 : Math.min(1, baseOp + g * 0.55)
-      const scale = (on ? 1.12 : 1) + g * 0.35
+      const scale = (on ? 1.06 : 1) + g * 0.35
       refs.label.style.opacity = opacity.toFixed(3)
       refs.label.style.transform =
         `translateY(-50%) translateX(${(g * refs.dir * 14).toFixed(1)}px) scale(${scale.toFixed(3)})`
@@ -166,7 +168,9 @@ export function Toc({ content }) {
   const railRef = useRef(null)
   const itemRefs = useRef([])
   const hoverYRef = useRef(null)
-  const rafRef = useRef(null)
+  const focusYRef = useRef(null)   // 滚动跟随的焦点：缓动逼近 targetY
+  const targetYRef = useRef(null)  // 当前章节的中心（焦点的目标位置）
+  const loopRef = useRef(null)
   const activeIdxRef = useRef(-1)
   const reducedMotionRef = useRef(false)
 
@@ -189,40 +193,70 @@ export function Toc({ content }) {
     })
   }
 
-  const schedule = useCallback(() => {
-    if (rafRef.current == null) {
-      rafRef.current = requestAnimationFrame(() => {
-        rafRef.current = null
-        paintRef.current(hoverYRef.current)
-      })
+  // 单一 rAF 驱动：hover 时以光标为焦点（全幅鱼眼）；
+  // 无光标时焦点每帧向当前章节缓动 16%，放大气泡沿轨道
+  // 平滑滑行——页面滚动切章时的 Time Machine 缓动感
+  const ensureLoop = useCallback(() => {
+    if (loopRef.current != null) return
+    const step = () => {
+      loopRef.current = null
+      if (hoverYRef.current != null) {
+        paintRef.current(hoverYRef.current, 1)
+        return
+      }
+      const target = targetYRef.current
+      if (target == null) {
+        paintRef.current(null, 1)
+        return
+      }
+      let cur = focusYRef.current
+      if (cur == null || reducedMotionRef.current) cur = target
+      const diff = target - cur
+      let settled = true
+      if (Math.abs(diff) > 0.5) {
+        cur += diff * 0.16
+        settled = false
+      } else {
+        cur = target
+      }
+      focusYRef.current = cur
+      paintRef.current(cur, 0.6)
+      if (!settled) loopRef.current = requestAnimationFrame(step)
     }
+    loopRef.current = requestAnimationFrame(step)
   }, [])
 
   useEffect(() => {
     activeIdxRef.current = toc.findIndex((o) => o.id === activeId)
-    schedule()
-  }, [toc, activeId, schedule])
+    const refs = itemRefs.current[activeIdxRef.current]
+    if (refs?.el) {
+      targetYRef.current = refs.el.offsetTop + refs.el.offsetHeight / 2
+      // 首次定位不做长距离滑入，直接落位
+      if (focusYRef.current == null) focusYRef.current = targetYRef.current
+    } else {
+      targetYRef.current = null
+    }
+    ensureLoop()
+  }, [toc, activeId, ensureLoop])
 
-  // 只在卸载时取消挂起的帧。不能放进上面的 effect：
-  // 每次 activeId 变化清理函数都会执行，cancel 后 rafRef 残留
-  // 旧 id 不为 null，schedule() 从此永久空转（帧已死无人复位）
+  // 只在卸载时取消挂起的帧并复位，防止 ensureLoop 永久空转
   useEffect(() => () => {
-    if (rafRef.current != null) {
-      cancelAnimationFrame(rafRef.current)
-      rafRef.current = null
+    if (loopRef.current != null) {
+      cancelAnimationFrame(loopRef.current)
+      loopRef.current = null
     }
   }, [])
 
   const handleMove = useCallback((e) => {
     if (!railRef.current) return
     hoverYRef.current = e.clientY - railRef.current.getBoundingClientRect().top
-    schedule()
-  }, [schedule])
+    ensureLoop()
+  }, [ensureLoop])
 
   const handleLeave = useCallback(() => {
     hoverYRef.current = null
-    schedule()
-  }, [schedule])
+    ensureLoop()
+  }, [ensureLoop])
 
   const handleClick = useCallback((e, o) => {
     e.preventDefault()
