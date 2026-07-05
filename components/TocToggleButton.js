@@ -8,7 +8,7 @@ const CompassIcon = ({ className }) => (
 export function TocToggleButton() {
     return (
         <div className="fixed right-4 bottom-9 md:right-10 text-4xl clickable">
-            <div className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-full shadow-lg p-2 flex items-center justify-center">
+            <div className="bg-chip border border-rule text-ink2 hover:text-ink hover:border-ink p-2.5 flex items-center justify-center transition-colors duration-200">
                 <CompassIcon />
             </div>
         </div>

@@ -1,7 +1,6 @@
 import Link from "next/link"
 import { useEffect, useState, useCallback, useRef } from "react"
 import { useRouter } from "next/router"
-import ViewBadge from "/components/ViewBadge"
 import { normalizeImageUrl } from "/components/util/imageUtils"
 import { CDN_BASE, handleCdnError } from "/lib/cdnUrl"
 
@@ -15,8 +14,8 @@ export default function WaterfallCards({ initialPosts, totalPosts, isAuthenticat
     const [error, setError] = useState(null)
     const [viewCounts, setViewCounts] = useState({})
     const [brokenImagePosts, setBrokenImagePosts] = useState(new Set())
-    // 小于等于平板宽度（此处按 1024px）时，卡片单列显示
-    const [isTabletOrBelow, setIsTabletOrBelow] = useState(false)
+    // 网格列数：>=1280 三列，>=768 两列，否则单列
+    const [columns, setColumns] = useState(3)
     const lastInitialFingerprintRef = useRef("")
 
     // Restore cached state from sessionStorage AFTER mount (avoids hydration error)
@@ -163,9 +162,12 @@ export default function WaterfallCards({ initialPosts, totalPosts, isAuthenticat
         return () => window.removeEventListener('scroll', handleScroll)
     }, [loadMorePosts])
 
-    // 监听窗口大小，平板及以下（<= 1024px）改为单列
+    // 监听窗口大小决定列数
     useEffect(() => {
-        const checkWidth = () => setIsTabletOrBelow(window.innerWidth <= 1024)
+        const checkWidth = () => {
+            const w = window.innerWidth
+            setColumns(w >= 1280 ? 3 : w >= 768 ? 2 : 1)
+        }
         checkWidth()
         window.addEventListener('resize', checkWidth)
         return () => window.removeEventListener('resize', checkWidth)
@@ -224,64 +226,114 @@ export default function WaterfallCards({ initialPosts, totalPosts, isAuthenticat
         return text
     }
 
-    // 生成保证右对齐的卡片宽度序列
-    const generateAlignedWidths = () => {
-        const widths = []
-        const patterns = [
-            [1 / 3, 1 / 3, 1 / 3],  // 三个1/3
-            [1 / 2, 1 / 2],       // 两个1/2
-            [2 / 3, 1 / 3],       // 一个2/3和一个1/3
-            [1 / 3, 2 / 3],       // 一个1/3和一个2/3
-            [1],              // 一个全宽
-        ]
-
-        let remainingPosts = posts.length
-        let postIndex = 0
-        let lastPatternIndex = -1
-
-        while (remainingPosts > 0) {
-            // 使用post的key和位置生成伪随机数选择pattern
-            const seed = posts[postIndex]?.key.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) || 0
-            let patternIndex = (seed + postIndex * 7) % patterns.length
-
-            // 避免连续使用相同的pattern
-            let attempts = 0
-            while (patternIndex === lastPatternIndex && attempts < patterns.length) {
-                patternIndex = (patternIndex + 1) % patterns.length
-                attempts++
-            }
-
-            let pattern = patterns[patternIndex]
-
-            // 如果剩余的文章数量小于pattern长度，选择更小的pattern
-            let selectedPattern = pattern
-            if (pattern.length > remainingPosts) {
-                // 选择一个能容纳剩余文章的pattern
-                if (remainingPosts === 1) {
-                    selectedPattern = [1]
-                } else if (remainingPosts === 2) {
-                    selectedPattern = [1 / 2, 1 / 2]
-                } else {
-                    selectedPattern = [1 / 3, 1 / 3, 1 / 3].slice(0, remainingPosts)
-                }
-            }
-
-            widths.push(...selectedPattern)
-            lastPatternIndex = patternIndex
-            remainingPosts -= selectedPattern.length
-            postIndex += selectedPattern.length
-        }
-
-        return widths
+    // 票据编号：最新一篇取最大号，往下递减
+    const ticketNo = (index) => {
+        const total = totalPosts > index ? totalPosts : posts.length
+        return 'NO.' + String(Math.max(1, total - index)).padStart(3, '0')
     }
 
-    const cardWidths = generateAlignedWidths()
+    // 分类：slug 的第二段（post/分类/文件.md）
+    const categoryOf = (post) => {
+        const segs = (post.path || '').split('/').filter(Boolean)
+        return segs.length > 2 ? segs[1] : '未分类'
+    }
+
+    const formatDate = (time) => {
+        const t = Number(time)
+        if (!t) return ''
+        const d = new Date(t)
+        if (isNaN(d.getTime())) return ''
+        const pad = (n) => String(n).padStart(2, '0')
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+    }
+
+    // 生成整数跨度序列：所有卡片落在等宽网格上，跨 1/2/3 列，
+    // 每一行 pattern 之和恰好等于列数，保证行行对齐。
+    // 第一张卡是「头版」，永远通栏。
+    const buildSpans = () => {
+        if (columns === 1) return posts.map(() => 1)
+
+        const patterns = columns === 3
+            ? [[1, 1, 1], [2, 1], [1, 2], [1, 1, 1], [3]]
+            : [[1, 1], [1, 1], [2]]
+
+        const spans = []
+        let i = 0
+        while (i < posts.length) {
+            if (i === 0) {
+                spans.push(columns) // 头版通栏
+                i += 1
+                continue
+            }
+            const seed = (posts[i].path || '')
+                .split('')
+                .reduce((acc, ch) => acc + ch.charCodeAt(0), 0)
+            let pattern = patterns[(seed + i) % patterns.length]
+            if (pattern.length > posts.length - i) {
+                pattern = pattern.slice(0, posts.length - i)
+            }
+            spans.push(...pattern)
+            i += pattern.length
+        }
+        return spans
+    }
+
+    const spans = buildSpans()
+
+    // ── 卡片渲染 ─────────────────────────────────────────
+
+    const MetaRow = ({ post, index }) => (
+        <div className="tk-meta">
+            <span>{ticketNo(index)}</span>
+            <span className="tk-leader" />
+            <span>{categoryOf(post)}</span>
+            {formatDate(post.time) && (
+                <>
+                    <span className="mx-1">·</span>
+                    <span>{formatDate(post.time)}</span>
+                </>
+            )}
+        </div>
+    )
+
+    const FootRow = ({ post }) => {
+        const views = viewCounts[post.path.replace(/^\//, '')]
+        return (
+            <div className="tk-meta mt-auto border-t border-dashed border-rule pt-2.5">
+                <span>阅读 {views != null ? views : '—'}</span>
+                <span className="tk-leader" />
+                <span className="font-bold text-accent">
+                    {post.isProtected ? 'UNLOCK →' : 'READ →'}
+                </span>
+            </div>
+        )
+    }
+
+    // Tailwind JIT 只认字面量类名，不能用模板串拼 line-clamp-${n}
+    const CLAMP = { 2: 'line-clamp-2', 3: 'line-clamp-3', 4: 'line-clamp-4' }
+
+    const Excerpt = ({ post, plainText, lines }) => {
+        if (post.isProtected) {
+            return (
+                <p className="tk-masked mb-4">
+                    ████ ██████ ████████ ███ ██████ ████ ███████ ██ ██████
+                </p>
+            )
+        }
+        return (
+            <p className={`text-[0.92rem] leading-relaxed text-ink2 mb-4 ${CLAMP[lines] || CLAMP[3]}`}>
+                {plainText}
+            </p>
+        )
+    }
 
     return (
         <div className="w-full">
-            {/* 简洁的卡片列表 - flex布局 */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-                <div className="flex flex-wrap gap-6">
+                <div
+                    className="grid gap-5"
+                    style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
+                >
                     {posts.map((post, index) => {
                         const fallbackTitle = (post.title || '').replace(/\.md$/i, '')
                         const title = extractTitle(post.content, fallbackTitle)
@@ -289,7 +341,6 @@ export default function WaterfallCards({ initialPosts, totalPosts, isAuthenticat
                         // Prefer pre-extracted firstImage from D1, fallback to extracting from content
                         const firstImage = normalizeImageUrl(post.firstImage || extractFirstImage(post.content))
                         const imageBlocked = brokenImagePosts.has(post.path)
-                        // Same logic as MarkdownArticle.js:
                         //   R2 (/.pic/...)  → prepend CDN_BASE for direct edge delivery
                         //   External URLs   → use as-is, <img> has no CORS restriction
                         //   null / blocked  → fall back to text-only card
@@ -297,81 +348,93 @@ export default function WaterfallCards({ initialPosts, totalPosts, isAuthenticat
                             ? (CDN_BASE && firstImage.startsWith('/.pic/') ? CDN_BASE + firstImage : firstImage)
                             : null
 
-                        // 使用预先计算好的宽度
-                        const widthRatio = cardWidths[index]
-                        // For image cards, cap width at 50% (1.5x of min 33.3%) to avoid overly wide images
-                        const effectiveRatio = previewImage && !isTabletOrBelow && widthRatio > 1 / 2
-                            ? 1 / 2
-                            : widthRatio
-                        let flexBasis
-                        if (isTabletOrBelow) {
-                            // 平板及以下强制单列
-                            flexBasis = '100%'
-                        } else if (effectiveRatio === 1 / 3) {
-                            flexBasis = 'calc(33.333% - 1rem)'
-                        } else if (effectiveRatio === 1 / 2) {
-                            flexBasis = 'calc(50% - 0.75rem)'
-                        } else if (effectiveRatio === 2 / 3) {
-                            flexBasis = 'calc(66.666% - 0.5rem)'
-                        } else {
-                            flexBasis = '100%'
+                        const span = Math.min(spans[index] || 1, columns)
+                        const isFeatured = index === 0
+                        const onImgError = (e) => {
+                            handleCdnError(e)
+                            setBrokenImagePosts((prev) => {
+                                if (prev.has(post.path)) return prev
+                                const next = new Set(prev)
+                                next.add(post.path)
+                                return next
+                            })
                         }
 
                         return (
-                            <div key={post.key} style={{ flexBasis, width: flexBasis, flexShrink: 0 }}>
-                                <Link href={post.path} prefetch={false} className="block" onClick={(e) => handlePostClick(e, post)}>
-                                        <div className="relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg pb-4 hover:shadow-xl hover:border-gray-400 dark:hover:border-gray-500 transition-all duration-300 cursor-pointer">
-                                            <ViewBadge views={viewCounts[post.path.replace(/^\//, '')]} />
-                                            {previewImage ? (
-                                                <>
-                                                    {/* Image card */}
-                                                    <div className="relative overflow-hidden rounded-t-lg" style={{ height: '140px' }}>
+                            <div key={post.key} style={{ gridColumn: `span ${span} / span ${span}` }}>
+                                <Link href={post.path} prefetch={false} className="block h-full" onClick={(e) => handlePostClick(e, post)}>
+                                    {isFeatured ? (
+                                        /* ── 头版：通栏，文字 + 右侧图片 ── */
+                                        <article className="tk-card h-full p-5 md:p-6 md:grid md:gap-6 md:grid-cols-[1.4fr_1fr]">
+                                            <div className="flex flex-col min-w-0">
+                                                <MetaRow post={post} index={index} />
+                                                <h2 className="text-xl md:text-2xl font-bold leading-snug my-3 text-ink">
+                                                    {title}
+                                                </h2>
+                                                <Excerpt post={post} plainText={plainText} lines={4} />
+                                                <FootRow post={post} />
+                                            </div>
+                                            {previewImage && (
+                                                <figure className="hidden md:block border border-rule bg-paper p-1.5 self-start m-0">
+                                                    <img
+                                                        src={previewImage}
+                                                        alt={title}
+                                                        loading="lazy"
+                                                        className="tk-duo w-full object-cover"
+                                                        style={{ height: '190px' }}
+                                                        onError={onImgError}
+                                                    />
+                                                </figure>
+                                            )}
+                                            {post.isProtected && <div className="tk-seal">加密</div>}
+                                        </article>
+                                    ) : previewImage && span >= 2 ? (
+                                        /* ── 宽卡：通栏灰调图 + 文字 ── */
+                                        <article className="tk-card h-full">
+                                            <div className="border-b border-rule overflow-hidden">
+                                                <img
+                                                    src={previewImage}
+                                                    alt={title}
+                                                    loading="lazy"
+                                                    className="tk-duo w-full object-cover block"
+                                                    style={{ height: '150px' }}
+                                                    onError={onImgError}
+                                                />
+                                            </div>
+                                            <div className="flex flex-col flex-1 p-4 pb-3.5">
+                                                <MetaRow post={post} index={index} />
+                                                <h2 className="text-lg font-bold leading-snug my-2.5 line-clamp-2 text-ink">
+                                                    {title}
+                                                </h2>
+                                                <Excerpt post={post} plainText={plainText} lines={2} />
+                                                <FootRow post={post} />
+                                            </div>
+                                            {post.isProtected && <div className="tk-seal">加密</div>}
+                                        </article>
+                                    ) : (
+                                        /* ── 标准卡：纯文字，或邮票式小图 ── */
+                                        <article className="tk-card h-full p-4 pb-3.5">
+                                            <MetaRow post={post} index={index} />
+                                            <div className="flex-1 min-w-0">
+                                                {previewImage && (
+                                                    <figure className="tk-stampimg">
                                                         <img
                                                             src={previewImage}
                                                             alt={title}
                                                             loading="lazy"
-                                                            className="w-full h-full object-cover"
-                                                            onError={(e) => {
-                                                                handleCdnError(e)
-                                                                setBrokenImagePosts((prev) => {
-                                                                    if (prev.has(post.path)) return prev
-                                                                    const next = new Set(prev)
-                                                                    next.add(post.path)
-                                                                    return next
-                                                                })
-                                                            }}
+                                                            onError={onImgError}
                                                         />
-                                                    </div>
-                                                    <div className="px-6 pt-3 overflow-hidden" style={{ height: '60px' }}>
-                                                        <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 line-clamp-2 flex items-center gap-2">
-                                                            {title}
-                                                            {!isAuthenticated && post.isProtected && (
-                                                                <svg className="w-5 h-5 text-blue-500 dark:text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                                                </svg>
-                                                            )}
-                                                        </h2>
-                                                    </div>
-                                                </>
-                                            ) : (
-                                                <div className="p-6 overflow-hidden" style={{ height: '200px' }}>
-                                                    {/* 标题 */}
-                                                    <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3 line-clamp-2 flex items-center gap-2">
-                                                        {title}
-                                                        {!isAuthenticated && post.isProtected && (
-                                                            <svg className="w-5 h-5 text-blue-500 dark:text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                                            </svg>
-                                                        )}
-                                                    </h2>
-
-                                                    {/* 文本内容 - 固定显示行数 */}
-                                                    <p className="text-gray-600 dark:text-gray-400 leading-relaxed line-clamp-4">
-                                                        {plainText || (post.isProtected && !isAuthenticated ? '已加密内容，解锁后可预览。' : '')}
-                                                    </p>
-                                                </div>
-                                            )}
-                                        </div>
+                                                    </figure>
+                                                )}
+                                                <h2 className="text-lg font-bold leading-snug my-2.5 line-clamp-2 text-ink">
+                                                    {title}
+                                                </h2>
+                                                <Excerpt post={post} plainText={plainText} lines={3} />
+                                            </div>
+                                            <FootRow post={post} />
+                                            {post.isProtected && <div className="tk-seal">加密</div>}
+                                        </article>
+                                    )}
                                 </Link>
                             </div>
                         )
@@ -380,31 +443,31 @@ export default function WaterfallCards({ initialPosts, totalPosts, isAuthenticat
             </div>
 
             {/* 加载状态和错误处理 */}
-            <div className="w-full flex justify-center mt-8">
+            <div className="w-full flex justify-center mt-10">
                 {loading && (
-                    <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
-                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
-                        <span>正在加载更多文章...</span>
+                    <div className="tk-meta !text-[0.75rem]">
+                        <span className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-accent mr-3" />
+                        <span>LOADING…</span>
                     </div>
                 )}
 
                 {error && (
-                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 max-w-md">
-                        <div className="text-red-600 dark:text-red-400 text-sm text-center">
+                    <div className="border border-accent bg-chip p-4 max-w-md">
+                        <div className="text-accent text-sm text-center font-mono">
                             {error}
                         </div>
                         <button
                             onClick={loadMorePosts}
-                            className="mt-2 w-full text-sm bg-red-100 dark:bg-red-800 text-red-700 dark:text-red-200 px-3 py-1 rounded hover:bg-red-200 dark:hover:bg-red-700 transition-colors"
+                            className="mt-3 w-full text-sm font-mono tracking-widest border border-accent text-accent px-3 py-1 hover:bg-accent hover:text-paper transition-colors"
                         >
-                            重试
+                            RETRY
                         </button>
                     </div>
                 )}
 
                 {!hasMore && !loading && posts.length > 0 && (
-                    <div className="text-gray-500 dark:text-gray-400 text-sm">
-                        ✨ 已加载全部 {posts.length} 篇文章
+                    <div className="tk-meta !text-[0.72rem] tracking-[0.4em]">
+                        · FIN · 全 {posts.length} 篇
                     </div>
                 )}
             </div>

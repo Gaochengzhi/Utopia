@@ -6,10 +6,10 @@ export default function Breadcrumb({ folderPath, isNavbar = false }) {
   const segments = folderPath.split('/').filter(s => s !== 'post')
 
   return (
-    <div className={`flex items-center ${isNavbar ? 'space-x-2' : 'space-x-2 mb-4'}`}>
-      <Link href="/" className={`text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors ${isNavbar ? 'text-2xl' : 'text-3xl font-bold'}`}>
-          {isNavbar ? 'Utopi' : 'Utopi'}
-          <span className={`font-extrabold font-sans ${isNavbar ? 'text-slate-400 dark:text-slate-500' : 'text-slate-400 dark:text-slate-500'}`}>
+    <div className={`flex items-center min-w-0 ${isNavbar ? 'space-x-2' : 'space-x-2 mb-4'}`}>
+      <Link href="/" className={`text-ink hover:text-accent transition-colors font-bold tracking-wide ${isNavbar ? 'text-2xl' : 'text-3xl'}`}>
+          Utopi
+          <span className="font-extrabold text-accent">
             a
           </span>
       </Link>
@@ -18,14 +18,14 @@ export default function Breadcrumb({ folderPath, isNavbar = false }) {
         const path = '/post/' + arr.slice(0, index + 1).join('/')
         const isLast = index === arr.length - 1
         return (
-          <div key={index} className="flex items-center space-x-2">
-            <span className="text-gray-400 dark:text-gray-600">·</span>
+          <div key={index} className="flex items-center space-x-2 min-w-0">
+            <span className="text-rule font-mono">/</span>
             {isLast ? (
-              <span className={`text-gray-900 dark:text-gray-100 font-bold ${isNavbar ? 'text-lg' : 'text-2xl'}`}>
+              <span className={`text-ink font-bold truncate ${isNavbar ? 'text-lg' : 'text-2xl'}`}>
                 {segment}
               </span>
             ) : (
-              <Link href={path} className={`text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors ${isNavbar ? 'text-lg' : 'text-2xl'}`}>
+              <Link href={path} className={`text-ink2 hover:text-ink transition-colors truncate ${isNavbar ? 'text-lg' : 'text-2xl'}`}>
                   {segment}
               </Link>
             )}

@@ -59,20 +59,20 @@ function TreeNode({ node, depth = 0, onFileClick, expandedKeys, toggleExpand }) 
     return (
         <div>
             <div
-                className="flex items-center text-sm py-1 px-2 cursor-pointer rounded-md hover:bg-gray-200/60 dark:hover:bg-gray-600/80 text-gray-700 dark:text-gray-200 transition-colors duration-150"
+                className="flex items-center text-sm py-1 px-2 cursor-pointer hover:bg-panel text-ink2 hover:text-ink transition-colors duration-150"
                 style={{ paddingLeft: `${depth * 16 + 4}px` }}
                 onClick={handleClick}
             >
                 {isFolder && (
-                    <ChevronIcon expanded={isExpanded} className="mr-1 text-gray-400 dark:text-gray-500 flex-shrink-0" />
+                    <ChevronIcon expanded={isExpanded} className="mr-1 text-rule flex-shrink-0" />
                 )}
                 {isFolder ? (
-                    <FolderIcon open={isExpanded} className="mr-2 text-yellow-500 dark:text-yellow-400 flex-shrink-0" />
+                    <FolderIcon open={isExpanded} className="mr-2 text-ink2 flex-shrink-0" />
                 ) : (
                     <span className="w-3 mr-1 flex-shrink-0" />
                 )}
                 {!isFolder && (
-                    <FileTextIcon className="mr-2 text-gray-400 dark:text-gray-500 flex-shrink-0" />
+                    <FileTextIcon className="mr-2 text-rule flex-shrink-0" />
                 )}
                 <span className="truncate text-left leading-5">{displayTitle}</span>
             </div>
@@ -144,8 +144,8 @@ export default function FileTree({ paths }) {
     const renderTreeMode = () => {
         if (!paths) {
             return (
-                <div className="flex items-center justify-center p-4 text-gray-500 dark:text-gray-400">
-                    <p>目录数据加载中...</p>
+                <div className="flex items-center justify-center p-4 text-ink2 font-mono text-xs tracking-widest">
+                    <p>LOADING…</p>
                 </div>
             )
         }
@@ -155,7 +155,7 @@ export default function FileTree({ paths }) {
             : [paths]
 
         return (
-            <div className="min-w-[16rem] text-gray-900 dark:text-gray-100 mt-2">
+            <div className="min-w-[16rem] text-ink mt-2">
                 {nodesToRender.map(node => (
                     <TreeNode
                         key={node.key || node.path || Math.random().toString()}
@@ -172,14 +172,14 @@ export default function FileTree({ paths }) {
 
     const renderFlatMode = () => {
         return (
-            <div className="min-w-[16rem] text-gray-900 dark:text-gray-100">
+            <div className="min-w-[16rem] text-ink">
                 {posts.map((post) => (
                     <div
                         key={post.path}
                         onClick={() => handleFileClick(post.path)}
-                        className="flex items-center text-sm mt-1 overflow-ellipsis transition-all ease-in cursor-pointer py-1 px-3 hover:bg-gray-200/60 dark:hover:bg-gray-600/80 text-gray-700 dark:text-gray-200"
+                        className="flex items-center text-sm mt-1 overflow-ellipsis transition-colors ease-in cursor-pointer py-1 px-3 hover:bg-panel text-ink2 hover:text-ink"
                     >
-                        <FileTextIcon className="mr-2 text-gray-500 dark:text-gray-400 flex-shrink-0" />
+                        <FileTextIcon className="mr-2 text-rule flex-shrink-0" />
                         <div className="truncate text-left leading-5">{post.title?.replace(/\.[^/.]+$/, "")}</div>
                     </div>
                 ))}
@@ -193,13 +193,13 @@ export default function FileTree({ paths }) {
 
     return (
         <>
-            <div className="flex items-center justify-between mb-2 pb-2 border-b border-gray-200/60 dark:border-gray-700/60 px-3">
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {isTreeMode ? '树状目录' : '文章列表'}
+            <div className="flex items-center justify-between mb-2 pb-2 border-b border-rule/60 px-3">
+                <span className="text-xs font-mono font-bold tracking-[0.2em] text-ink2">
+                    {isTreeMode ? 'TREE · 目录' : 'LIST · 列表'}
                 </span>
                 <button
                     onClick={toggleViewMode}
-                    className="p-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-200"
+                    className="p-1.5 border border-rule text-ink2 hover:text-ink hover:border-ink transition-colors duration-200"
                     aria-label={isTreeMode ? '切换到列表视图' : '切换到树状视图'}
                 >
                     {isTreeMode ? (

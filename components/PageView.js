@@ -27,8 +27,8 @@ export default function PageView({ slug }) {
   }
 
   return (
-    <div className="flex items-center justify-center text-gray-500 dark:text-gray-400 text-sm py-4">
-      <span>Viewer: {count}</span>
+    <div className="flex items-center justify-center text-ink2 font-mono text-xs tracking-[0.2em] py-4">
+      <span>VIEWS · {count}</span>
     </div>
   )
 }

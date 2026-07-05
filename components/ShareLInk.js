@@ -97,14 +97,14 @@ export default function ShareLInk() {
                 <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={handleCancel}>
                     <div className="fixed inset-0 bg-black/50" />
                     <div
-                        className="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-[60%] mx-4 p-6 z-10"
+                        className="relative bg-paper border border-rule max-w-[60%] mx-4 p-6 z-10"
                         onClick={e => e.stopPropagation()}
                     >
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">添加微信</h3>
+                            <h3 className="text-lg font-medium text-ink">添加微信</h3>
                             <button
                                 onClick={handleCancel}
-                                className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 transition-colors"
+                                className="p-1 hover:bg-panel text-ink2 hover:text-ink transition-colors"
                             >
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                     <line x1="18" y1="6" x2="6" y2="18" />
@@ -116,7 +116,7 @@ export default function ShareLInk() {
                         <div className="flex justify-end mt-4">
                             <button
                                 onClick={handleOk}
-                                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+                                className="px-4 py-2 bg-ink text-paper font-mono text-sm tracking-widest hover:bg-accent transition-colors"
                             >
                                 确定
                             </button>

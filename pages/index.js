@@ -82,11 +82,11 @@ export default function Home({ paths: staticPaths, initialPosts, totalPosts: sta
             <div className="relative pt-8">
                 {/* 左侧边栏 - 固定定位 */}
                 <div className="fixed left-0 top-16 h-[calc(100vh-4rem)] w-80 z-30 hidden lg:block">
-                    <div className="h-full p-6 bg-white dark:bg-gray-900 shadow-lg">
+                    <div className="h-full p-6 bg-paper border-r border-rule">
                         <div className="flex flex-col items-center space-y-6 mb-8">
                             <Info />
                         </div>
-                        <div className="bg-white dark:bg-gray-800 p-4 h-[calc((100vh-10rem)/2)] overflow-y-auto overflow-x-hidden  scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent">
+                        <div className="p-4 h-[calc((100vh-10rem)/2)] overflow-y-auto overflow-x-hidden border-t border-dashed border-rule scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent">
                             <FileTree paths={paths} />
                         </div>
                     </div>

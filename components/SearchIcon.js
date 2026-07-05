@@ -95,7 +95,7 @@ export default function SearchIcon() {
         <>
             {/* 搜索图标 */}
             <div
-                className="clickable flex justify-center items-center text-2xl cursor-pointer text-gray-900 dark:text-gray-100"
+                className="clickable flex justify-center items-center text-2xl cursor-pointer text-ink2 hover:text-ink"
                 onClick={handleOpenSearch}
             >
                 <SearchOutlinedSvg />
@@ -109,12 +109,17 @@ export default function SearchIcon() {
                 >
                     <div className="flex justify-center pt-20">
                         <div
-                            className="bg-white dark:bg-gray-600 rounded-lg shadow-lg border border-gray-300 dark:border-gray-600 p-4 w-full max-w-2xl mx-4 animate-fade-in"
+                            className="bg-paper border border-ink p-4 w-full max-w-2xl mx-4 animate-fade-in"
                             onClick={(e) => e.stopPropagation()}
                         >
                             {/* 搜索输入框 */}
                             <div className="relative">
-                                <div className="rounded-md border border-gray-100 dark:border-gray-600 flex justify-around items-center bg-white dark:bg-gray-700 text-base">
+                                <div className="tk-meta mb-2 !text-[0.65rem]">
+                                    <span>SEARCH</span>
+                                    <span className="tk-leader" />
+                                    <span>检索单</span>
+                                </div>
+                                <div className="border border-rule flex justify-around items-center bg-chip text-base focus-within:border-ink transition-colors">
                                     <input
                                         type="text"
                                         id="search_input"
@@ -123,10 +128,10 @@ export default function SearchIcon() {
                                         onKeyDown={handleKeyDown}
                                         autoComplete="off"
                                         placeholder="搜索文章内容..."
-                                        className="px-4 py-2 flex-1 focus:!outline-none bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                                        className="px-4 py-2 flex-1 focus:!outline-none bg-transparent text-ink placeholder-ink2/70"
                                     />
                                     <div
-                                        className="text-gray-400 dark:text-gray-300 flex items-center px-3 cursor-pointer hover:text-gray-600 dark:hover:text-gray-100"
+                                        className="text-ink2 flex items-center px-3 cursor-pointer hover:text-ink"
                                         onClick={handleSubmit}
                                     >
                                         <SearchOutlinedSvg />
@@ -134,7 +139,7 @@ export default function SearchIcon() {
                                 </div>
 
                                 {/* 搜索结果 */}
-                                <div className={show ? "mt-2 border border-gray-200 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 max-h-96 overflow-auto" : "hidden"}>
+                                <div className={show ? "mt-2 border border-rule bg-chip max-h-96 overflow-auto" : "hidden"}>
                                     {reslist.map((item, index) => {
                                         const queText = searchText.trim()
                                         const resList = item.split(":")
@@ -151,7 +156,7 @@ export default function SearchIcon() {
                                         return (
                                             <div
                                                 key={`${item}-${index}`}
-                                                className="border-b border-gray-200 dark:border-gray-600 p-3 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer"
+                                                className="border-b border-rule/60 p-3 hover:bg-panel cursor-pointer"
                                                 onClick={() =>
                                                     handleGoToPage(
                                                         url,
@@ -159,12 +164,12 @@ export default function SearchIcon() {
                                                     )
                                                 }
                                             >
-                                                <div className="font-semibold text-sm text-gray-700 dark:text-gray-300 mb-1">
-                                                    {url}：第{lineNumber}行
+                                                <div className="font-mono text-xs tracking-wider text-ink2 mb-1">
+                                                    {url} · L{lineNumber}
                                                 </div>
-                                                <div className="text-gray-600 dark:text-gray-400 text-sm">
+                                                <div className="text-ink2 text-sm">
                                                     <span>{contentList[0] || ''}</span>
-                                                    <span className="text-blue-500 dark:text-blue-400 font-bold bg-blue-100 dark:bg-blue-900 px-1 rounded">
+                                                    <span className="text-accent font-bold border-b border-accent px-0.5">
                                                         {queText}
                                                     </span>
                                                     <span>{contentList[1] || ''}</span>

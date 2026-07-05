@@ -25,7 +25,7 @@ export default function TotalViews() {
   const formattedTotal = total.toLocaleString()
 
   return (
-    <div className="jobs text-gray-600 dark:text-gray-400">
+    <div className="jobs text-ink2">
       👁 Total Views: {formattedTotal}
     </div>
   )

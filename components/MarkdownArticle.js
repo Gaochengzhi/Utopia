@@ -83,7 +83,7 @@ export default function MarkdownArticle({ content }) {
 
     return (
         <ReactMarkdown
-            className="markdown-body lg:max-w-3xl p-4 mylist bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 mx-auto"
+            className="markdown-body lg:max-w-3xl p-4 mylist text-ink mx-auto"
             remarkPlugins={[remarkGfm, remarkMath]}
             rehypePlugins={[[rehypeKatex, { strict: false }], rehypeRaw]}
             components={{

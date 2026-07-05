@@ -1,7 +1,7 @@
 import { SlugToc } from "/components/SlugToc"
 import { TocToggleButton } from "/components/TocToggleButton"
 import { Footer } from "/components/footer"
-import { Toc } from "/components/Toc"
+import { Toc, MobileToc } from "/components/Toc"
 import Navbar from "/components/Navbar"
 import MarkdownArticle from "/components/MarkdownArticle"
 import FolderView from "/components/FolderView"
@@ -16,12 +16,21 @@ import { getFolderContents } from "/lib/data/paths"
 
 // Custom loading spinner to replace antd Spin
 const LoadingSpinner = () => (
-    <div className="flex items-center justify-center h-screen bg-white dark:bg-gray-900">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div>
+    <div className="flex items-center justify-center h-screen bg-paper">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-accent"></div>
     </div>
 )
 
-export default function Post({ contents, filename, status, folderContents, folderPath, isProtected }) {
+const formatStampDate = (time) => {
+    const t = Number(time)
+    if (!t) return ''
+    const d = new Date(t)
+    if (isNaN(d.getTime())) return ''
+    const pad = (n) => String(n).padStart(2, '0')
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
+export default function Post({ contents, filename, status, folderContents, folderPath, isProtected, updatedAt }) {
     const router = useRouter()
     const [showToc, setShowToc] = useState(false)
     const [path, setPath] = useState({})
@@ -112,7 +121,7 @@ export default function Post({ contents, filename, status, folderContents, folde
                         <meta name="viewport" content="initial-scale=1.0, width=device-width" />
                     </Head>
                     <Navbar folderPath={folderPath} />
-                    <div className="main lg:flex lg:mr-9 w-screen bg-white dark:bg-gray-900">
+                    <div className="main lg:flex lg:mr-9 w-screen bg-paper">
                         {showToc ? (
                             <div className="hidetoc">
                                 <SlugToc paths={path} />
@@ -120,17 +129,31 @@ export default function Post({ contents, filename, status, folderContents, folde
                         ) : (
                             <></>
                         )}
-                        <div className="hidden lg:flex mr-3 navbar ">
+                        {/* 桌面端：Time Machine 目录刻度轨，独占一列 */}
+                        <div className="hidden lg:block flex-shrink-0">
                             <Toc content={displayContent} />
                         </div>
-                        <div className="flex-1 max-w-4xl mx-auto">
-                            <div className="lg:flex flex-col items-center justify-center text-3xl mt-10"></div>
+                        <div className="flex-1 max-w-4xl mx-auto min-w-0">
+                            {/* 票据式文章头：编号行 */}
+                            <div className="lg:max-w-3xl mx-auto px-4 pt-8">
+                                <div className="tk-meta tk-dbl pt-3">
+                                    <span>{(folderPath || '').replace(/^post\/?/, '') || 'UTOPIA'}</span>
+                                    <span className="tk-leader" />
+                                    {isProtected && <span className="text-accent font-bold mr-2">SEALED</span>}
+                                    <span>{formatStampDate(updatedAt) || 'UTOPIA PRESS'}</span>
+                                </div>
+                            </div>
                             <MarkdownArticle content={displayContent} />
                             <PageView slug={folderPath + '/' + filename} />
                             <div className="pb-10">
                                 <Footer />
                             </div>
                         </div>
+                    </div>
+
+                    {/* 移动端：右缘细线目录，滑入/点按弹出 */}
+                    <div className="lg:hidden">
+                        <MobileToc content={displayContent} />
                     </div>
 
                     <div
@@ -148,7 +171,7 @@ export default function Post({ contents, filename, status, folderContents, folde
                         <meta name="viewport" content="initial-scale=1.0, width=device-width" />
                     </Head>
                     <Navbar folderPath={folderPath} />
-                    <div className="main lg:flex lg:mr-9 w-screen bg-white dark:bg-gray-900">
+                    <div className="main lg:flex lg:mr-9 w-screen bg-paper">
                         <FolderView folderPath={folderPath} folderContents={folderContents} />
                     </div>
                 </>
@@ -276,6 +299,7 @@ export const getStaticProps = async ({ params: { slug } }) => {
                 status: "md",
                 folderPath: articleFolderPath,
                 isProtected: !!post.is_protected,
+                updatedAt: post.updated_at || null,
             },
             revalidate: 60,
         }

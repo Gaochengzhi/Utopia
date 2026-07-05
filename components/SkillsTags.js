@@ -20,7 +20,7 @@ export function SkillsList({ className = "" }) {
 
 export default function SkillsTags() {
     return (
-        <div className="bg-white dark:bg-gray-900 px-4 pt-2">
+        <div className="px-4 pt-2">
             <div className="flex justify-center">
                 <div className="w-full">
                     {/* Mobile: Horizontal Scroll, Desktop: Wrap & Center */}

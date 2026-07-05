@@ -52,28 +52,32 @@ export default function DiaryAuth() {
         <title>日记密码验证 - Utopia</title>
       </Head>
 
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 px-4">
-        <div className="max-w-md w-full space-y-8">
+      <div className="min-h-screen flex items-center justify-center bg-paper px-4">
+        <div className="max-w-md w-full bg-chip border border-rule p-8 space-y-8">
           <div className="text-center">
-            <div className="mx-auto h-16 w-16 flex items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
-              <svg
-                className="h-8 w-8 text-blue-600 dark:text-blue-300"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                />
-              </svg>
+            <div className="tk-meta !text-[0.65rem] mb-6">
+              <span>UTOPIA</span>
+              <span className="tk-leader" />
+              <span>启封申请单</span>
             </div>
-            <h2 className="mt-6 text-3xl font-bold text-gray-900 dark:text-white">
+            <div
+              className="mx-auto inline-block font-mono font-bold text-accent select-none"
+              style={{
+                transform: 'rotate(-8deg)',
+                border: '2px solid rgb(var(--c-accent))',
+                outline: '1px solid rgb(var(--c-accent))',
+                outlineOffset: '3px',
+                letterSpacing: '0.45em',
+                padding: '10px 6px 10px 16px',
+                opacity: 0.85,
+              }}
+            >
+              加密
+            </div>
+            <h2 className="mt-8 text-2xl font-bold text-ink">
               日记已加密
             </h2>
-            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+            <p className="mt-2 text-sm text-ink2">
               此内容需要密码访问
             </p>
           </div>
@@ -91,34 +95,17 @@ export default function DiaryAuth() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="appearance-none relative block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 transition-colors"
+                className="appearance-none relative block w-full px-4 py-3 border border-rule placeholder-ink2/70 text-ink bg-paper focus:outline-none focus:border-ink transition-colors"
                 placeholder="请输入密码"
                 disabled={loading}
               />
             </div>
 
             {error && (
-              <div className="rounded-lg bg-red-50 dark:bg-red-900/30 p-4">
-                <div className="flex">
-                  <div className="flex-shrink-0">
-                    <svg
-                      className="h-5 w-5 text-red-400"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-sm font-medium text-red-800 dark:text-red-200">
-                      {error}
-                    </p>
-                  </div>
-                </div>
+              <div className="border border-accent bg-paper p-3">
+                <p className="text-sm font-mono text-accent text-center">
+                  {error}
+                </p>
               </div>
             )}
 
@@ -126,9 +113,9 @@ export default function DiaryAuth() {
               <button
                 type="submit"
                 disabled={loading}
-                className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="w-full flex justify-center py-3 px-4 border border-ink text-sm font-mono font-bold tracking-[0.3em] text-paper bg-ink hover:bg-accent hover:border-accent focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {loading ? '验证中...' : '解锁日记'}
+                {loading ? '验证中…' : 'UNLOCK · 启封'}
               </button>
             </div>
 
@@ -136,7 +123,7 @@ export default function DiaryAuth() {
               <button
                 type="button"
                 onClick={() => router.push('/')}
-                className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 transition-colors"
+                className="text-sm text-ink2 hover:text-accent underline decoration-rule underline-offset-4 transition-colors"
               >
                 返回首页
               </button>

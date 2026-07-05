@@ -16,13 +16,13 @@ export function Info({ variant = "desktop", showSkills = true }) {
         </div>
 
         <div className="">
-          <div className="flex justify-center items-center rounded-full p-1 border-gray-400 dark:border-gray-600 border-dotted border-2 shadow-md">
+          <div className="flex justify-center items-center rounded-full p-1 border-rule border-dotted border-2">
             <Image src="/icon.jpeg" alt="Avatar" width={112} height={112} className="w-28 h-28 rounded-full object-cover" />
           </div>
         </div>
         <div className="flex flex-col">
-          <div className="text-3xl font-light text-gray-900 dark:text-gray-100">@Taitan_Pascal</div>
-          <div className="text-gray-400 dark:text-gray-500 p-1 mt-2 whitespace-nowrap">
+          <div className="text-3xl font-light text-ink">@Taitan_Pascal</div>
+          <div className="text-ink2 p-1 mt-2 whitespace-nowrap">
             <div>
               <div className="text-xl p-0 font-serif">
                 <div className="inline m-[-2px] text-purple-600"> C</div>
@@ -32,17 +32,17 @@ export function Info({ variant = "desktop", showSkills = true }) {
                 <div className="inline m-[-2px] text-blue-600"> k</div>
                 <div className="inline text-2xl">👇</div>
               </div>
-              <div className="jobs text-gray-600 dark:text-gray-400">🌈 瓦梁湖生态观察小队副队长</div>
-              <div className="jobs text-gray-600 dark:text-gray-400">👨🏻‍💻 Software Engineer</div>
+              <div className="jobs text-ink2">🌈 瓦梁湖生态观察小队副队长</div>
+              <div className="jobs text-ink2">👨🏻‍💻 Software Engineer</div>
               <div className="jobs">
-                <Link href="/photographer" className="text-gray-400 dark:text-gray-500">
+                <Link href="/photographer" className="text-ink2">
                   📸 Photographer
                 </Link>
               </div>
               <TotalViews />
             </div>
             {showSkills && (
-              <div className="text-blue-400 dark:text-blue-300 mt-2 font-semibold max-w-[48rem]">
+              <div className="text-ink2 mt-2 font-semibold max-w-[48rem]">
                 <SkillsList className="!justify-start !flex-wrap !mx-0 !px-0" />
               </div>
             )}
@@ -54,7 +54,7 @@ export function Info({ variant = "desktop", showSkills = true }) {
 
   // Mobile variant: horizontal compact layout
   return (
-    <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shadow-sm">
+    <div className="bg-paper border-b border-rule">
       <div className="flex justify-center p-4">
         <div className="w-full max-w-lg">
           {/* Social media links */}
@@ -64,11 +64,11 @@ export function Info({ variant = "desktop", showSkills = true }) {
 
           {/* Avatar and basic info */}
           <div className="flex items-center space-x-4 mb-4">
-            <div className="flex justify-center items-center rounded-full p-1 border-gray-400 border-dotted border-2 shadow-md">
+            <div className="flex justify-center items-center rounded-full p-1 border-rule border-dotted border-2">
               <Image src="/icon.jpeg" alt="Avatar" width={64} height={64} className="w-16 h-16 rounded-full object-cover" />
             </div>
             <div className="flex flex-col">
-              <div className="text-xl font-light text-gray-900 dark:text-gray-100">@Taitan_Pascal</div>
+              <div className="text-xl font-light text-ink">@Taitan_Pascal</div>
 
               {/* Colorful click prompt */}
               <div className="text-base font-serif flex items-center mt-1">
@@ -83,7 +83,7 @@ export function Info({ variant = "desktop", showSkills = true }) {
           </div>
 
           {/* Job descriptions */}
-          <div className="text-gray-500 dark:text-gray-400 text-sm space-y-1 mb-3">
+          <div className="text-ink2 text-sm space-y-1 mb-3">
             <div className="jobs cursor-pointer">🌈 瓦梁湖生态观察小队副队长</div>
             <div className="jobs cursor-pointer">👨🏻‍💻 Software Engineer</div>
             <Link href="/photographer" className="jobs cursor-pointer">📸 Photographer</Link>

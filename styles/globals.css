@@ -2,20 +2,61 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Dark mode base styles */
+/* ═══════════════════════════════════════════════════════
+   票据视觉体系 tokens —— light = 暖纸，dark = 碳纸
+   Tailwind 色名 paper/panel/chip/ink/ink2/rule/accent/ledger
+   引用这些变量（见 tailwind.config.js），.dark 下自动换肤
+   ═══════════════════════════════════════════════════════ */
 @layer base {
+    :root {
+        --c-paper: 245 241 232;
+        --c-panel: 237 231 215;
+        --c-chip: 251 248 240;
+        --c-ink: 42 39 34;
+        --c-ink2: 111 103 89;
+        --c-rule: 198 187 163;
+        --c-accent: 179 64 46;
+        --c-ledger: 46 74 102;
+    }
+
+    .dark {
+        --c-paper: 25 23 18;
+        --c-panel: 33 30 23;
+        --c-chip: 35 32 25;
+        --c-ink: 231 224 209;
+        --c-ink2: 156 146 126;
+        --c-rule: 70 64 47;
+        --c-accent: 217 107 84;
+        --c-ledger: 138 174 206;
+    }
+
     html {
         @apply transition-colors duration-300;
         scroll-behavior: smooth;
     }
 
     body {
-        @apply bg-white dark:bg-black text-gray-900 dark:text-gray-100 transition-colors duration-300;
+        @apply bg-paper text-ink font-sans transition-colors duration-300;
     }
 }
 
 /* 摄影页面专用动画效果 */
 @layer utilities {
+
+    /* line-clamp：tailwind 3.1 尚未内置（3.3 才有），手写补齐 */
+    .line-clamp-1,
+    .line-clamp-2,
+    .line-clamp-3,
+    .line-clamp-4 {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .line-clamp-1 { -webkit-line-clamp: 1; }
+    .line-clamp-2 { -webkit-line-clamp: 2; }
+    .line-clamp-3 { -webkit-line-clamp: 3; }
+    .line-clamp-4 { -webkit-line-clamp: 4; }
 
     /* 隐藏滚动条 */
     .scrollbar-hide {
@@ -285,171 +326,6 @@
         transition: all 0.3s ease;
     }
 
-    /* 增强的瀑布流卡片样式 */
-    .waterfall-card {
-        background: linear-gradient(145deg, #ffffff, #f8f9fa);
-        border-radius: 16px;
-        border: 1px solid rgba(229, 231, 235, 0.8);
-        overflow: hidden;
-        position: relative;
-        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        backdrop-filter: blur(10px);
-        transform-style: preserve-3d;
-        perspective: 1000px;
-    }
-
-    .dark .waterfall-card {
-        background: linear-gradient(145deg, #262626, #171717);
-        border-color: rgba(75, 85, 99, 0.3);
-    }
-
-    .waterfall-card:hover {
-        box-shadow:
-            0 25px 50px -12px rgba(0, 0, 0, 0.25),
-            0 0 0 1px rgba(255, 255, 255, 0.1),
-            0 0 30px rgba(99, 102, 241, 0.15);
-        z-index: 10;
-    }
-
-    .dark .waterfall-card:hover {
-        box-shadow:
-            0 25px 50px -12px rgba(0, 0, 0, 0.5),
-            0 0 0 1px rgba(255, 255, 255, 0.1);
-    }
-
-    .card-content {
-        padding: 1.5rem;
-        position: relative;
-        z-index: 10;
-    }
-
-    .card-header {
-        margin-bottom: 1rem;
-    }
-
-    .card-title {
-        font-size: 1.375rem; /* 从1.25rem增加到1.375rem */
-        font-weight: 600;
-        line-height: 1.4;
-        color: #262626;
-        margin: 0;
-        transition: color 0.3s ease;
-    }
-
-    .dark .card-title {
-        color: #f9fafb;
-    }
-
-    .card-body {
-        position: relative;
-        overflow: hidden;
-    }
-
-    .card-footer {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-top: 1rem;
-        padding-top: 1rem;
-        border-top: 1px solid rgba(229, 231, 235, 0.8);
-    }
-
-    .dark .card-footer {
-        border-top-color: rgba(75, 85, 99, 0.3);
-    }
-
-    .card-overlay {
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(135deg,
-                rgba(168, 85, 247, 0.1) 0%,
-                rgba(59, 130, 246, 0.1) 50%,
-                rgba(16, 185, 129, 0.1) 100%);
-        opacity: 0;
-        transition: opacity 0.3s ease;
-        pointer-events: none;
-        border-radius: inherit;
-    }
-
-    .waterfall-card:hover .card-overlay {
-        opacity: 1;
-    }
-
-    .read-more-arrow {
-        transition: transform 0.3s ease;
-    }
-
-    .waterfall-card:hover .read-more-arrow {
-        transform: translateX(4px);
-    }
-
-    /* Markdown 内容样式优化 */
-    .markdown-preview {
-        line-height: 1.6;
-        color: #6b7280;
-        font-size: 1.1rem; /* 增加markdown预览的字体大小 */
-    }
-
-    .dark .markdown-preview {
-        color: #d1d5db;
-    }
-
-    .markdown-preview h1,
-    .markdown-preview h2,
-    .markdown-preview h3 {
-        margin: 0.5rem 0;
-        font-weight: 600;
-    }
-
-    .markdown-preview .card-h1 {
-        font-size: 1.25rem; /* 从1.125rem增加到1.25rem */
-        color: #262626;
-    }
-
-    .dark .markdown-preview .card-h1 {
-        color: #f9fafb;
-    }
-
-    .markdown-preview .card-h2 {
-        font-size: 1.125rem; /* 从1rem增加到1.125rem */
-        color: #404040;
-    }
-
-    .dark .markdown-preview .card-h2 {
-        color: #e5e7eb;
-    }
-
-    .markdown-preview .card-h3 {
-        font-size: 1rem; /* 从0.875rem增加到1rem */
-        color: #525252;
-    }
-
-    .dark .markdown-preview .card-h3 {
-        color: #d1d5db;
-    }
-
-    .markdown-preview .card-image {
-        width: 100%;
-        height: auto;
-        border-radius: 8px;
-        margin: 0.5rem 0;
-        max-height: 200px;
-        object-fit: cover;
-    }
-
-    .markdown-preview .inline-code {
-        background-color: rgba(229, 231, 235, 0.8);
-        color: #dc2626;
-        padding: 0.125rem 0.25rem;
-        border-radius: 0.25rem;
-        font-size: 0.875em;
-    }
-
-    .dark .markdown-preview .inline-code {
-        background-color: rgba(55, 65, 81, 0.8);
-        color: #fca5a5;
-    }
-
     /* 摄影页面专用样式 */
     .enhanced-photo-item {
         position: relative;
@@ -473,107 +349,68 @@
     }
 }
 
-/* Dark mode Ant Design overrides */
-.dark .ant-tree {
-    background: transparent !important;
-    color: #f3f4f6 !important;
-}
-
-.dark .ant-tree .ant-tree-node-content-wrapper {
-    color: #d1d5db !important;
-}
-
-.dark .ant-tree .ant-tree-node-content-wrapper:hover {
-    background-color: rgba(75, 85, 99, 0.3) !important;
-    color: #f9fafb !important;
-}
-
-.dark .ant-tree .ant-tree-node-selected {
-    background-color: rgba(99, 102, 241, 0.3) !important;
-    color: #f9fafb !important;
-}
-
-.dark .ant-tree .ant-tree-switcher {
-    color: #9ca3af !important;
-}
-
-.dark .ant-tree .ant-tree-iconEle {
-    color: #9ca3af !important;
-}
-
-.dark .ant-divider {
-    border-color: #525252 !important;
-}
-
-.dark .ant-divider-inner-text {
-    color: #d1d5db !important;
-}
-
-/* Markdown content dark mode styles */
+/* ═══════════════════════════════════════════════════════
+   Markdown 正文 —— 覆盖 github-markdown-css，
+   全部走票据 token，因此 light/dark 一套规则通吃
+   ═══════════════════════════════════════════════════════ */
 .markdown-body {
-    font-size: 1.1rem !important; /* 增加markdown内容字体大小 */
+    font-size: 1.1rem !important;
+    background-color: transparent !important;
+    color: rgb(var(--c-ink)) !important;
 }
 
-.dark .markdown-body {
-    background-color: #171717 !important;
-    color: #f9fafb !important;
-}
-
-.dark .markdown-body h1,
-.dark .markdown-body h2,
-.dark .markdown-body h3,
-.dark .markdown-body h4,
-.dark .markdown-body h5,
-.dark .markdown-body h6 {
-    color: #f9fafb !important;
-    border-bottom-color: #525252 !important;
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 {
+    color: rgb(var(--c-ink)) !important;
+    border-bottom-color: rgb(var(--c-rule)) !important;
 }
 
 .markdown-body p,
 .markdown-body li,
 .markdown-body td,
 .markdown-body th {
-    font-size: 1.1rem !important; /* 增加段落和列表项字体大小 */
+    font-size: 1.1rem !important;
+    color: rgb(var(--c-ink)) !important;
 }
 
-.dark .markdown-body p,
-.dark .markdown-body li,
-.dark .markdown-body td,
-.dark .markdown-body th {
-    color: #e5e7eb !important;
+.markdown-body blockquote {
+    color: rgb(var(--c-ink2)) !important;
+    border-left: 3px solid rgb(var(--c-rule)) !important;
 }
 
-.dark .markdown-body blockquote {
-    color: #d1d5db !important;
-    border-left-color: #6b7280 !important;
+.markdown-body hr {
+    height: 0 !important;
+    background: none !important;
+    border: none !important;
+    border-top: 3px double rgb(var(--c-ink)) !important;
+    opacity: .55;
 }
 
-.dark .markdown-body table {
+.markdown-body table {
     background-color: transparent !important;
 }
 
-.dark .markdown-body tr {
+.markdown-body tr {
     background-color: transparent !important;
-    border-top-color: #525252 !important;
+    border-top-color: rgb(var(--c-rule)) !important;
 }
 
-.dark .markdown-body th,
-.dark .markdown-body td {
-    border-color: #525252 !important;
+.markdown-body th,
+.markdown-body td {
+    border-color: rgb(var(--c-rule)) !important;
 }
 
-/* Light-mode inline code: ensure visible text on any background */
+/* Inline code：纸上的红墨标注，两种模式通用 */
 .markdown-body code:not(pre code) {
-    background-color: rgba(229, 231, 235, 0.85) !important;
-    color: #c7254e !important;
+    background-color: rgb(var(--c-panel)) !important;
+    color: rgb(var(--c-accent)) !important;
     padding: 0.15em 0.4em !important;
-    border-radius: 4px !important;
+    border-radius: 0 !important;
     font-size: 0.9em !important;
-}
-
-.dark .markdown-body code:not(pre code) {
-    background-color: rgba(55, 65, 81, 0.8) !important;
-    color: #f9fafb !important;
 }
 
 /* Force dark theme for code blocks in both light and dark modes */
@@ -582,17 +419,23 @@
     background-color: #1e1e1e !important;
 }
 
-.dark .markdown-body pre,
-.dark .markdown-body pre > div {
-    background-color: #1e1e1e !important;
+.markdown-body a {
+    color: rgb(var(--c-ledger)) !important;
+    text-decoration: underline;
+    text-decoration-color: rgb(var(--c-rule));
+    text-underline-offset: 3px;
 }
 
-.dark .markdown-body a {
-    color: #60a5fa !important;
+.markdown-body a:hover {
+    color: rgb(var(--c-accent)) !important;
+    text-decoration-color: rgb(var(--c-accent));
 }
 
-.dark .markdown-body a:hover {
-    color: #93c5fd !important;
+.markdown-body img {
+    border: 1px solid rgb(var(--c-rule));
+    padding: 5px;
+    background: rgb(var(--c-paper));
+    border-radius: 0 !important;
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -941,18 +784,10 @@ h3 {
 } */
 .hidetoc {
     @apply fixed right-2 top-[6rem] w-[19rem] py-4 px-3 overflow-scroll lg:mt-5 z-50;
-    background: rgba(255, 255, 255, 0.95);
+    background: rgb(var(--c-chip) / 0.97);
     backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 16px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgb(var(--c-rule));
     animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.dark .hidetoc {
-    background: rgba(31, 41, 55, 0.95);
-    border: 1px solid rgba(75, 85, 99, 0.3);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
 .navbar {
@@ -989,19 +824,6 @@ h3 {
 
 .mytag {
     @apply m-1 rounded-full border shadow-sm py-[1px] text-white px-[8px]
-}
-
-.ant-tree-node-content-wrapper {
-    font-size: 1.15rem /* 从1.05rem增加到1.15rem */
-        /* 18px */
-    ;
-    line-height: 1.75rem
-        /* 28px */
-    ;
-}
-
-.ant-tree-title {
-    @apply m-1
 }
 
 .clickable {
@@ -1043,20 +865,6 @@ h3 {
         opacity: 1;
         transform: translateX(0);
     }
-}
-
-.toc-h2 {
-    padding-bottom: 0.375rem;
-    margin-bottom: 0.25rem;
-    border-bottom: 1px solid rgba(209, 213, 219, 0.2);
-}
-
-.dark .toc-h2 {
-    border-bottom: 1px solid rgba(75, 85, 99, 0.2);
-}
-
-.pclick {
-    @apply cursor-pointer hover:text-white transition-all ease-in duration-150
 }
 
 .picon {
@@ -1191,279 +999,23 @@ pre .token-line,
     background-color: transparent !important;
 }
 
-/* Light-mode inline code inside .mylist: ensure visible text/background */
+/* Inline code inside .mylist —— 纸上的红墨标注，token 通吃两种模式 */
 .mylist > code,
 .mylist code:not(pre code) {
-    background-color: rgba(229, 231, 235, 0.85) !important;
-    color: #c7254e !important;
+    background-color: rgb(var(--c-panel)) !important;
+    color: rgb(var(--c-accent)) !important;
     padding: 0.15em 0.4em !important;
-    border-radius: 4px !important;
+    border-radius: 0 !important;
     font-size: 0.9em !important;
 }
 
-.dark .mylist > code,
-.dark .mylist code:not(pre code) {
-    background-color: rgba(55, 65, 81, 0.8) !important;
-    color: #fca5a5 !important;
-}
-
 .mynav {
-    background: rgba(255, 255, 255, 0.7);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-:is(.dark) .mynav {
-    background: rgba(17, 17, 17, 0.7);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgb(var(--c-paper) / 0.82);
+    border-bottom: 1px solid rgb(var(--c-rule) / 0.7);
 }
 
 .search_bar {
     @apply text-base bg-white dark:bg-gray-800 dark:text-white md:min-w-[24rem] max-w-[34rem] p-2 border dark:border-gray-600 absolute top-10 left-2 rounded shadow-lg z-10
-}
-
-/* 瀑布流卡片样式 */
-.waterfall-container {
-    min-height: calc(100vh - 4rem);
-    background: #ffffff;
-    padding-top: 2rem;
-}
-
-.dark .waterfall-container {
-    background: #171717;
-}
-
-.waterfall-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.5rem;
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 0 1.5rem;
-    grid-auto-rows: masonry;
-}
-
-/* 如果浏览器不支持masonry，使用JavaScript实现 */
-@supports not (grid-auto-rows: masonry) {
-    .waterfall-grid {
-        display: block;
-        columns: 3;
-        column-gap: 1.5rem;
-    }
-
-    .waterfall-card {
-        display: inline-block;
-        width: 100%;
-        margin-bottom: 1.5rem;
-        break-inside: avoid;
-    }
-}
-
-@media (max-width: 1024px) and (min-width: 769px) {
-    .waterfall-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-    @supports not (grid-auto-rows: masonry) {
-        .waterfall-grid {
-            columns: 2;
-        }
-    }
-}
-
-@media (max-width: 768px) {
-    .waterfall-grid {
-        grid-template-columns: 1fr;
-        padding: 0 1rem;
-    }
-
-    @supports not (grid-auto-rows: masonry) {
-        .waterfall-grid {
-            columns: 1;
-            column-gap: 0;
-        }
-    }
-
-    .waterfall-container {
-        padding-top: 1rem;
-    }
-}
-
-.waterfall-card {
-    position: relative;
-    border-radius: 16px;
-    overflow: hidden;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    background: rgba(255, 255, 255, 0.95);
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-}
-
-.dark .waterfall-card {
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgba(31, 41, 55, 0.95);
-}
-
-.waterfall-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-}
-
-.card-content {
-    position: relative;
-    z-index: 2;
-    padding: 1.5rem;
-}
-
-.card-header {
-    margin-bottom: 1rem;
-}
-
-.card-title {
-    font-size: 1.375rem; /* 从1.25rem增加到1.375rem */
-    font-weight: 600;
-    color: #262626;
-    margin: 0;
-    line-height: 1.4;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-
-.dark .card-title {
-    color: #f9fafb;
-}
-
-.card-body {
-    margin-bottom: 1rem;
-}
-
-.markdown-preview {
-    font-size: 1rem; /* 从0.9rem增加到1rem */
-    line-height: 1.6;
-    color: #525252;
-    overflow: hidden;
-    position: relative;
-}
-
-.dark .markdown-preview {
-    color: #d1d5db;
-}
-
-.markdown-preview::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 40px;
-    background: linear-gradient(transparent, rgba(255, 255, 255, 0.95));
-}
-
-.dark .markdown-preview::after {
-    background: linear-gradient(transparent, rgba(31, 41, 55, 0.95));
-}
-
-.markdown-preview h1,
-.markdown-preview h2,
-.markdown-preview h3 {
-    margin: 0.5rem 0;
-    color: #404040;
-}
-
-.card-h1 {
-    font-size: 1.25rem; /* 从1.1rem增加到1.25rem */
-    font-weight: 600;
-    margin: 0.5rem 0;
-}
-
-.card-h2 {
-    font-size: 1.125rem; /* 从1rem增加到1.125rem */
-    font-weight: 500;
-    margin: 0.5rem 0;
-}
-
-.card-h3 {
-    font-size: 1rem; /* 从0.9rem增加到1rem */
-    font-weight: 500;
-    margin: 0.5rem 0;
-}
-
-.card-image {
-    max-width: 100%;
-    height: auto;
-    border-radius: 8px;
-    margin: 0.5rem 0;
-}
-
-.inline-code {
-    background: rgba(99, 102, 241, 0.1);
-    color: #4f46e5;
-    padding: 0.125rem 0.25rem;
-    border-radius: 0.25rem;
-    font-size: 0.875rem;
-}
-
-.dark .inline-code {
-    background: rgba(99, 102, 241, 0.2);
-    color: #a5b4fc;
-}
-
-.card-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-top: 1rem;
-    border-top: 1px solid rgba(156, 163, 175, 0.2);
-}
-
-.read-more-arrow {
-    font-size: 1.2rem;
-    color: #6366f1;
-    transition: transform 0.2s ease;
-}
-
-.waterfall-card:hover .read-more-arrow {
-    transform: translateX(4px);
-}
-
-.card-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.02);
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    z-index: 1;
-    border-radius: 16px;
-}
-
-.waterfall-card:hover .card-overlay {
-    opacity: 1;
-}
-
-/* JavaScript瀑布流样式 */
-.waterfall-grid-js {
-    /* 样式通过内联样式控制 */
-}
-
-.waterfall-column {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    min-width: 0;
-}
-
-@media (max-width: 768px) {
-    .waterfall-grid-js {
-        padding: 0 1rem !important;
-    }
 }
 
 /* 隐藏滚动条 */
@@ -1474,85 +1026,328 @@ pre .token-line,
 
 .scrollbar-hide::-webkit-scrollbar {
     display: none;
-}/* Rich Tag Styles */
+}
+
+/* ═══════════════════════════════════════════════════════
+   技能标签 —— 平面票据章：mono 小字 + 细线框 + 直角
+   ═══════════════════════════════════════════════════════ */
 @layer components {
     .tag-rich {
-        @apply relative px-4 py-1.5 rounded-2xl text-sm font-medium transition-all duration-300 overflow-hidden backdrop-blur-md;
-        /* Default fallback */
-        --tag-color: 100, 116, 139; /* Slate-500 */
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(var(--tag-color), 0.1) 100%);
-        border: 1px solid rgba(var(--tag-color), 0.2);
+        @apply px-3 py-1 text-xs font-mono font-semibold tracking-wider transition-colors duration-200;
+        --tag-color: 100, 116, 139;
+        background: rgb(var(--c-chip));
+        border: 1px solid rgba(var(--tag-color), 0.45);
         color: rgb(var(--tag-color));
-        box-shadow: 
-            0 2px 4px rgba(var(--tag-color), 0.05),
-            inset 0 1px 0 rgba(255, 255, 255, 0.6);
     }
 
-    .dark .tag-rich {
-        background: linear-gradient(135deg, rgba(var(--tag-color), 0.15) 0%, rgba(var(--tag-color), 0.05) 100%);
-        border: 1px solid rgba(var(--tag-color), 0.3);
-        color: rgba(var(--tag-color), 0.9); /* Slightly lighter text for contrast */
-        box-shadow: 
-            0 4px 12px rgba(var(--tag-color), 0.2),
-            inset 0 1px 0 rgba(255, 255, 255, 0.05);
-        text-shadow: 0 0 10px rgba(var(--tag-color), 0.4);
-    }
-
-    /* Hover Effects */
     .tag-rich:hover {
-        transform: translateY(-1px);
-        box-shadow: 
-            0 4px 12px rgba(var(--tag-color), 0.15),
-            inset 0 1px 0 rgba(255, 255, 255, 0.8);
-    }
-
-    .dark .tag-rich:hover {
-        background: linear-gradient(135deg, rgba(var(--tag-color), 0.25) 0%, rgba(var(--tag-color), 0.1) 100%);
-        box-shadow: 
-            0 0 20px rgba(var(--tag-color), 0.4),
-            inset 0 1px 0 rgba(255, 255, 255, 0.1);
-        border-color: rgba(var(--tag-color), 0.5);
-    }
-
-    /* Active/Click Effects */
-    .tag-rich:active {
-        transform: translateY(0);
-        box-shadow: none;
+        border-color: rgb(var(--tag-color));
     }
 
     /* Color Variants */
-    .tag-orange { --tag-color: 249, 115, 22; } /* Orange-500 */
-    .tag-purple { --tag-color: 168, 85, 247; } /* Purple-500 */
-    .tag-sky    { --tag-color: 14, 165, 233; } /* Sky-500 */
-    .tag-gray   { --tag-color: 107, 114, 128; } /* Gray-500 */
-    .tag-green  { --tag-color: 34, 197, 94; } /* Green-500 */
-    
-    /* Shimmer Animation for Light Mode richness */
-    .tag-rich::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 50%;
-        height: 100%;
-        background: linear-gradient(
-            to right,
-            transparent,
-            rgba(255, 255, 255, 0.4),
-            transparent
-        );
-        transform: skewX(-25deg);
-        transition: 0.5s;
-        pointer-events: none;
-    }
-    
-    .tag-rich:hover::before {
-        animation: shimmer-tag 1.5s infinite;
+    .tag-orange { --tag-color: 194, 96, 32; }
+    .tag-purple { --tag-color: 136, 84, 190; }
+    .tag-sky    { --tag-color: 44, 122, 168; }
+    .tag-gray   { --tag-color: 122, 114, 98; }
+    .tag-green  { --tag-color: 74, 138, 84; }
+
+    .dark .tag-orange { --tag-color: 224, 146, 92; }
+    .dark .tag-purple { --tag-color: 178, 140, 220; }
+    .dark .tag-sky    { --tag-color: 118, 176, 214; }
+    .dark .tag-gray   { --tag-color: 160, 150, 132; }
+    .dark .tag-green  { --tag-color: 130, 180, 138; }
+}
+
+/* ═══════════════════════════════════════════════════════
+   票据部件 —— 首页卡片 / 页签 / 印章 / 点线引导符
+   ═══════════════════════════════════════════════════════ */
+@layer components {
+    /* 卡片编号行、页脚行的容器：mono 小字 + 点线 */
+    .tk-meta {
+        @apply flex items-baseline font-mono text-[0.7rem] tracking-[0.12em] text-ink2 whitespace-nowrap;
     }
 
-    @keyframes shimmer-tag {
-        100% {
-            left: 200%;
-        }
+    .tk-leader {
+        flex: 1 1 auto;
+        min-width: 1em;
+        margin: 0 0.5em;
+        border-bottom: 2px dotted rgb(var(--c-rule));
+        transform: translateY(-0.28em);
+    }
+
+    .tk-card {
+        @apply relative flex flex-col bg-chip border border-rule transition-all duration-300;
+    }
+
+    .tk-card:hover {
+        @apply border-ink -translate-y-0.5;
+    }
+
+    /* 索引页签（一级目录 / 分类） */
+    .tk-tab {
+        @apply inline-block px-4 py-2 font-mono text-[0.78rem] font-bold tracking-[0.18em] bg-chip border border-rule text-ink2 transition-colors duration-200 whitespace-nowrap;
+    }
+
+    .tk-tab:hover {
+        @apply border-ink text-ink;
+    }
+
+    .tk-tab-on {
+        @apply bg-ink text-paper border-ink;
+    }
+
+    /* 印章（加密卡等） */
+    .tk-seal {
+        @apply absolute font-mono font-bold text-accent select-none pointer-events-none;
+        right: 1rem;
+        top: 3.2rem;
+        transform: rotate(-11deg);
+        border: 2px solid rgb(var(--c-accent));
+        outline: 1px solid rgb(var(--c-accent));
+        outline-offset: 3px;
+        letter-spacing: 0.45em;
+        padding: 7px 3px 7px 12px;
+        font-size: 0.8rem;
+        line-height: 1;
+        opacity: 0.8;
+    }
+
+    /* 加密卡的涂黑摘要 */
+    .tk-masked {
+        @apply font-mono text-[0.82rem] text-ink2 opacity-60 tracking-[0.1em] break-all;
+    }
+
+    /* 通栏图：灰调压制，hover 恢复彩色 */
+    .tk-duo {
+        filter: grayscale(0.85) sepia(0.18) contrast(1.03);
+        transition: filter 0.4s ease;
+    }
+
+    .tk-card:hover .tk-duo {
+        filter: none;
+    }
+
+    /* 邮票式小图：细线框 + 齿孔衬底 */
+    .tk-stampimg {
+        @apply float-right border border-rule bg-paper;
+        margin: 0 0 8px 12px;
+        padding: 5px;
+        width: 6rem;
+        background-image: radial-gradient(circle, rgb(var(--c-panel)) 1.6px, transparent 1.7px);
+        background-size: 9px 9px;
+    }
+
+    .tk-stampimg img {
+        display: block;
+        width: 100%;
+        height: 6.5rem;
+        object-fit: cover;
+        filter: grayscale(0.85) sepia(0.18);
+    }
+
+    /* 双线章节规（账本样式的分隔线） */
+    .tk-dbl {
+        border-top: 3px double rgb(var(--c-ink));
+    }
+}
+
+/* ═══════════════════════════════════════════════════════
+   Time Machine 目录刻度轨
+   桌面端：文章左侧独占一列；静止只见刻度 + 当前章节标题，
+   光标扫过时按距离高斯放大（宽度/标签透明度由 JS 内联控制）
+   ═══════════════════════════════════════════════════════ */
+.tocrail {
+    position: sticky;
+    top: 5rem;
+    height: calc(100vh - 7rem);
+    width: 15rem;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-left: 1rem;
+    cursor: pointer;
+}
+
+.tocrail-item {
+    position: relative;
+    flex: 0 1 26px;
+    min-height: 8px;
+    display: flex;
+    align-items: center;
+}
+
+.tocrail-tick {
+    height: 2px;
+    width: 22px;
+    background: rgb(var(--c-ink2));
+    opacity: 0.55;
+    transition: background 0.18s ease, opacity 0.18s ease;
+    will-change: width;
+}
+
+.tocrail-item.lv3 .tocrail-tick {
+    width: 12px;
+    opacity: 0.35;
+}
+
+.tocrail-item.on .tocrail-tick {
+    background: rgb(var(--c-accent));
+    opacity: 1;
+}
+
+.tocrail-label {
+    position: absolute;
+    left: 4.2rem;
+    top: 50%;
+    transform: translateY(-50%);
+    transform-origin: left center;
+    max-width: 12rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    padding: 4px 9px;
+    background: rgb(var(--c-chip));
+    border: 1px solid rgb(var(--c-rule));
+    color: rgb(var(--c-ink));
+    opacity: 0;
+    pointer-events: none;
+    will-change: transform, opacity;
+    z-index: 5;
+}
+
+.tocrail-item.on .tocrail-label {
+    border-color: rgb(var(--c-accent));
+    color: rgb(var(--c-accent));
+}
+
+/* ── 移动端：右缘细线列 + 当前标题浮现 + 抽屉目录 ── */
+.tocrail-m {
+    position: fixed;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 7px;
+    padding: 12px 6px 12px 16px;    /* 左侧留出手指热区 */
+}
+
+.tocrail-m-tick {
+    height: 2px;
+    width: 10px;
+    background: rgb(var(--c-ink2));
+    opacity: 0.45;
+    transition: width 0.2s ease, background 0.2s ease;
+}
+
+.tocrail-m-tick.lv3 {
+    width: 6px;
+    opacity: 0.3;
+}
+
+.tocrail-m-tick.on {
+    width: 16px;
+    background: rgb(var(--c-accent));
+    opacity: 1;
+}
+
+/* 滚动时浮现的当前章节标题 */
+.tocrail-m-chip {
+    position: fixed;
+    right: 1.6rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 40;
+    max-width: 60vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 5px 10px;
+    background: rgb(var(--c-chip) / 0.96);
+    border: 1px solid rgb(var(--c-rule));
+    color: rgb(var(--c-ink));
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    pointer-events: none;
+}
+
+.tocrail-m-chip.show {
+    opacity: 1;
+}
+
+/* 抽屉目录（边缘滑入 / 点按细线列弹出） */
+.tocrail-m-drawer {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+}
+
+.tocrail-m-drawer .backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgb(var(--c-ink) / 0.25);
+}
+
+.tocrail-m-panel {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: min(78vw, 20rem);
+    background: rgb(var(--c-paper));
+    border-left: 1px solid rgb(var(--c-rule));
+    padding: 4.5rem 1.2rem 2rem;
+    overflow-y: auto;
+    animation: slideInRight 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tocrail-m-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    border-bottom: 1px solid rgb(var(--c-rule) / 0.5);
+    padding: 0.55rem 0.2rem;
+    font-size: 0.9rem;
+    color: rgb(var(--c-ink));
+    cursor: pointer;
+}
+
+.tocrail-m-item.lv3 {
+    padding-left: 1.2rem;
+    font-size: 0.82rem;
+    color: rgb(var(--c-ink2));
+}
+
+.tocrail-m-item.on {
+    color: rgb(var(--c-accent));
+    border-bottom-color: rgb(var(--c-accent) / 0.5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tocrail-tick,
+    .tocrail-label,
+    .tocrail-m-tick,
+    .tocrail-m-chip,
+    .tk-duo {
+        transition: none !important;
+    }
+
+    .tocrail-m-panel,
+    .hidetoc {
+        animation: none !important;
+    }
+
+    html {
+        scroll-behavior: auto;
     }
 }
