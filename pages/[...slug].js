@@ -21,13 +21,15 @@ const LoadingSpinner = () => (
     </div>
 )
 
+// 用 UTC 取日期：Worker（UTC）与浏览器（本地时区）跨午夜时
+// 本地化会渲染出不同的字符串，触发 hydration mismatch
 const formatStampDate = (time) => {
     const t = Number(time)
     if (!t) return ''
     const d = new Date(t)
     if (isNaN(d.getTime())) return ''
     const pad = (n) => String(n).padStart(2, '0')
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+    return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`
 }
 
 export default function Post({ contents, filename, status, folderContents, folderPath, isProtected, updatedAt }) {

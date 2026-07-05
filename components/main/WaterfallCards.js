@@ -238,33 +238,29 @@ export default function WaterfallCards({ initialPosts, totalPosts, isAuthenticat
         return segs.length > 2 ? segs[1] : '未分类'
     }
 
+    // 用 UTC 取日期：Worker（UTC）与浏览器（本地时区）跨午夜时
+    // 本地化会渲染出不同的字符串，触发 hydration mismatch
     const formatDate = (time) => {
         const t = Number(time)
         if (!t) return ''
         const d = new Date(t)
         if (isNaN(d.getTime())) return ''
         const pad = (n) => String(n).padStart(2, '0')
-        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+        return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`
     }
 
-    // 生成整数跨度序列：所有卡片落在等宽网格上，跨 1/2/3 列，
+    // 生成整数跨度序列：所有卡片落在等宽网格上，只跨 1/2 列，
     // 每一行 pattern 之和恰好等于列数，保证行行对齐。
-    // 第一张卡是「头版」，永远通栏。
     const buildSpans = () => {
         if (columns === 1) return posts.map(() => 1)
 
         const patterns = columns === 3
-            ? [[1, 1, 1], [2, 1], [1, 2], [1, 1, 1], [3]]
+            ? [[1, 1, 1], [2, 1], [1, 2]]
             : [[1, 1], [1, 1], [2]]
 
         const spans = []
         let i = 0
         while (i < posts.length) {
-            if (i === 0) {
-                spans.push(columns) // 头版通栏
-                i += 1
-                continue
-            }
             const seed = (posts[i].path || '')
                 .split('')
                 .reduce((acc, ch) => acc + ch.charCodeAt(0), 0)
@@ -348,8 +344,7 @@ export default function WaterfallCards({ initialPosts, totalPosts, isAuthenticat
                             ? (CDN_BASE && firstImage.startsWith('/.pic/') ? CDN_BASE + firstImage : firstImage)
                             : null
 
-                        const span = Math.min(spans[index] || 1, columns)
-                        const isFeatured = index === 0
+                        const span = Math.min(spans[index] || 1, 2)
                         const onImgError = (e) => {
                             handleCdnError(e)
                             setBrokenImagePosts((prev) => {
@@ -363,40 +358,15 @@ export default function WaterfallCards({ initialPosts, totalPosts, isAuthenticat
                         return (
                             <div key={post.key} style={{ gridColumn: `span ${span} / span ${span}` }}>
                                 <Link href={post.path} prefetch={false} className="block h-full" onClick={(e) => handlePostClick(e, post)}>
-                                    {isFeatured ? (
-                                        /* ── 头版：通栏，文字 + 右侧图片 ── */
-                                        <article className="tk-card h-full p-5 md:p-6 md:grid md:gap-6 md:grid-cols-[1.4fr_1fr]">
-                                            <div className="flex flex-col min-w-0">
-                                                <MetaRow post={post} index={index} />
-                                                <h2 className="text-xl md:text-2xl font-bold leading-snug my-3 text-ink">
-                                                    {title}
-                                                </h2>
-                                                <Excerpt post={post} plainText={plainText} lines={4} />
-                                                <FootRow post={post} />
-                                            </div>
-                                            {previewImage && (
-                                                <figure className="hidden md:block border border-rule bg-paper p-1.5 self-start m-0">
-                                                    <img
-                                                        src={previewImage}
-                                                        alt={title}
-                                                        loading="lazy"
-                                                        className="tk-duo w-full object-cover"
-                                                        style={{ height: '190px' }}
-                                                        onError={onImgError}
-                                                    />
-                                                </figure>
-                                            )}
-                                            {post.isProtected && <div className="tk-seal">加密</div>}
-                                        </article>
-                                    ) : previewImage && span >= 2 ? (
-                                        /* ── 宽卡：通栏灰调图 + 文字 ── */
+                                    {previewImage && span >= 2 ? (
+                                        /* ── 宽卡：通栏图 + 文字 ── */
                                         <article className="tk-card h-full">
                                             <div className="border-b border-rule overflow-hidden">
                                                 <img
                                                     src={previewImage}
                                                     alt={title}
                                                     loading="lazy"
-                                                    className="tk-duo w-full object-cover block"
+                                                    className="w-full object-cover block"
                                                     style={{ height: '150px' }}
                                                     onError={onImgError}
                                                 />

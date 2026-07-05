@@ -15,13 +15,13 @@ module.exports = {
         slate: colors.neutral,
         // 票据视觉体系：值来自 CSS 变量（globals.css 定义），
         // .dark 下变量整体切换，因此这些色名无需 dark: 前缀即自动换肤
-        paper: 'rgb(var(--c-paper) / <alpha-value>)',   // 页面底：暖纸
-        panel: 'rgb(var(--c-panel) / <alpha-value>)',   // 衬底：深一档的纸
+        paper: 'rgb(var(--c-paper) / <alpha-value>)',   // 页面底：纯白/碳黑
+        panel: 'rgb(var(--c-panel) / <alpha-value>)',   // 衬底：深一档
         chip: 'rgb(var(--c-chip) / <alpha-value>)',     // 卡片纸
         ink: 'rgb(var(--c-ink) / <alpha-value>)',       // 正文墨
         ink2: 'rgb(var(--c-ink2) / <alpha-value>)',     // 褪色墨
         rule: 'rgb(var(--c-rule) / <alpha-value>)',     // 细线
-        accent: 'rgb(var(--c-accent) / <alpha-value>)', // 印泥红
+        accent: 'rgb(var(--c-accent) / <alpha-value>)', // 强调蓝（印章/高亮）
         ledger: 'rgb(var(--c-ledger) / <alpha-value>)', // 账本蓝（链接）
       },
       fontFamily: {

@@ -3,31 +3,31 @@
 @tailwind utilities;
 
 /* ═══════════════════════════════════════════════════════
-   票据视觉体系 tokens —— light = 暖纸，dark = 碳纸
+   票据视觉体系 tokens —— light = 纯白，dark = 碳黑
    Tailwind 色名 paper/panel/chip/ink/ink2/rule/accent/ledger
    引用这些变量（见 tailwind.config.js），.dark 下自动换肤
    ═══════════════════════════════════════════════════════ */
 @layer base {
     :root {
-        --c-paper: 245 241 232;
-        --c-panel: 237 231 215;
-        --c-chip: 251 248 240;
-        --c-ink: 42 39 34;
-        --c-ink2: 111 103 89;
-        --c-rule: 198 187 163;
-        --c-accent: 179 64 46;
-        --c-ledger: 46 74 102;
+        --c-paper: 255 255 255;
+        --c-panel: 244 244 244;
+        --c-chip: 250 250 250;
+        --c-ink: 23 23 23;
+        --c-ink2: 115 115 115;
+        --c-rule: 212 212 212;
+        --c-accent: 37 99 235;
+        --c-ledger: 29 78 216;
     }
 
     .dark {
-        --c-paper: 25 23 18;
-        --c-panel: 33 30 23;
-        --c-chip: 35 32 25;
-        --c-ink: 231 224 209;
-        --c-ink2: 156 146 126;
-        --c-rule: 70 64 47;
-        --c-accent: 217 107 84;
-        --c-ledger: 138 174 206;
+        --c-paper: 23 23 23;
+        --c-panel: 38 38 38;
+        --c-chip: 32 32 32;
+        --c-ink: 229 229 229;
+        --c-ink2: 163 163 163;
+        --c-rule: 64 64 64;
+        --c-accent: 96 165 250;
+        --c-ledger: 147 197 253;
     }
 
     html {
@@ -1117,16 +1117,6 @@ pre .token-line,
         @apply font-mono text-[0.82rem] text-ink2 opacity-60 tracking-[0.1em] break-all;
     }
 
-    /* 通栏图：灰调压制，hover 恢复彩色 */
-    .tk-duo {
-        filter: grayscale(0.85) sepia(0.18) contrast(1.03);
-        transition: filter 0.4s ease;
-    }
-
-    .tk-card:hover .tk-duo {
-        filter: none;
-    }
-
     /* 邮票式小图：细线框 + 齿孔衬底 */
     .tk-stampimg {
         @apply float-right border border-rule bg-paper;
@@ -1142,7 +1132,6 @@ pre .token-line,
         width: 100%;
         height: 6.5rem;
         object-fit: cover;
-        filter: grayscale(0.85) sepia(0.18);
     }
 
     /* 双线章节规（账本样式的分隔线） */
@@ -1153,14 +1142,15 @@ pre .token-line,
 
 /* ═══════════════════════════════════════════════════════
    Time Machine 目录刻度轨
-   桌面端：文章左侧独占一列；静止只见刻度 + 当前章节标题，
-   光标扫过时按距离高斯放大（宽度/标签透明度由 JS 内联控制）
+   桌面端：文章左侧独占一列。h2/h3 标题默认全部可见：
+   当前章节大而深，其余小而淡；光标扫过时按距离高斯放大
+   （刻度宽度 / 标签缩放由 JS 内联控制，无边框无底色）
    ═══════════════════════════════════════════════════════ */
 .tocrail {
     position: sticky;
     top: 5rem;
     height: calc(100vh - 7rem);
-    width: 15rem;
+    width: 16rem;
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
@@ -1171,8 +1161,8 @@ pre .token-line,
 
 .tocrail-item {
     position: relative;
-    flex: 0 1 26px;
-    min-height: 8px;
+    flex: 0 1 34px;
+    min-height: 14px;
     display: flex;
     align-items: center;
 }
@@ -1181,14 +1171,14 @@ pre .token-line,
     height: 2px;
     width: 22px;
     background: rgb(var(--c-ink2));
-    opacity: 0.55;
+    opacity: 0.5;
     transition: background 0.18s ease, opacity 0.18s ease;
     will-change: width;
 }
 
 .tocrail-item.lv3 .tocrail-tick {
     width: 12px;
-    opacity: 0.35;
+    opacity: 0.32;
 }
 
 .tocrail-item.on .tocrail-tick {
@@ -1198,44 +1188,57 @@ pre .token-line,
 
 .tocrail-label {
     position: absolute;
-    left: 4.2rem;
+    left: 3.8rem;
     top: 50%;
     transform: translateY(-50%);
     transform-origin: left center;
-    max-width: 12rem;
+    max-width: 11.5rem;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     font-size: 0.8rem;
-    font-weight: 600;
-    letter-spacing: 0.03em;
-    padding: 4px 9px;
-    background: rgb(var(--c-chip));
-    border: 1px solid rgb(var(--c-rule));
-    color: rgb(var(--c-ink));
-    opacity: 0;
+    letter-spacing: 0.02em;
+    color: rgb(var(--c-ink2));
+    opacity: 0.72;
     pointer-events: none;
     will-change: transform, opacity;
-    z-index: 5;
+}
+
+.tocrail-item.lv3 .tocrail-label {
+    opacity: 0.45;
+    transform: translateY(-50%) scale(0.86);
 }
 
 .tocrail-item.on .tocrail-label {
-    border-color: rgb(var(--c-accent));
-    color: rgb(var(--c-accent));
+    color: rgb(var(--c-ink));
+    font-weight: 700;
+    opacity: 1;
 }
 
-/* ── 移动端：右缘细线列 + 当前标题浮现 + 抽屉目录 ── */
+/* ── 移动端：右缘细线列，按压时标题浮现（同桌面的鱼眼行为） ── */
 .tocrail-m {
     position: fixed;
     right: 0;
     top: 50%;
     transform: translateY(-50%);
     z-index: 40;
+    max-height: 72vh;
     display: flex;
     flex-direction: column;
+    justify-content: center;
     align-items: flex-end;
-    gap: 7px;
-    padding: 12px 6px 12px 16px;    /* 左侧留出手指热区 */
+    padding: 12px 8px 12px 20px;    /* 左侧留出手指热区 */
+    touch-action: none;             /* 按压滑动时不带动页面滚动 */
+}
+
+.tocrail-m-item {
+    position: relative;
+    flex: 0 1 22px;
+    min-height: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    width: 100%;
 }
 
 .tocrail-m-tick {
@@ -1243,106 +1246,53 @@ pre .token-line,
     width: 10px;
     background: rgb(var(--c-ink2));
     opacity: 0.45;
-    transition: width 0.2s ease, background 0.2s ease;
+    transition: background 0.2s ease;
+    will-change: width;
 }
 
-.tocrail-m-tick.lv3 {
+.tocrail-m-item.lv3 .tocrail-m-tick {
     width: 6px;
     opacity: 0.3;
 }
 
-.tocrail-m-tick.on {
+.tocrail-m-item.on .tocrail-m-tick {
     width: 16px;
     background: rgb(var(--c-accent));
     opacity: 1;
 }
 
-/* 滚动时浮现的当前章节标题 */
-.tocrail-m-chip {
-    position: fixed;
-    right: 1.6rem;
+.tocrail-m-label {
+    position: absolute;
+    right: 2.1rem;
     top: 50%;
     transform: translateY(-50%);
-    z-index: 40;
-    max-width: 60vw;
+    transform-origin: right center;
+    max-width: 62vw;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: 0.8rem;
-    font-weight: 600;
-    padding: 5px 10px;
-    background: rgb(var(--c-chip) / 0.96);
-    border: 1px solid rgb(var(--c-rule));
+    font-size: 0.78rem;
+    padding: 2px 8px;
     color: rgb(var(--c-ink));
+    background: rgb(var(--c-paper) / 0.92);
     opacity: 0;
-    transition: opacity 0.25s ease;
     pointer-events: none;
+    will-change: transform, opacity;
+    transition: opacity 0.15s ease;
 }
 
-.tocrail-m-chip.show {
-    opacity: 1;
-}
-
-/* 抽屉目录（边缘滑入 / 点按细线列弹出） */
-.tocrail-m-drawer {
-    position: fixed;
-    inset: 0;
-    z-index: 50;
-}
-
-.tocrail-m-drawer .backdrop {
-    position: absolute;
-    inset: 0;
-    background: rgb(var(--c-ink) / 0.25);
-}
-
-.tocrail-m-panel {
-    position: absolute;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    width: min(78vw, 20rem);
-    background: rgb(var(--c-paper));
-    border-left: 1px solid rgb(var(--c-rule));
-    padding: 4.5rem 1.2rem 2rem;
-    overflow-y: auto;
-    animation: slideInRight 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.tocrail-m-item {
-    display: block;
-    width: 100%;
-    text-align: left;
-    background: none;
-    border: none;
-    border-bottom: 1px solid rgb(var(--c-rule) / 0.5);
-    padding: 0.55rem 0.2rem;
-    font-size: 0.9rem;
-    color: rgb(var(--c-ink));
-    cursor: pointer;
-}
-
-.tocrail-m-item.lv3 {
-    padding-left: 1.2rem;
-    font-size: 0.82rem;
-    color: rgb(var(--c-ink2));
-}
-
-.tocrail-m-item.on {
-    color: rgb(var(--c-accent));
-    border-bottom-color: rgb(var(--c-accent) / 0.5);
+.tocrail-m-item.on .tocrail-m-label {
+    font-weight: 700;
 }
 
 @media (prefers-reduced-motion: reduce) {
     .tocrail-tick,
     .tocrail-label,
     .tocrail-m-tick,
-    .tocrail-m-chip,
-    .tk-duo {
+    .tocrail-m-label {
         transition: none !important;
     }
 
-    .tocrail-m-panel,
     .hidetoc {
         animation: none !important;
     }

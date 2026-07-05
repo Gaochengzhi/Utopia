@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react"
  * Generate a URL-friendly slug from heading text.
  * Handles CJK characters by keeping them as-is; only strips
  * punctuation and collapses whitespace into hyphens.
+ * Must stay in sync with the identical function in MarkdownArticle.js.
  */
 function slugify(text) {
   return text
@@ -16,7 +17,7 @@ function slugify(text) {
 }
 
 /**
- * Parse headings from a raw markdown string.
+ * Parse h2/h3 headings from a raw markdown string.
  * Returns an array of { title, id, level, indent }.
  */
 function parseHeadingsFromMarkdown(markdown) {
@@ -35,8 +36,8 @@ function parseHeadingsFromMarkdown(markdown) {
     }
     if (inCodeBlock) continue
 
-    // Skip h1 headings — they are the article title, not part of the TOC
-    const match = /^(#{2,5})\s+(.+)$/.exec(line)
+    // 只收 h2/h3：h1 是文章标题，h4/h5 太细碎不进目录轨
+    const match = /^(#{2,3})\s+(.+)$/.exec(line)
     if (!match) continue
 
     const level = match[1].length
@@ -51,20 +52,18 @@ function parseHeadingsFromMarkdown(markdown) {
       seenSlugs[slug] = 0
     }
 
-    headings.push({ title, id: slug, level })
+    headings.push({ title, id: slug, level, indent: level - 2 })
   }
 
-  // The regex above already skips h1 (only matches #{2,5}).
-  // Indent is simply level - 2: h2 → 0, h3 → 1, h4 → 2, h5 → 3.
-  return headings.map((h) => ({
-    ...h,
-    indent: h.level - 2,
-  }))
+  return headings
 }
 
 /**
- * Shared hook: parse headings from markdown and track which one
- * is currently visible (IntersectionObserver).
+ * Shared hook: parse headings from markdown and track which one is
+ * current. Tracking is scroll-position based (the last heading whose
+ * top passed the 30%-viewport line), so it stays in sync scrolling
+ * both directions — IntersectionObserver only fired on entry and
+ * went stale when scrolling back up.
  */
 function useHeadings(content) {
   const [toc, setToc] = useState([])
@@ -77,24 +76,39 @@ function useHeadings(content) {
   useEffect(() => {
     if (toc.length === 0) return
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            setActiveId(entry.target.id)
-            break
-          }
-        }
-      },
-      { rootMargin: "0px 0px -70% 0px", threshold: 0 }
-    )
+    let raf = null
+    const compute = () => {
+      raf = null
+      const doc = document.documentElement
+      const marker = window.innerHeight * 0.3
+      const atBottom = doc.scrollTop + doc.clientHeight >= doc.scrollHeight - 2
 
-    for (const h of toc) {
-      const el = document.getElementById(h.id)
-      if (el) observer.observe(el)
+      let current = toc[0].id
+      if (atBottom) {
+        current = toc[toc.length - 1].id
+      } else {
+        for (const h of toc) {
+          const el = document.getElementById(h.id)
+          if (!el) continue
+          if (el.getBoundingClientRect().top <= marker) current = h.id
+          else break
+        }
+      }
+      setActiveId((prev) => (prev === current ? prev : current))
     }
 
-    return () => observer.disconnect()
+    const onScroll = () => {
+      if (raf == null) raf = requestAnimationFrame(compute)
+    }
+
+    compute()
+    window.addEventListener("scroll", onScroll, { passive: true })
+    window.addEventListener("resize", onScroll, { passive: true })
+    return () => {
+      window.removeEventListener("scroll", onScroll)
+      window.removeEventListener("resize", onScroll)
+      if (raf != null) cancelAnimationFrame(raf)
+    }
   }, [toc])
 
   return { toc, activeId }
@@ -107,11 +121,41 @@ function scrollToHeading(id) {
   }
 }
 
+/**
+ * Shared fisheye painter: writes tick width / label opacity+scale
+ * inline via refs — no React re-render per pointermove.
+ * focusY == null 表示无光标/手指，回到静态基准态。
+ */
+function makeFisheyePaint(itemRefs, activeIdxRef, reducedMotionRef, opts) {
+  const { tickGrow, labelIdle } = opts
+  return (focusY) => {
+    itemRefs.current.forEach((refs, i) => {
+      if (!refs || !refs.el || !refs.tick || !refs.label) return
+      let g = 0
+      if (focusY != null && !reducedMotionRef.current) {
+        const cy = refs.el.offsetTop + refs.el.offsetHeight / 2
+        const d = (cy - focusY) / 52
+        g = Math.exp(-d * d)
+      }
+      const on = i === activeIdxRef.current
+      refs.tick.style.width = `${refs.base + g * tickGrow + (on ? 8 : 0)}px`
+
+      // 基准态：当前大而深，其余小而淡（h3 再淡一档）
+      const baseOp = labelIdle ? (on ? 1 : refs.lv3 ? 0.45 : 0.72) : 0
+      const hidden = !labelIdle && focusY == null
+      const opacity = hidden ? 0 : Math.min(1, baseOp + g * 0.6)
+      const baseScale = on ? 1.14 : refs.lv3 ? 0.86 : 1
+      refs.label.style.opacity = opacity.toFixed(3)
+      refs.label.style.transform =
+        `translateY(-50%) translateX(${(g * refs.dir * 10).toFixed(1)}px) scale(${(baseScale + g * 0.14).toFixed(3)})`
+    })
+  }
+}
+
 /* ═══════════════════════════════════════════════════════
    桌面端：Time Machine 刻度轨
-   静止只见刻度 + 当前章节标题；光标扫过时附近刻度
-   按高斯衰减放大、标题淡入（Dock magnification）。
-   鱼眼是纯视觉反馈，走 ref 直改样式，不触发 React 重渲染。
+   h2/h3 标题默认全部可见；光标扫过时附近刻度按高斯
+   衰减放大（Dock magnification）。走 ref 直改样式。
    ═══════════════════════════════════════════════════════ */
 export function Toc({ content }) {
   const { toc, activeId } = useHeadings(content)
@@ -131,32 +175,22 @@ export function Toc({ content }) {
       window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches || false
   }, [])
 
-  const paint = useCallback(() => {
-    rafRef.current = null
-    const hy = hoverYRef.current
-    itemRefs.current.forEach((refs, i) => {
-      if (!refs || !refs.el || !refs.tick || !refs.label) return
-      let g = 0
-      if (hy != null && !reducedMotionRef.current) {
-        const cy = refs.el.offsetTop + refs.el.offsetHeight / 2
-        const d = (cy - hy) / 52
-        g = Math.exp(-d * d)
-      }
-      const on = i === activeIdxRef.current
-      refs.tick.style.width = `${refs.base + g * 34 + (on ? 9 : 0)}px`
-      const opacity = hy == null ? (on ? 1 : 0) : Math.max(g, on ? 0.25 : 0)
-      refs.label.style.opacity = opacity.toFixed(3)
-      refs.label.style.transform =
-        `translateY(-50%) translateX(${(g * 12).toFixed(1)}px) scale(${(0.88 + g * 0.24).toFixed(3)})`
-      refs.label.style.zIndex = String(5 + Math.round(g * 10))
+  const paintRef = useRef(null)
+  if (!paintRef.current) {
+    paintRef.current = makeFisheyePaint(itemRefs, activeIdxRef, reducedMotionRef, {
+      tickGrow: 26,
+      labelIdle: true, // 桌面：标签常显
     })
-  }, [])
+  }
 
   const schedule = useCallback(() => {
     if (rafRef.current == null) {
-      rafRef.current = requestAnimationFrame(paint)
+      rafRef.current = requestAnimationFrame(() => {
+        rafRef.current = null
+        paintRef.current(hoverYRef.current)
+      })
     }
-  }, [paint])
+  }, [])
 
   useEffect(() => {
     activeIdxRef.current = toc.findIndex((o) => o.id === activeId)
@@ -202,6 +236,8 @@ export function Toc({ content }) {
                 tick: el.children[0],
                 label: el.children[1],
                 base: o.indent === 0 ? 22 : 12,
+                lv3: o.indent > 0,
+                dir: 1, // 标签在刻度右侧，放大时向右推
               }
             }
           }}
@@ -218,101 +254,129 @@ export function Toc({ content }) {
 
 /* ═══════════════════════════════════════════════════════
    移动端：右缘细线列
-   平时不占版面；滚动时当前章节标题短暂浮现后隐去；
-   点按细线列（或从右缘向内滑）弹出完整抽屉目录。
+   默认只见刻度；手指按压时标题浮现，跟随手指鱼眼放大
+   （同桌面行为），松手滚动到离手指最近的章节。
    ═══════════════════════════════════════════════════════ */
 export function MobileToc({ content }) {
   const { toc, activeId } = useHeadings(content)
-  const [open, setOpen] = useState(false)
-  const [chipVisible, setChipVisible] = useState(false)
-  const chipTimerRef = useRef(null)
-  const touchStartXRef = useRef(null)
+  const railRef = useRef(null)
+  const itemRefs = useRef([])
+  const pressYRef = useRef(null)
+  const rafRef = useRef(null)
+  const activeIdxRef = useRef(-1)
+  const reducedMotionRef = useRef(false)
 
   // 文章太长时细线列只保留 h2，避免撑出屏幕
   const railToc = toc.length > 26 ? toc.filter((o) => o.indent === 0) : toc
-  const activeTitle = toc.find((o) => o.id === activeId)?.title || ""
 
-  // 滚动 → 当前标题浮现，停止滚动 1.4s 后隐去
   useEffect(() => {
-    if (toc.length === 0) return
-    const onScroll = () => {
-      setChipVisible(true)
-      if (chipTimerRef.current) clearTimeout(chipTimerRef.current)
-      chipTimerRef.current = setTimeout(() => setChipVisible(false), 1400)
-    }
-    window.addEventListener("scroll", onScroll, { passive: true })
-    return () => {
-      window.removeEventListener("scroll", onScroll)
-      if (chipTimerRef.current) clearTimeout(chipTimerRef.current)
-    }
-  }, [toc])
+    itemRefs.current = []
+  }, [railToc.length])
 
-  // 从右缘向内滑弹出抽屉
-  const onTouchStart = (e) => {
-    touchStartXRef.current = e.touches?.[0]?.clientX ?? null
+  useEffect(() => {
+    reducedMotionRef.current =
+      window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches || false
+  }, [])
+
+  const paintRef = useRef(null)
+  if (!paintRef.current) {
+    paintRef.current = makeFisheyePaint(itemRefs, activeIdxRef, reducedMotionRef, {
+      tickGrow: 14,
+      labelIdle: false, // 移动端：默认不显示标签，按压才浮现
+    })
   }
-  const onTouchMove = (e) => {
-    const startX = touchStartXRef.current
-    if (startX == null) return
-    const x = e.touches?.[0]?.clientX
-    if (x != null && startX - x > 24) {
-      touchStartXRef.current = null
-      setOpen(true)
+
+  const schedule = useCallback(() => {
+    if (rafRef.current == null) {
+      rafRef.current = requestAnimationFrame(() => {
+        rafRef.current = null
+        paintRef.current(pressYRef.current)
+      })
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    activeIdxRef.current = railToc.findIndex((o) => o.id === activeId)
+    schedule()
+    return () => {
+      if (rafRef.current != null) cancelAnimationFrame(rafRef.current)
+    }
+  }, [railToc, activeId, schedule])
+
+  const setPressY = useCallback((e) => {
+    if (!railRef.current) return
+    pressYRef.current = e.clientY - railRef.current.getBoundingClientRect().top
+    schedule()
+  }, [schedule])
+
+  const onPointerDown = useCallback((e) => {
+    railRef.current?.setPointerCapture?.(e.pointerId)
+    setPressY(e)
+  }, [setPressY])
+
+  const onPointerMove = useCallback((e) => {
+    if (pressYRef.current == null) return
+    setPressY(e)
+  }, [setPressY])
+
+  const onPointerUp = useCallback(() => {
+    const y = pressYRef.current
+    pressYRef.current = null
+    schedule()
+    if (y == null) return
+    // 松手：跳到离手指最近的章节
+    let best = null
+    let bestDist = Infinity
+    itemRefs.current.forEach((refs, i) => {
+      if (!refs || !refs.el) return
+      const cy = refs.el.offsetTop + refs.el.offsetHeight / 2
+      const d = Math.abs(cy - y)
+      if (d < bestDist) {
+        bestDist = d
+        best = i
+      }
+    })
+    if (best != null && railToc[best]) scrollToHeading(railToc[best].id)
+  }, [railToc, schedule])
+
+  const onPointerCancel = useCallback(() => {
+    pressYRef.current = null
+    schedule()
+  }, [schedule])
 
   if (toc.length === 0) return null
 
   return (
-    <>
-      {!open && (
+    <nav
+      ref={railRef}
+      className="tocrail-m"
+      aria-label="目录"
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerCancel}
+    >
+      {railToc.map((o, i) => (
         <div
-          className="tocrail-m"
-          aria-label="打开目录"
-          role="button"
-          tabIndex={0}
-          onClick={() => setOpen(true)}
-          onKeyDown={(e) => e.key === "Enter" && setOpen(true)}
-          onTouchStart={onTouchStart}
-          onTouchMove={onTouchMove}
+          key={o.id}
+          ref={(el) => {
+            if (el) {
+              itemRefs.current[i] = {
+                el,
+                label: el.children[0],
+                tick: el.children[1],
+                base: o.indent === 0 ? 10 : 6,
+                lv3: o.indent > 0,
+                dir: -1, // 标签在刻度左侧，放大时向左推
+              }
+            }
+          }}
+          className={`tocrail-m-item ${o.indent > 0 ? "lv3" : ""} ${activeId === o.id ? "on" : ""}`}
         >
-          {railToc.map((o) => (
-            <span
-              key={o.id}
-              className={`tocrail-m-tick ${o.indent > 0 ? "lv3" : ""} ${activeId === o.id ? "on" : ""}`}
-            />
-          ))}
+          <span className="tocrail-m-label">{o.title}</span>
+          <span className="tocrail-m-tick" />
         </div>
-      )}
-
-      <div className={`tocrail-m-chip ${chipVisible && !open && activeTitle ? "show" : ""}`}>
-        {activeTitle}
-      </div>
-
-      {open && (
-        <div className="tocrail-m-drawer">
-          <div className="backdrop" onClick={() => setOpen(false)} />
-          <div className="tocrail-m-panel">
-            <div className="tk-meta mb-4">
-              <span>CONTENTS</span>
-              <span className="tk-leader" />
-              <span>目录</span>
-            </div>
-            {toc.map((o) => (
-              <button
-                key={o.id}
-                className={`tocrail-m-item ${o.indent > 0 ? "lv3" : ""} ${activeId === o.id ? "on" : ""}`}
-                onClick={() => {
-                  setOpen(false)
-                  scrollToHeading(o.id)
-                }}
-              >
-                {o.title}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-    </>
+      ))}
+    </nav>
   )
 }
