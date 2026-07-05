@@ -132,22 +132,26 @@ function makeFisheyePaint(itemRefs, activeIdxRef, reducedMotionRef, opts) {
     itemRefs.current.forEach((refs, i) => {
       if (!refs || !refs.el || !refs.tick || !refs.label) return
       let g = 0
+      let d = 0
       if (focusY != null && !reducedMotionRef.current) {
+        // offsetTop 不受 transform 影响，位移后力场依然稳定
         const cy = refs.el.offsetTop + refs.el.offsetHeight / 2
-        const d = (cy - focusY) / 52
+        d = (cy - focusY) / 56
         g = Math.exp(-d * d)
       }
       const on = i === activeIdxRef.current
       refs.tick.style.width = `${refs.base + g * tickGrow + (on ? 8 : 0)}px`
+      // 密度形变：光标附近的条目被挤向两侧（Time Machine 的呼吸感）
+      refs.el.style.transform = `translateY(${(d * g * 9).toFixed(1)}px)`
 
-      // 基准态：当前大而深，其余小而淡（h3 再淡一档）
-      const baseOp = labelIdle ? (on ? 1 : refs.lv3 ? 0.45 : 0.72) : 0
+      // 基准态：当前大而深，其余小而淡（h3 再淡一档，字号见 CSS）
+      const baseOp = labelIdle ? (on ? 1 : refs.lv3 ? 0.5 : 0.75) : 0
       const hidden = !labelIdle && focusY == null
-      const opacity = hidden ? 0 : Math.min(1, baseOp + g * 0.6)
-      const baseScale = on ? 1.14 : refs.lv3 ? 0.86 : 1
+      const opacity = hidden ? 0 : Math.min(1, baseOp + g * 0.55)
+      const scale = (on ? 1.12 : 1) + g * 0.35
       refs.label.style.opacity = opacity.toFixed(3)
       refs.label.style.transform =
-        `translateY(-50%) translateX(${(g * refs.dir * 10).toFixed(1)}px) scale(${(baseScale + g * 0.14).toFixed(3)})`
+        `translateY(-50%) translateX(${(g * refs.dir * 14).toFixed(1)}px) scale(${scale.toFixed(3)})`
     })
   }
 }
@@ -167,7 +171,9 @@ export function Toc({ content }) {
   const reducedMotionRef = useRef(false)
 
   useEffect(() => {
-    itemRefs.current = []
+    // 裁掉目录变短后残留的尾部条目；不能整个清空——
+    // effect 在渲染后执行，会把刚注册好的 refs 抹掉
+    itemRefs.current.length = toc.length
   }, [toc])
 
   useEffect(() => {
@@ -178,7 +184,7 @@ export function Toc({ content }) {
   const paintRef = useRef(null)
   if (!paintRef.current) {
     paintRef.current = makeFisheyePaint(itemRefs, activeIdxRef, reducedMotionRef, {
-      tickGrow: 26,
+      tickGrow: 32,
       labelIdle: true, // 桌面：标签常显
     })
   }
@@ -270,7 +276,8 @@ export function MobileToc({ content }) {
   const railToc = toc.length > 26 ? toc.filter((o) => o.indent === 0) : toc
 
   useEffect(() => {
-    itemRefs.current = []
+    // 同桌面端：只裁尾，不整个清空
+    itemRefs.current.length = railToc.length
   }, [railToc.length])
 
   useEffect(() => {

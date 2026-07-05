@@ -141,7 +141,7 @@ export default function Post({ contents, filename, status, folderContents, folde
                                 <div className="tk-meta tk-dbl pt-3">
                                     <span>{(folderPath || '').replace(/^post\/?/, '') || 'UTOPIA'}</span>
                                     <span className="tk-leader" />
-                                    {isProtected && <span className="text-accent font-bold mr-2">SEALED</span>}
+                                    {isProtected && <span className="mr-2">私密 ·</span>}
                                     <span>{formatStampDate(updatedAt) || 'UTOPIA PRESS'}</span>
                                 </div>
                             </div>

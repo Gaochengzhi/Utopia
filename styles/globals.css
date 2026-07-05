@@ -15,7 +15,7 @@
         --c-ink: 23 23 23;
         --c-ink2: 115 115 115;
         --c-rule: 212 212 212;
-        --c-accent: 37 99 235;
+        --c-accent: 30 64 175;
         --c-ledger: 29 78 216;
     }
 
@@ -26,8 +26,8 @@
         --c-ink: 229 229 229;
         --c-ink2: 163 163 163;
         --c-rule: 64 64 64;
-        --c-accent: 96 165 250;
-        --c-ledger: 147 197 253;
+        --c-accent: 100 145 200;
+        --c-ledger: 130 165 210;
     }
 
     html {
@@ -1096,22 +1096,6 @@ pre .token-line,
         @apply bg-ink text-paper border-ink;
     }
 
-    /* 印章（加密卡等） */
-    .tk-seal {
-        @apply absolute font-mono font-bold text-accent select-none pointer-events-none;
-        right: 1rem;
-        top: 3.2rem;
-        transform: rotate(-11deg);
-        border: 2px solid rgb(var(--c-accent));
-        outline: 1px solid rgb(var(--c-accent));
-        outline-offset: 3px;
-        letter-spacing: 0.45em;
-        padding: 7px 3px 7px 12px;
-        font-size: 0.8rem;
-        line-height: 1;
-        opacity: 0.8;
-    }
-
     /* 加密卡的涂黑摘要 */
     .tk-masked {
         @apply font-mono text-[0.82rem] text-ink2 opacity-60 tracking-[0.1em] break-all;
@@ -1165,6 +1149,8 @@ pre .token-line,
     min-height: 14px;
     display: flex;
     align-items: center;
+    transition: transform 0.12s ease-out;
+    will-change: transform;
 }
 
 .tocrail-tick {
@@ -1172,7 +1158,7 @@ pre .token-line,
     width: 22px;
     background: rgb(var(--c-ink2));
     opacity: 0.5;
-    transition: background 0.18s ease, opacity 0.18s ease;
+    transition: width 0.12s ease-out, background 0.18s ease, opacity 0.18s ease;
     will-change: width;
 }
 
@@ -1186,6 +1172,7 @@ pre .token-line,
     opacity: 1;
 }
 
+/* 层级靠字号拉开：h2 明显大于 h3；鱼眼缩放叠加在字号之上 */
 .tocrail-label {
     position: absolute;
     left: 3.8rem;
@@ -1196,17 +1183,18 @@ pre .token-line,
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: 0.8rem;
+    font-size: 0.84rem;
     letter-spacing: 0.02em;
     color: rgb(var(--c-ink2));
-    opacity: 0.72;
+    opacity: 0.75;
     pointer-events: none;
     will-change: transform, opacity;
+    transition: transform 0.12s ease-out, opacity 0.15s ease-out;
 }
 
 .tocrail-item.lv3 .tocrail-label {
-    opacity: 0.45;
-    transform: translateY(-50%) scale(0.86);
+    font-size: 0.68rem;
+    opacity: 0.5;
 }
 
 .tocrail-item.on .tocrail-label {
@@ -1239,6 +1227,8 @@ pre .token-line,
     align-items: center;
     justify-content: flex-end;
     width: 100%;
+    transition: transform 0.12s ease-out;
+    will-change: transform;
 }
 
 .tocrail-m-tick {
@@ -1246,7 +1236,7 @@ pre .token-line,
     width: 10px;
     background: rgb(var(--c-ink2));
     opacity: 0.45;
-    transition: background 0.2s ease;
+    transition: width 0.12s ease-out, background 0.2s ease;
     will-change: width;
 }
 
@@ -1271,14 +1261,18 @@ pre .token-line,
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: 0.78rem;
+    font-size: 0.8rem;
     padding: 2px 8px;
     color: rgb(var(--c-ink));
     background: rgb(var(--c-paper) / 0.92);
     opacity: 0;
     pointer-events: none;
     will-change: transform, opacity;
-    transition: opacity 0.15s ease;
+    transition: transform 0.12s ease-out, opacity 0.15s ease;
+}
+
+.tocrail-m-item.lv3 .tocrail-m-label {
+    font-size: 0.68rem;
 }
 
 .tocrail-m-item.on .tocrail-m-label {
@@ -1286,8 +1280,10 @@ pre .token-line,
 }
 
 @media (prefers-reduced-motion: reduce) {
+    .tocrail-item,
     .tocrail-tick,
     .tocrail-label,
+    .tocrail-m-item,
     .tocrail-m-tick,
     .tocrail-m-label {
         transition: none !important;

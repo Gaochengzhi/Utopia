@@ -58,27 +58,13 @@ export default function DiaryAuth() {
             <div className="tk-meta !text-[0.65rem] mb-6">
               <span>UTOPIA</span>
               <span className="tk-leader" />
-              <span>启封申请单</span>
+              <span>私密内容</span>
             </div>
-            <div
-              className="mx-auto inline-block font-mono font-bold text-accent select-none"
-              style={{
-                transform: 'rotate(-8deg)',
-                border: '2px solid rgb(var(--c-accent))',
-                outline: '1px solid rgb(var(--c-accent))',
-                outlineOffset: '3px',
-                letterSpacing: '0.45em',
-                padding: '10px 6px 10px 16px',
-                opacity: 0.85,
-              }}
-            >
-              加密
-            </div>
-            <h2 className="mt-8 text-2xl font-bold text-ink">
-              日记已加密
+            <h2 className="mt-4 text-2xl font-bold text-ink">
+              此内容为私密
             </h2>
             <p className="mt-2 text-sm text-ink2">
-              此内容需要密码访问
+              需要密码访问
             </p>
           </div>
 

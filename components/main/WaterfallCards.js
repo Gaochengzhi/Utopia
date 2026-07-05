@@ -282,6 +282,12 @@ export default function WaterfallCards({ initialPosts, totalPosts, isAuthenticat
         <div className="tk-meta">
             <span>{ticketNo(index)}</span>
             <span className="tk-leader" />
+            {post.isProtected && (
+                <>
+                    <span>私密</span>
+                    <span className="mx-1">·</span>
+                </>
+            )}
             <span>{categoryOf(post)}</span>
             {formatDate(post.time) && (
                 <>
@@ -379,7 +385,6 @@ export default function WaterfallCards({ initialPosts, totalPosts, isAuthenticat
                                                 <Excerpt post={post} plainText={plainText} lines={2} />
                                                 <FootRow post={post} />
                                             </div>
-                                            {post.isProtected && <div className="tk-seal">加密</div>}
                                         </article>
                                     ) : (
                                         /* ── 标准卡：纯文字，或邮票式小图 ── */
@@ -402,7 +407,6 @@ export default function WaterfallCards({ initialPosts, totalPosts, isAuthenticat
                                                 <Excerpt post={post} plainText={plainText} lines={3} />
                                             </div>
                                             <FootRow post={post} />
-                                            {post.isProtected && <div className="tk-seal">加密</div>}
                                         </article>
                                     )}
                                 </Link>
