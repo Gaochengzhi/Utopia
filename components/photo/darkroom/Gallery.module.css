@@ -1,0 +1,294 @@
+/*
+ * Darkroom gallery — category pages as scanned film rolls.
+ * Shares the Darkroom palette (kept local: CSS modules don't share vars).
+ */
+
+.root {
+  --paper: #0e0d0b;
+  --paper2: #14120f;
+  --film: #080706;
+  --silver: #d9d4cb;
+  --silverDim: #8f897d;
+  --silverFaint: #544f46;
+  --rule: #292520;
+  --safe: #e14e1f;
+  --disp: 'Archivo Variable', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+  --cjk: 'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+
+  background: var(--paper);
+  color: var(--silver);
+  font-family: var(--cjk);
+  font-weight: 300;
+  font-size: 16px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+.root ::selection { background: var(--safe); color: var(--paper); }
+.root img { display: block; max-width: 100%; }
+.root a { color: inherit; text-decoration: none; }
+
+/* ————— top chrome ————— */
+.top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 22px 5vw 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: var(--silverDim);
+}
+.back { transition: color 0.3s; }
+.back:hover { color: var(--silver); }
+.pos b { color: var(--safe); font-weight: 500; }
+
+/* ————— category strip ————— */
+.catStrip {
+  display: flex;
+  gap: 26px;
+  padding: 26px 5vw 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  white-space: nowrap;
+}
+.catStrip::-webkit-scrollbar { display: none; }
+.catLink {
+  color: var(--silverFaint);
+  padding-bottom: 8px;
+  border-bottom: 1px solid transparent;
+  transition: color 0.3s, border-color 0.3s;
+  flex: none;
+}
+.catLink i { font-style: normal; margin-left: 6px; opacity: 0.7; font-size: 9px; }
+.catLink:hover { color: var(--silver); }
+.catOn { color: var(--safe); border-bottom-color: var(--safe); }
+
+/* ————— head ————— */
+.head { padding: 7vh 5vw 5vh; }
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.26em;
+  color: var(--safe);
+  margin-bottom: 16px;
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.eyebrow .dim { color: var(--silverFaint); }
+.h1 {
+  font-family: var(--disp);
+  font-weight: 900;
+  font-stretch: 120%;
+  text-transform: uppercase;
+  font-size: clamp(52px, 9vw, 140px);
+  line-height: 0.9;
+  letter-spacing: -0.01em;
+  color: var(--silver);
+  margin: 0 0 0 -0.04em;
+}
+.h1 .zh {
+  font-family: var(--cjk);
+  font-weight: 700;
+  font-size: 0.4em;
+  vertical-align: 0.16em;
+  margin-left: 0.2em;
+  color: var(--silverDim);
+  letter-spacing: 0.1em;
+}
+
+/* ————— develop-in ————— */
+.devable img {
+  opacity: 0;
+  filter: blur(14px) brightness(0.4) sepia(0.2);
+  transform: scale(1.02);
+}
+.devable.dev img {
+  opacity: 1;
+  filter: none;
+  transform: none;
+  transition: filter 1.2s cubic-bezier(0.22, 0.61, 0.36, 1), opacity 1s ease,
+    transform 1.2s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+/* ————— lead print ————— */
+.leadWrap { padding: 0 5vw 3vh; display: flex; justify-content: center; }
+.lead {
+  background: var(--paper2);
+  border: 1px solid var(--rule);
+  padding: 12px 12px 0;
+  width: min(100%, calc(66vh * var(--ar)));
+}
+.lead .ph { overflow: hidden; background: #000; cursor: zoom-in; }
+.lead img { width: 100%; height: 100%; object-fit: cover; }
+.lead .cap {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 2px 11px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--silverFaint);
+}
+
+/* ————— film rolls ————— */
+.roll {
+  position: relative;
+  background: var(--film);
+  margin: 6vh 0;
+  padding: 40px 2.5vw 34px;
+}
+.roll::before,
+.roll::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 12px;
+  background-image: radial-gradient(4.5px 3.5px at 11px 50%, #242019 96%, transparent);
+  background-size: 22px 100%;
+  background-repeat: repeat-x;
+}
+.roll::before { top: 10px; }
+.roll::after { bottom: 10px; }
+.edgeprint {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.34em;
+  color: #5e4a33;
+  opacity: 0.9;
+  user-select: none;
+}
+.rollNo {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.3em;
+  color: #6b5136;
+  padding: 0 4px 14px;
+}
+.jrow { display: flex; gap: 10px; margin-bottom: 10px; }
+.jrow:last-child { margin-bottom: 0; }
+.jit { position: relative; flex: 1 1 0%; min-width: 0; }
+.jit .ph {
+  overflow: hidden;
+  background: #000;
+  border: 1px solid #1b1815;
+  cursor: zoom-in;
+  width: 100%;
+}
+.jit img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.92);
+  transition: filter 0.4s ease;
+}
+.jit:hover img { filter: brightness(1.02); }
+.jit .fno {
+  position: absolute;
+  right: 7px;
+  bottom: 6px;
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: 0.18em;
+  color: rgba(217, 212, 203, 0.75);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+  pointer-events: none;
+}
+.jpad { flex: 1 1 0%; min-width: 0; }
+
+/* ————— foot ————— */
+.foot { padding: 6vh 5vw 40px; }
+.nextRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+.nay {
+  padding: 30px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: background 0.3s;
+}
+.nay:hover { background: #14110d; }
+.nayR { text-align: right; align-items: flex-end; }
+.nayLab {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  color: var(--silverFaint);
+}
+.nay:hover .nayLab { color: var(--safe); }
+.nayName {
+  font-family: var(--disp);
+  font-weight: 800;
+  font-stretch: 115%;
+  font-size: clamp(26px, 3.4vw, 46px);
+  text-transform: uppercase;
+  line-height: 1;
+  color: var(--silver);
+}
+.nayName i {
+  font-style: normal;
+  font-family: var(--cjk);
+  font-weight: 400;
+  font-size: 0.38em;
+  color: var(--silverDim);
+  margin-left: 12px;
+  letter-spacing: 0.12em;
+}
+.footBar {
+  margin-top: 26px;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px 28px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  color: var(--silverFaint);
+}
+.footBar a:hover { color: var(--silver); }
+
+/* ————— responsive ————— */
+@media (max-width: 760px) {
+  .head { padding: 5vh 5vw 4vh; }
+  .lead { width: 100%; }
+  .roll { padding: 36px 3vw 30px; }
+  .jrow { display: block; margin-bottom: 0; }
+  .jit { margin-bottom: 10px; }
+  .jit .fno { right: 9px; bottom: 8px; }
+  .jpad { display: none; }
+  .nextRow { grid-template-columns: 1fr; }
+  .nayR { text-align: left; align-items: flex-start; }
+}
+
+/* ————— flat (QA) ————— */
+.flat .devable img { opacity: 1; filter: none; transform: none; transition: none; }
+.flat .head { padding: 60px 5vw 40px; }
+.flat .leadWrap { padding-bottom: 30px; }
+.flat .lead { width: min(100%, 720px); }
+.flat .roll { margin: 50px 0; }
+.flat .foot { padding: 50px 5vw 40px; }
+
+/* ————— reduced motion ————— */
+@media (prefers-reduced-motion: reduce) {
+  .root * { animation: none !important; transition: none !important; }
+  .devable img { opacity: 1; filter: none; transform: none; }
+}

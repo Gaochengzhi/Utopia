@@ -22,7 +22,7 @@ const PARAM_META = [
     { key: "overlayAlpha", label: "遮罩透明度", min: 0.0,  max: 0.8,  step: 0.01 },
 ]
 
-export function LiquidGoldCanvas({ className = "" }) {
+export function LiquidGoldCanvas({ className = "", controls = true }) {
     const canvasRef    = useRef(null)
     const overlayRef   = useRef(null)
     const paramsRef    = useRef({ ...DEFAULTS })          // WebGL 读这里
@@ -303,6 +303,7 @@ void main() {
             />
 
             {/* 参数控制面板 */}
+            {controls && (
             <div
                 className="absolute top-3 right-3 z-50"
                 style={{ fontFamily: "'SF Mono', 'Fira Code', monospace" }}
@@ -415,6 +416,7 @@ void main() {
                     </div>
                 )}
             </div>
+            )}
         </div>
     )
 }
