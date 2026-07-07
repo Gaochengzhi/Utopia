@@ -8,7 +8,7 @@ export default function TotalViews() {
     fetch('/api/pageviews?type=total')
       .then(res => res.json())
       .then(data => {
-        setTotal(data.total)
+        setTotal(typeof data.total === 'number' ? data.total : null)
         setLoading(false)
       })
       .catch(err => {
@@ -17,7 +17,7 @@ export default function TotalViews() {
       })
   }, [])
 
-  if (loading || total === null) {
+  if (loading || total == null) {
     return null
   }
 

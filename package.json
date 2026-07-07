@@ -29,6 +29,8 @@
         "d1:seed:dry": "bash scripts/d1-seed-remote.sh --dry-run"
     },
     "dependencies": {
+        "@fontsource-variable/archivo": "^5.2.8",
+        "@fontsource/ibm-plex-mono": "^5.2.7",
         "@next/bundle-analyzer": "^15.5.14",
         "cross-env": "^7.0.3",
         "github-markdown-css": "^5.1.0",

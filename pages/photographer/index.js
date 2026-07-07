@@ -1,143 +1,47 @@
-import { CataContainer } from "/components/photo/cataContainer"
-import { Walls } from "/components/photo/Wall"
-import { Banner } from "/components/photo/Banner"
-import { Pnav } from "/components/photo/Pnav"
-import { Footer } from "/components/footer"
-import { getCfEnv } from "/lib/cfContext"
-import { CDN_BASE } from "/lib/cdnUrl"
-import { getLatestPhotos, getPhotoCategories } from "/lib/data/photos"
-import { useState, useEffect } from "react"
-import Head from "next/head"
+import Head from 'next/head'
+import { getCfEnv } from '/lib/cfContext'
+import { CDN_BASE } from '/lib/cdnUrl'
+import { getDarkroomHomeData } from '/lib/data/darkroom'
+import DarkroomHome from '/components/photo/darkroom/DarkroomHome'
 
-export default function Index({ path: initialPath, categories: initialCategories }) {
-    const [path, setPath] = useState(initialPath || [])
-    const [categories, setCategories] = useState(initialCategories || [])
-    const [loading, setLoading] = useState(!initialPath || initialPath.length === 0)
-
-    // Client-side fallback: if getStaticProps returned empty data
-    // (happens when D1 is not available during build), fetch via API
-    useEffect(() => {
-        if (path.length > 0 && categories.length > 0) return
-
-        const fetchData = async () => {
-            try {
-                setLoading(true)
-
-                // Fetch photos
-                const photosRes = await fetch('/api/photography/latest')
-                if (photosRes.ok) {
-                    const photosData = await photosRes.json()
-                    if (photosData.images) {
-                        setPath(photosData.images)
-                    }
-                }
-
-                // Fetch categories
-                const catsRes = await fetch('/api/photography/categories')
-                if (catsRes.ok) {
-                    const catsData = await catsRes.json()
-                    if (catsData.categories) {
-                        setCategories(catsData.categories)
-                    }
-                }
-            } catch (err) {
-                console.error('Failed to fetch photography data:', err)
-            } finally {
-                setLoading(false)
-            }
-        }
-
-        fetchData()
-    }, [path.length, categories.length])
-
+export default function Index({ data }) {
     return (
-        <div className="bg-black min-h-screen">
-            {CDN_BASE && (
-                <Head>
-                    <link rel="preconnect" href={CDN_BASE} />
-                    <link rel="dns-prefetch" href={CDN_BASE} />
-                </Head>
-            )}
-            <Pnav select="index" categories={categories} />
-
-            {/* Banner section - 限制宽度用于可读性 */}
-            <div className="max-w-7xl mx-auto px-4">
-                <Banner />
-            </div>
-
-            {/* 全宽度内容区域 */}
-            <div className="w-full">
-                {/* Latest Work 分割线 */}
-                <div>
-                    <div className="flex flex-col justify-center text-lg font-serif p-4">
-                        <Footer />
-                        <div className="text-white m-3 font-serif text-lg m-auto">Latest Work</div>
-                    </div>
-                </div>
-
-                {/* 图片墙 - 全宽度显示 */}
-                <div className="w-full  xl:px-12">
-                    {loading ? (
-                        <div className="flex items-center justify-center py-20">
-                            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-white"></div>
-                        </div>
-                    ) : path.length > 0 ? (
-                        <Walls path={path} />
-                    ) : (
-                        <div className="text-gray-500 text-center py-20">No photos available</div>
-                    )}
-                </div>
-
-                {/* More... 分割线 */}
-                <div className="w-full pt-8 flex flex-col justify-center items-center">
-                    <div className="h-4"></div>
-                    <Footer />
-                </div>
-
-                {/* 分类容器 - 限制宽度保持可读性 */}
-                <div className="w-full flex justify-center">
-                    <div className="max-w-6xl w-full">
-                        <CataContainer categories={categories} />
-                    </div>
-                </div>
-
-                {/* 页脚区域 */}
-                <div className="text-white mt-9 w-full">
-                    <div className="flex justify-center text-lg font-serif mt-6 p-4">
-                        End
-                    </div>
-                    <Footer />
-                    <div className="text-lg font-thin font-serif flex flex-col h-56"></div>
-                </div>
-            </div>
-        </div>
+        <>
+            <Head>
+                <title>Taitan_Pascal — 暗房 · Utopia Photography</title>
+                <meta
+                    name="description"
+                    content="高成志（Taitan_Pascal）摄影档案：人像、情绪、恋人、婚礼、香港与城市街头。常驻南京，接受预约。"
+                />
+                <meta name="theme-color" content="#0e0d0b" />
+                {CDN_BASE && (
+                    <>
+                        <link rel="preconnect" href={CDN_BASE} />
+                        <link rel="dns-prefetch" href={CDN_BASE} />
+                    </>
+                )}
+            </Head>
+            <DarkroomHome data={data} />
+        </>
     )
 }
 
 export const getStaticProps = async () => {
-    let picLists = []
-    let categories = []
-
+    let db = null
     try {
         const env = await getCfEnv()
-        const db = env?.DB
-
-        if (db) {
-            picLists = await getLatestPhotos(db, 50)
-            categories = await getPhotoCategories(db)
-        }
+        db = env?.DB || null
     } catch (e) {
-        console.error('photographer getStaticProps failed:', e.message)
+        console.error('photographer getStaticProps: no Cloudflare env:', e.message)
     }
 
+    // Falls back to the bundled photo manifest when D1 is unavailable
+    // (local dev, build machines) — the page always has real content.
+    const data = await getDarkroomHomeData(db)
+
     return {
-        props: {
-            path: picLists,
-            categories,
-        },
-        // ISR: photos change rarely; a 5-minute window keeps the page cached
-        // while still picking up new uploads without a redeploy.
+        props: { data },
+        // ISR: photos change rarely; 5 minutes picks up new uploads without a redeploy.
         revalidate: 300,
     }
 }
-
