@@ -837,17 +837,26 @@
 .recentLink {
   display: inline-flex;
   align-items: baseline;
-  gap: 8px;
-  padding: 8px 0;
+  gap: 16px;
+  padding: 10px 0;
   font-family: var(--mono);
-  font-size: 10px;
   line-height: 1.4;
-  letter-spacing: 0.16em;
-  color: var(--silverDim);
+  color: #f4dfa0;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.4);
   border-bottom: 1px solid transparent;
-  transition: color 0.3s, border-color 0.3s;
+  transition: color 0.3s, border-color 0.3s, transform 0.3s;
 }
-.recentLink:hover { color: var(--silver); border-bottom-color: var(--safe); }
+.recentZh {
+  font-family: var(--cjk);
+  font-weight: 700;
+  font-size: clamp(19px, 1.5vw, 23px);
+  letter-spacing: 0.18em;
+  line-height: 1;
+}
+.recentEn { font-family: var(--mono); font-weight: 500; font-size: 12px; letter-spacing: 0.22em; }
+.recentArr { font-size: 16px; line-height: 1; color: #fff3d6; transition: transform 0.3s; }
+.recentLink:hover { color: #fff3d6; border-bottom-color: #f4dfa0; transform: translateX(3px); }
+.recentLink:hover .recentArr { transform: translateX(4px); }
 
 .foot {
   padding: 34px 6vw 42px;

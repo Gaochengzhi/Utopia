@@ -726,10 +726,10 @@ export default function DarkroomHome({ data }) {
                                     <span className={s.ctaArr}>→</span>
                                 </Link>
                                 <Link className={s.recentLink} href="/photographer/recent">
-                                    <span className={s.zh}>浏览最近</span>
-                                    <span className={s.en}>BROWSE RECENT</span>
-                                    <span className={s.ja}>最新を見る</span>
-                                    <span aria-hidden="true">→</span>
+                                    <span className={`${s.recentZh} ${s.zh}`}>浏览最近</span>
+                                    <span className={`${s.recentEn} ${s.en}`}>BROWSE RECENT</span>
+                                    <span className={`${s.recentZh} ${s.ja}`}>最新を見る</span>
+                                    <span className={s.recentArr} aria-hidden="true">▶</span>
                                 </Link>
                             </div>
                         </div>
