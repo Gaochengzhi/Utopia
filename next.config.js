@@ -27,9 +27,9 @@ const nextConfig = {
     // requests origin paths like /.pic/* directly, the API routes can still
     // redirect to CDN (or proxy from R2 when CDN is unavailable).
     return [
-      // Photography images (content, thumb, full, cata, banner)
+      // Photography images (originals and pre-generated display variants)
       {
-        source: '/photography/:variant(content|thumb|full|cata|banner)/:path*',
+        source: '/photography/:variant(content|thumb|thumb-v2|thumb-v3|preview|preview-v2|preview-v3|full|cata|banner)/:path*',
         destination: '/api/photography-images/:variant/:path*'
       },
       // Blog images

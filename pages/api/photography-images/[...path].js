@@ -14,16 +14,16 @@ export default async function handler(req, res) {
 
     // Build R2 key from path segments.
     // The rewrite keeps the variant in the destination:
-    //   /photography/:variant(content|thumb|full|cata|banner)/:path*
+    //   /photography/:variant(content|thumb-v3|preview-v3|full|cata|banner)/:path*
     //     → /api/photography-images/:variant/:path*
-    // R2 only stores content/, cata/ and banner/ — thumb/ and full/ are
-    // legacy URL shapes that map back to the content/ original.
+    // R2 stores content/, thumb-v3/, preview-v3/, cata/ and banner/. The full/
+    // legacy URL shape maps back to the content/ original.
     const joinedPath = imgPath.join('/')
     const [variant, ...rest] = imgPath
     let r2Key
-    if (variant === 'content' || variant === 'cata' || variant === 'banner') {
+    if (variant === 'content' || variant === 'thumb' || variant === 'thumb-v2' || variant === 'thumb-v3' || variant === 'preview' || variant === 'preview-v2' || variant === 'preview-v3' || variant === 'cata' || variant === 'banner') {
       r2Key = 'photography/' + joinedPath
-    } else if (variant === 'thumb' || variant === 'full') {
+    } else if (variant === 'full') {
       r2Key = 'photography/content/' + rest.join('/')
     } else {
       // Bare path without a variant segment (defensive fallback)

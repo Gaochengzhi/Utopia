@@ -13,7 +13,8 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { PhotoProvider, PhotoView } from 'react-photo-view'
 import 'react-photo-view/dist/react-photo-view.css'
-import { getCdnUrl, handleCdnError } from '/lib/cdnUrl'
+import { getCdnFullUrl, getCdnPreviewUrl, getCdnThumbUrl } from '/lib/cdnUrl'
+import DeferredImage from '/components/photo/darkroom/DeferredImage'
 import { LiquidGoldCanvas } from '/components/photo/LiquidGoldCanvas'
 import s from './Darkroom.module.css'
 
@@ -30,17 +31,21 @@ const HERO_PAN = [0.035, 0.06, 0.045, 0.075, 0.09]
 
 const pad2 = n => String(n).padStart(2, '0')
 
-function Img({ entry, eager, className, style }) {
+function Img({ entry, eager, variant = 'preview', className, style }) {
+    const src = variant === 'full'
+        ? getCdnFullUrl(entry.p)
+        : variant === 'thumb'
+            ? getCdnThumbUrl(entry.p)
+            : getCdnPreviewUrl(entry.p)
+
     return (
-        <img
-            src={getCdnUrl(entry.p)}
+        <DeferredImage
+            src={src}
             alt={entry.cat || ''}
-            loading={eager ? 'eager' : 'lazy'}
-            decoding="async"
+            eager={eager}
             draggable={false}
             className={className}
             style={style}
-            onError={handleCdnError}
         />
     )
 }
@@ -177,12 +182,12 @@ function FilmRow({ photos, cats, speed, start = 0, tall, edge, frameBase, flat }
                 style={{ aspectRatio: p.w && p.h ? `${p.w}/${p.h}` : '2/3' }}
                 {...(ci > 0 ? { onClick: () => openFrom(i) } : {})}
             >
-                <Img entry={p} eager={ci === 0 && i < 3} />
+                <Img entry={p} />
             </div>
         )
         return (
             <div key={`${ci}-${p.p}`} className={s.frame}>
-                {ci === 0 ? <PhotoView src={getCdnUrl(p.p)}>{ph}</PhotoView> : ph}
+                {ci === 0 ? <PhotoView src={getCdnFullUrl(p.p)}>{ph}</PhotoView> : ph}
                 <span className={s.fno}>TP-{frameBase + i} ▸ {20 + i}A</span>
                 <span className={s.peoplecap}>{zhOf(p.cat)} · {p.cat.toUpperCase()}</span>
             </div>
@@ -467,8 +472,8 @@ export default function DarkroomHome({ data }) {
                         {hero.map((p, i) => (
                             <div key={p.p} className={s.panel} style={{ '--fw': p.fw }}>
                                 <div className={s.bleed}>
-                                    <PhotoView src={getCdnUrl(p.p)}>
-                                        <Img entry={{ ...p, cat: 'BANNER' }} eager />
+                                    <PhotoView src={getCdnFullUrl(p.p)}>
+                                        <Img entry={{ ...p, cat: 'BANNER' }} eager={i < 2} />
                                     </PhotoView>
                                 </div>
                             </div>
@@ -545,7 +550,7 @@ export default function DarkroomHome({ data }) {
                         {cityRows.map((row, ri) => (
                             <div key={ri} className={`${s.crow} ${[s.crowA, s.crowB, s.crowC][ri % 3]}`}>
                                 {row.map((p, i) => (
-                                    <PhotoView key={p.p} src={getCdnUrl(p.p)}>
+                                    <PhotoView key={p.p} src={getCdnFullUrl(p.p)}>
                                         <div
                                             className={s.citem}
                                             style={{ aspectRatio: p.w && p.h ? `${p.w}/${p.h}` : '3/2' }}
@@ -582,12 +587,12 @@ export default function DarkroomHome({ data }) {
                     <div className={s.wallWrap}>
                         <div className={s.wallGrid}>
                             {wall.map((p, i) => (
-                                <PhotoView key={p.p} src={getCdnUrl(p.p)}>
+                                <PhotoView key={p.p} src={getCdnFullUrl(p.p)}>
                                     <div
                                         className={`${s.wtile} ${s.devable} ${i === wallPicked ? s.picked : ''}`}
                                         data-devable
                                     >
-                                        <Img entry={p} style={{ transitionDelay: `${(i % 10) * 50}ms` }} />
+                                        <Img entry={p} variant="thumb" style={{ transitionDelay: `${(i % 10) * 50}ms` }} />
                                         {i === wallPicked && (
                                             <svg className={s.grease} viewBox="0 0 100 100" preserveAspectRatio="none">
                                                 <ellipse cx="50" cy="50" rx="46" ry="44" pathLength="100" transform="rotate(3 50 50)" />
@@ -609,7 +614,7 @@ export default function DarkroomHome({ data }) {
                     <div className={s.gold}>
                         {goldOn && !flat && <LiquidGoldCanvas className={s.goldCanvas} controls={false} />}
                         <div className={`${s.epiCard} ${s.devable}`} data-devable>
-                            <PhotoView src={getCdnUrl(epi.p)}>
+                            <PhotoView src={getCdnFullUrl(epi.p)}>
                                 <div
                                     className={s.cardPh}
                                     style={{ aspectRatio: epi.w && epi.h ? `${epi.w}/${epi.h}` : '3/2' }}
@@ -672,7 +677,7 @@ export default function DarkroomHome({ data }) {
                                     <span className={s.ovThumbs}>
                                         {c.thumbs.map(t => (
                                             <span key={t} className={s.th}>
-                                                <img src={getCdnUrl(t)} alt="" loading="lazy" onError={handleCdnError} />
+                                                <DeferredImage src={getCdnThumbUrl(t)} alt="" />
                                             </span>
                                         ))}
                                     </span>

@@ -10,7 +10,8 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { PhotoProvider, PhotoView } from 'react-photo-view'
 import 'react-photo-view/dist/react-photo-view.css'
-import { getCdnUrl, handleCdnError } from '/lib/cdnUrl'
+import { getCdnFullUrl, getCdnPreviewUrl } from '/lib/cdnUrl'
+import DeferredImage from '/components/photo/darkroom/DeferredImage'
 import s from './Gallery.module.css'
 
 const pad2 = n => String(n).padStart(2, '0')
@@ -18,13 +19,11 @@ const pad3 = n => String(n).padStart(3, '0')
 
 function Img({ entry, eager }) {
     return (
-        <img
-            src={getCdnUrl(entry.p)}
+        <DeferredImage
+            src={getCdnPreviewUrl(entry.p)}
             alt={`${entry.cat || ''} ${pad3(entry.n || 0)}`}
-            loading={eager ? 'eager' : 'lazy'}
-            decoding="async"
+            eager={eager}
             draggable={false}
-            onError={handleCdnError}
         />
     )
 }
@@ -116,7 +115,7 @@ export default function DarkroomGallery({ data }) {
                             data-devable
                             style={{ '--ar': lead.w && lead.h ? lead.w / lead.h : 1.5 }}
                         >
-                            <PhotoView src={getCdnUrl(lead.p)}>
+                            <PhotoView src={getCdnFullUrl(lead.p)}>
                                 <div className={s.ph} style={{ aspectRatio: lead.w && lead.h ? `${lead.w}/${lead.h}` : '3/2' }}>
                                     <Img entry={lead} eager />
                                 </div>
@@ -145,7 +144,7 @@ export default function DarkroomGallery({ data }) {
                                         data-devable
                                         style={{ flexGrow: p.ar }}
                                     >
-                                        <PhotoView src={getCdnUrl(p.p)}>
+                                        <PhotoView src={getCdnFullUrl(p.p)}>
                                             <div className={s.ph} style={{ aspectRatio: p.ar }}>
                                                 <Img entry={p} />
                                             </div>
