@@ -85,6 +85,7 @@
 
 /* ————— head ————— */
 .head { padding: 7vh 5vw 5vh; }
+.recentHead { padding: 4.5vh 5vw 3.5vh; }
 .eyebrow {
   font-family: var(--mono);
   font-size: 11px;
@@ -107,6 +108,7 @@
   color: var(--silver);
   margin: 0 0 0 -0.04em;
 }
+.recentTitle { font-size: clamp(38px, 5.8vw, 86px); }
 .h1 .zh {
   font-family: var(--cjk);
   font-weight: 700;
@@ -296,6 +298,8 @@
 @media (max-width: 760px) {
   .head { padding: 5vh 5vw 4vh; }
   .h1 { font-size: clamp(36px, 12vw, 54px); }
+  .recentHead { padding: 3.5vh 5vw 3vh; }
+  .recentTitle { font-size: clamp(32px, 10vw, 46px); }
   .roll { padding: 36px 3vw 30px; }
   /* Keep the contact-sheet rhythm on a narrow screen: a portrait no longer
      monopolises the viewport, while landscapes still earn a wider share of

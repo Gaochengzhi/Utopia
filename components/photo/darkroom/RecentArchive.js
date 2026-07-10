@@ -10,6 +10,17 @@ import s from './Gallery.module.css'
 
 const PAGE_SIZE = 18
 const MAX_ACTIVE_PAGES = 3
+// Deliberately alternate two- and three-frame rows. The weights are visual
+// sizes rather than image aspect ratios, so brand-new photos without bundled
+// dimension metadata still form an uneven contact sheet instead of a 3×3 grid.
+const ROW_LAYOUTS = [
+  [1.65, 0.82],
+  [0.76, 1.38, 0.92],
+  [1.08, 0.68, 1.48],
+  [0.88, 1.42],
+  [1.42, 0.78, 1.02],
+  [0.72, 1.28],
+]
 
 const pad2 = value => String(value).padStart(2, '0')
 const formatDate = value => {
@@ -18,27 +29,31 @@ const formatDate = value => {
   return `DATE ${date.getUTCFullYear()}.${pad2(date.getUTCMonth() + 1)}.${pad2(date.getUTCDate())}`
 }
 
-function rowsFor(entries) {
+function rowsFor(entries, pageIndex) {
   const rows = []
-  let row = []
-  let ratio = 0
-  for (const entry of entries) {
-    const ar = entry.w && entry.h ? entry.w / entry.h : 1.5
-    row.push({ ...entry, ar: Math.round(ar * 1000) / 1000 })
-    ratio += ar
-    if (ratio >= 4 || row.length >= 5) {
-      rows.push(row)
-      row = []
-      ratio = 0
-    }
+  let cursor = 0
+  let layoutIndex = pageIndex * 2
+  while (cursor < entries.length) {
+    const weights = ROW_LAYOUTS[layoutIndex % ROW_LAYOUTS.length]
+    const take = Math.min(weights.length, entries.length - cursor)
+    const row = entries.slice(cursor, cursor + take).map((entry, index) => {
+      const ar = entry.w && entry.h ? entry.w / entry.h : 1.5
+      return {
+        ...entry,
+        ar: Math.round(ar * 1000) / 1000,
+        layoutWeight: weights[index],
+      }
+    })
+    rows.push(row)
+    cursor += take
+    layoutIndex++
   }
-  if (row.length) rows.push(row)
   return rows
 }
 
 function Frame({ entry, number }) {
   return (
-    <div className={s.jit} style={{ flexGrow: entry.ar }}>
+    <div className={s.jit} style={{ flexGrow: entry.layoutWeight }}>
       <PhotoView src={getCdnFullUrl(entry.p)}>
         <div className={s.ph} style={{ aspectRatio: entry.ar }}>
           <DeferredImage
@@ -215,19 +230,15 @@ export default function RecentArchive({ initialPage }) {
           <LangSwitch locale={locale} onChange={setLocale} />
         </div>
 
-        <header className={s.head}>
-          <div className={s.eyebrow}>
-            <span>{locale === 'ja' ? '新着プリント · 時間順' : 'RECENT PRINTS · 最新上传优先'}</span>
-            <span className={s.dim}>{locale === 'ja' ? '下に行くほど古いネガ' : '向下滚动 · 越往下越早'}</span>
-          </div>
-          <h1 className={s.h1}>RECENT<span className={s.zh}>最近</span><span className={s.ja}>最新</span></h1>
+        <header className={`${s.head} ${s.recentHead}`}>
+          <h1 className={`${s.h1} ${s.recentTitle}`}>RECENT<span className={s.zh}>最近</span><span className={s.ja}>最新</span></h1>
         </header>
 
         <div style={{ height: topSpacer }} aria-hidden="true" />
         <div ref={topTriggerRef} className="h-px" aria-hidden="true" />
 
         {pages.map((page, pageIndex) => {
-          const rows = rowsFor(page)
+          const rows = rowsFor(page, pageIndex)
           const pageStart = frameNumber
           frameNumber += page.length
           return (
