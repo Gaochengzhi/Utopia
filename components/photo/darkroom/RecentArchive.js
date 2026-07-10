@@ -10,17 +10,13 @@ import s from './Gallery.module.css'
 
 const PAGE_SIZE = 18
 const MAX_ACTIVE_PAGES = 3
-// Deliberately alternate two- and three-frame rows. The weights are visual
-// sizes rather than image aspect ratios, so brand-new photos without bundled
-// dimension metadata still form an uneven contact sheet instead of a 3×3 grid.
-const ROW_LAYOUTS = [
-  [1.65, 0.82],
-  [0.76, 1.38, 0.92],
-  [1.08, 0.68, 1.48],
-  [0.88, 1.42],
-  [1.42, 0.78, 1.02],
-  [0.72, 1.28],
-]
+// Match the category-detail contact sheets: widths follow aspect ratio, which
+// makes every frame in one row resolve to exactly the same image height.
+const ROW_TARGETS = [3.4, 4.3, 2.9, 3.8, 4.6, 3.1]
+// Newly uploaded photos can precede the bundled dimension manifest. Until the
+// next manifest refresh, use varied photographic ratios rather than making
+// every unknown frame the same square/landscape shape.
+const FALLBACK_ASPECTS = [1.55, 0.72, 1.2, 0.82, 1.75, 1, 0.68, 1.4]
 
 const pad2 = value => String(value).padStart(2, '0')
 const formatDate = value => {
@@ -31,29 +27,38 @@ const formatDate = value => {
 
 function rowsFor(entries, pageIndex) {
   const rows = []
-  let cursor = 0
-  let layoutIndex = pageIndex * 2
-  while (cursor < entries.length) {
-    const weights = ROW_LAYOUTS[layoutIndex % ROW_LAYOUTS.length]
-    const take = Math.min(weights.length, entries.length - cursor)
-    const row = entries.slice(cursor, cursor + take).map((entry, index) => {
-      const ar = entry.w && entry.h ? entry.w / entry.h : 1.5
-      return {
-        ...entry,
-        ar: Math.round(ar * 1000) / 1000,
-        layoutWeight: weights[index],
-      }
+  let items = []
+  let sum = 0
+  let targetIndex = pageIndex * 2
+  entries.forEach((entry, index) => {
+    const fallback = FALLBACK_ASPECTS[(pageIndex * PAGE_SIZE + index) % FALLBACK_ASPECTS.length]
+    const ar = entry.w && entry.h ? entry.w / entry.h : fallback
+    const roundedAr = Math.round(ar * 1000) / 1000
+    items.push({ ...entry, ar: roundedAr })
+    sum += roundedAr
+
+    if (sum >= ROW_TARGETS[targetIndex % ROW_TARGETS.length] || items.length >= 5) {
+      rows.push({ items, target: sum, partial: false })
+      items = []
+      sum = 0
+      targetIndex++
+    }
+  })
+
+  if (items.length) {
+    const target = ROW_TARGETS[targetIndex % ROW_TARGETS.length]
+    rows.push({
+      items,
+      target: Math.max(sum, Math.min(target, sum * 1.9)),
+      partial: sum < target * 0.72,
     })
-    rows.push(row)
-    cursor += take
-    layoutIndex++
   }
   return rows
 }
 
 function Frame({ entry, number }) {
   return (
-    <div className={s.jit} style={{ flexGrow: entry.layoutWeight }}>
+    <div className={s.jit} style={{ flexGrow: entry.ar }}>
       <PhotoView src={getCdnFullUrl(entry.p)}>
         <div className={s.ph} style={{ aspectRatio: entry.ar }}>
           <DeferredImage
@@ -247,9 +252,15 @@ export default function RecentArchive({ initialPage }) {
               <div className={s.rollNo}>ROLL {pad2(pageIndex + 1)} · NEWEST FIRST · {page.length} FRAMES</div>
               {rows.map((row, rowIndex) => (
                 <div key={rowIndex} className={s.jrow}>
-                  {row.map((entry, itemIndex) => (
-                    <Frame key={entry.p} entry={entry} number={pageStart + rows.slice(0, rowIndex).reduce((sum, prior) => sum + prior.length, 0) + itemIndex} />
+                  {row.items.map((entry, itemIndex) => (
+                    <Frame key={entry.p} entry={entry} number={pageStart + rows.slice(0, rowIndex).reduce((sum, prior) => sum + prior.items.length, 0) + itemIndex} />
                   ))}
+                  {row.partial && (
+                    <div
+                      className={s.jpad}
+                      style={{ flexGrow: Math.max(0, row.target - row.items.reduce((sum, entry) => sum + entry.ar, 0)) }}
+                    />
+                  )}
                 </div>
               ))}
             </section>
