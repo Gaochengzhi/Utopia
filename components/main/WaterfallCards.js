@@ -17,6 +17,7 @@ export default function WaterfallCards({ initialPosts, totalPosts, isAuthenticat
     // 网格列数：>=1280 三列，>=768 两列，否则单列
     const [columns, setColumns] = useState(3)
     const lastInitialFingerprintRef = useRef("")
+    const loadMoreTriggerRef = useRef(null)
 
     // Restore cached state from sessionStorage AFTER mount (avoids hydration error)
     useEffect(() => {
@@ -145,22 +146,32 @@ export default function WaterfallCards({ initialPosts, totalPosts, isAuthenticat
         }
     }, [loading, hasMore, page, fetchViewCounts])
 
-    // 检测滚动到底部
+    // 观察列表底部：首屏在桌面端不足以滚动时，哨兵仍会立即可见并加载下一页。
+    // 相比只监听 scroll，这也能覆盖用户不产生滚动事件的情况。
     useEffect(() => {
-        const handleScroll = () => {
-            const scrollHeight = document.documentElement.scrollHeight
-            const scrollTop = document.documentElement.scrollTop || document.body.scrollTop
-            const clientHeight = document.documentElement.clientHeight
+        const trigger = loadMoreTriggerRef.current
+        if (!trigger || !hasMore) return
 
-            // 当距离底部还有300px时开始加载
-            if (scrollHeight - scrollTop - clientHeight < 300) {
-                loadMorePosts()
-            }
+        if ('IntersectionObserver' in window) {
+            const observer = new IntersectionObserver(
+                ([entry]) => {
+                    if (entry.isIntersecting) loadMorePosts()
+                },
+                { rootMargin: '0px 0px 400px' }
+            )
+            observer.observe(trigger)
+            return () => observer.disconnect()
         }
 
+        // 旧浏览器回退：注册后主动检查一次，避免首屏不够高时无法触发。
+        const handleScroll = () => {
+            const { scrollHeight, scrollTop, clientHeight } = document.documentElement
+            if (scrollHeight - scrollTop - clientHeight < 400) loadMorePosts()
+        }
         window.addEventListener('scroll', handleScroll)
+        handleScroll()
         return () => window.removeEventListener('scroll', handleScroll)
-    }, [loadMorePosts])
+    }, [hasMore, loadMorePosts])
 
     // 监听窗口大小决定列数
     useEffect(() => {
@@ -281,6 +292,8 @@ export default function WaterfallCards({ initialPosts, totalPosts, isAuthenticat
     const MetaRow = ({ post, index }) => (
         <div className="tk-meta">
             <span>{ticketNo(index)}</span>
+            <span className="mx-1">·</span>
+            <span>阅读 {viewCounts[post.path.replace(/^\//, '')] ?? '—'} 次</span>
             <span className="tk-leader" />
             {post.isProtected && (
                 <>
@@ -297,19 +310,6 @@ export default function WaterfallCards({ initialPosts, totalPosts, isAuthenticat
             )}
         </div>
     )
-
-    const FootRow = ({ post }) => {
-        const views = viewCounts[post.path.replace(/^\//, '')]
-        return (
-            <div className="tk-meta mt-auto border-t border-dashed border-rule pt-2.5">
-                <span>阅读 {views != null ? views : '—'}</span>
-                <span className="tk-leader" />
-                <span className="font-bold text-accent">
-                    {post.isProtected ? 'UNLOCK →' : 'READ →'}
-                </span>
-            </div>
-        )
-    }
 
     // Tailwind JIT 只认字面量类名，不能用模板串拼 line-clamp-${n}
     const CLAMP = { 2: 'line-clamp-2', 3: 'line-clamp-3', 4: 'line-clamp-4' }
@@ -383,7 +383,6 @@ export default function WaterfallCards({ initialPosts, totalPosts, isAuthenticat
                                                     {title}
                                                 </h2>
                                                 <Excerpt post={post} plainText={plainText} lines={2} />
-                                                <FootRow post={post} />
                                             </div>
                                         </article>
                                     ) : (
@@ -406,7 +405,6 @@ export default function WaterfallCards({ initialPosts, totalPosts, isAuthenticat
                                                 </h2>
                                                 <Excerpt post={post} plainText={plainText} lines={3} />
                                             </div>
-                                            <FootRow post={post} />
                                         </article>
                                     )}
                                 </Link>
@@ -415,6 +413,8 @@ export default function WaterfallCards({ initialPosts, totalPosts, isAuthenticat
                     })}
                 </div>
             </div>
+
+            {hasMore && <div ref={loadMoreTriggerRef} className="h-px" aria-hidden="true" />}
 
             {/* 加载状态和错误处理 */}
             <div className="w-full flex justify-center mt-10">
