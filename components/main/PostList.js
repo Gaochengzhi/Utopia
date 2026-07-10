@@ -7,8 +7,8 @@ import rehypeKatex from "rehype-katex"
 import remarkGfm from "remark-gfm"
 import "katex/dist/katex.min.css"
 import rehypeRaw from "rehype-raw"
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter"
-import { vscDarkPlus } from "react-syntax-highlighter/dist/cjs/styles/prism"
+import SyntaxHighlighter from "react-syntax-highlighter/dist/cjs/prism-async-light"
+import vscDarkPlus from "react-syntax-highlighter/dist/cjs/styles/prism/vsc-dark-plus"
 
 const FileTextIcon = ({ className }) => (
   <svg className={className} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
