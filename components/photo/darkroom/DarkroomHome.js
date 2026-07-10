@@ -718,12 +718,20 @@ export default function DarkroomHome({ data }) {
                                 <span className={s.en}>BASED IN NANJING · SEU.EDU.CN</span>
                                 <span className={s.ja}>南京在住 · 東南大学 SEU.EDU.CN</span>
                             </div>
-                            <Link className={s.cta} href="/photographer/order">
-                                <span className={`${s.ctaZh} ${s.zh}`}>预约拍摄</span>
-                                <span className={`${s.ctaEn} ${s.en}`}>BOOK A SESSION</span>
-                                <span className={`${s.ctaZh} ${s.ja}`}>予約する</span>
-                                <span className={s.ctaArr}>→</span>
-                            </Link>
+                            <div className={s.heroActions}>
+                                <Link className={s.cta} href="/photographer/order">
+                                    <span className={`${s.ctaZh} ${s.zh}`}>预约拍摄</span>
+                                    <span className={`${s.ctaEn} ${s.en}`}>BOOK A SESSION</span>
+                                    <span className={`${s.ctaZh} ${s.ja}`}>予約する</span>
+                                    <span className={s.ctaArr}>→</span>
+                                </Link>
+                                <Link className={s.recentLink} href="/photographer/recent">
+                                    <span className={s.zh}>浏览最近</span>
+                                    <span className={s.en}>BROWSE RECENT</span>
+                                    <span className={s.ja}>最新を見る</span>
+                                    <span aria-hidden="true">→</span>
+                                </Link>
+                            </div>
                         </div>
                         <h1 className={s.h1}>
                             TAITAN<span className={s.u}>_</span>PASCAL

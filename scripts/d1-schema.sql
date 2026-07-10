@@ -52,6 +52,7 @@ CREATE TABLE IF NOT EXISTS photos (
   sort_order INTEGER,                   -- 排序用
   created_at INTEGER
 );
+CREATE INDEX IF NOT EXISTS idx_photos_recent ON photos(created_at DESC, path DESC);
 
 -- 路径树表
 CREATE TABLE IF NOT EXISTS path_tree (
