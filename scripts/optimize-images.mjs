@@ -10,6 +10,9 @@ import { loadProjectEnv } from './load-env.mjs'
 const ROOT = process.cwd()
 loadProjectEnv(ROOT)
 const MANIFEST_PATH = path.join(ROOT, 'scripts', '.image-manifest.json')
+// A one-deploy hand-off to build-photo-variants.mjs. It lets that script move
+// already-generated R2 variants when a photographer only changes a folder.
+const PHOTO_MOVE_MANIFEST_PATH = path.join(ROOT, 'scripts', '.photo-moves.json')
 const PUBLIC_DIR = path.join(ROOT, 'public')
 const MAX_WIDTH = 2560
 const NODE_BIN = process.execPath
@@ -120,6 +123,16 @@ function getSyncDirFilter(scope) {
   if (scope === 'blog') return '.pic'
   if (scope === 'photography') return 'photography'
   return null
+}
+
+function isInScope(relativePath, scope) {
+  if (scope === 'all') return true
+  if (scope === 'blog') return relativePath.startsWith('.pic/')
+  return relativePath.startsWith('photography/content/')
+}
+
+function isPhotographyContentPath(relativePath) {
+  return relativePath.startsWith('photography/content/')
 }
 
 function runSyncR2({ scope }) {
@@ -315,8 +328,29 @@ async function main() {
     allFiles.push(...scanFiles(dir, imageRegex))
   }
 
+  // A renamed/moved file has a new path, so the normal path-keyed manifest
+  // would treat it as a fresh image and encode WebP again. Match only a unique
+  // missing manifest entry with the same content hash; duplicate files stay on
+  // the conservative normal path and are never guessed to be a move.
+  if (!DRY_RUN && fs.existsSync(PHOTO_MOVE_MANIFEST_PATH)) {
+    fs.unlinkSync(PHOTO_MOVE_MANIFEST_PATH)
+  }
+  const currentPaths = new Set(allFiles.map(file =>
+    path.relative(PUBLIC_DIR, file).split(path.sep).join('/')
+  ))
+  const missingByHash = new Map()
+  for (const [oldPath, record] of Object.entries(manifest.files)) {
+    if (!isInScope(oldPath, TARGET_SCOPE) || currentPaths.has(oldPath)) continue
+    if (!record?.hash || (record.status !== 'ok' && record.status !== 'skip')) continue
+    if (fs.existsSync(path.join(PUBLIC_DIR, oldPath))) continue
+    const candidates = missingByHash.get(record.hash) || []
+    candidates.push({ oldPath, record })
+    missingByHash.set(record.hash, candidates)
+  }
+
   const toProcess = []
-  let counts = { skip: 0, error: 0, ok: 0, removed: 0, total: 0 }
+  const photoMoves = []
+  let counts = { skip: 0, error: 0, ok: 0, moved: 0, removed: 0, total: 0 }
   let totalSavedBytes = 0
   const checkLimit = pLimit(Math.max(4, os.cpus().length * 2))
   const precheckResults = await Promise.all(
@@ -331,6 +365,28 @@ async function main() {
 
         const record = manifest.files[relativePath]
         if (!record) {
+          // Hashing is needed only for a path not known to the manifest. This
+          // is the identity check that distinguishes a move from new content.
+          try {
+            const currentHash = await hashFile(file)
+            const candidates = missingByHash.get(currentHash) || []
+            if (candidates.length === 1) {
+              const currentStats = await fs.promises.stat(file)
+              return {
+                action: 'move',
+                file,
+                relativePath,
+                oldPath: candidates[0].oldPath,
+                oldRecord: candidates[0].record,
+                hash: currentHash,
+                size: currentStats.size,
+                mtimeMs: Math.trunc(currentStats.mtimeMs),
+              }
+            }
+          } catch {
+            // Fall through to normal image processing. processImage will
+            // report a useful error if the image itself is unreadable.
+          }
           return { action: 'process', file, relativePath }
         }
 
@@ -382,12 +438,35 @@ async function main() {
   )
 
   counts.total = allFiles.length
+  const claimedMoveSources = new Set()
   for (const result of precheckResults) {
     if (result.action === 'skip') {
       counts[result.status]++
       if (!DRY_RUN && result.relativePath && manifest.files[result.relativePath]) {
         manifest.files[result.relativePath].size = result.size
         manifest.files[result.relativePath].mtimeMs = result.mtimeMs
+      }
+    } else if (result.action === 'move') {
+      if (claimedMoveSources.has(result.oldPath)) {
+        // Two newly discovered files have the same bytes. Only one can be a
+        // rename of this missing path; process the other as a genuine copy.
+        toProcess.push({ file: result.file, relativePath: result.relativePath })
+        continue
+      }
+      claimedMoveSources.add(result.oldPath)
+      counts.skip++
+      counts.moved++
+      if (!DRY_RUN) {
+        manifest.files[result.relativePath] = {
+          ...result.oldRecord,
+          hash: result.hash,
+          size: result.size,
+          mtimeMs: result.mtimeMs,
+        }
+        delete manifest.files[result.oldPath]
+        if (isPhotographyContentPath(result.oldPath) && isPhotographyContentPath(result.relativePath)) {
+          photoMoves.push({ fromPath: result.oldPath, toPath: result.relativePath, hash: result.hash })
+        }
       }
     } else {
       toProcess.push({ file: result.file, relativePath: result.relativePath })
@@ -445,6 +524,10 @@ async function main() {
     }
   }
 
+  if (!DRY_RUN && photoMoves.length > 0) {
+    fs.writeFileSync(PHOTO_MOVE_MANIFEST_PATH, JSON.stringify({ version: 1, moves: photoMoves }, null, 2))
+  }
+
   saveManifest(manifest)
 
 
@@ -454,6 +537,7 @@ async function main() {
     '✅ Optimization complete!',
     `   Processed (newly): ${counts.ok}`,
     `   Skipped: ${counts.skip}`,
+    `   Moved without re-encoding: ${counts.moved}`,
     `   Errors: ${counts.error}`,
     `   Removed from manifest: ${counts.removed}`,
     `   Total saved: ${formatBytes(totalSavedBytes)}`
