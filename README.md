@@ -399,6 +399,10 @@ node scripts/optimize-images.mjs --force       # Force full reprocessing
 node scripts/optimize-images.mjs --scope blog         # Blog images only
 node scripts/optimize-images.mjs --scope photography  # Photography only
 node scripts/optimize-images.mjs --no-sync     # Local compress only, skip R2 upload
+node scripts/build-photo-variants.mjs          # Generate only missing photography thumbnail/preview variants in R2
+
+# On the machine that holds the complete photography library:
+npm run upload:images                          # Optimize new photos, sync them, generate variants, and refresh the D1 photo index
 ```
 
 ---

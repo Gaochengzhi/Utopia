@@ -15,7 +15,7 @@
  * Usage:
  *   node scripts/preflight-sync-check.mjs                  # check all scopes
  *   node scripts/preflight-sync-check.mjs --articles-only  # post/ + photography (D1 index still rebuilds photos)
- *   node scripts/preflight-sync-check.mjs --images-only    # .pic/ + photography
+ *   node scripts/preflight-sync-check.mjs --images-only    # photography only
  *   node scripts/preflight-sync-check.mjs --force          # print comparison but never abort
  *
  * Exit codes: 0 = safe to sync, 1 = abort.
@@ -41,6 +41,14 @@ const SECRET_KEY = process.env.R2_SECRET_ACCESS_KEY
 const IMAGE_EXT = /\.(jpg|jpeg|png|gif|webp|svg|bmp|ico)$/i
 const ARTICLE_EXT = /\.(md|mdx|txt)$/i
 
+// These objects are produced in R2 by build-photo-variants.mjs and are not
+// expected in a content-machine checkout. Count only source assets here, or a
+// complete local photography library would look incomplete as soon as its two
+// display variants had been generated remotely.
+function isGeneratedPhotographyVariant(key) {
+  return /^photography\/(?:thumb|thumb-v\d+|preview|preview-v\d+)\//.test(key)
+}
+
 // scope selection mirrors what upload.sh will actually touch:
 // - photography is always checked: it is synced in image mode AND re-indexed
 //   into D1 (DELETE FROM photos + reinsert) in article mode.
@@ -57,7 +65,7 @@ const SCOPES = [
     prefix: '.pic/',
     localDir: path.join(ROOT, 'public', '.pic'),
     extRegex: IMAGE_EXT,
-    enabled: !ARTICLES_ONLY,
+    enabled: !ARTICLES_ONLY && !IMAGES_ONLY,
   },
   {
     name: 'photography',
@@ -65,6 +73,7 @@ const SCOPES = [
     localDir: path.join(ROOT, 'public', 'photography'),
     extRegex: IMAGE_EXT,
     enabled: true,
+    ignoreRemote: isGeneratedPhotographyVariant,
   },
 ]
 
@@ -92,7 +101,7 @@ function countLocalFiles(dirPath, extRegex) {
   return count
 }
 
-async function countRemoteObjects(s3, prefix) {
+async function countRemoteObjects(s3, prefix, ignore = () => false) {
   let count = 0
   let token
   while (true) {
@@ -102,7 +111,7 @@ async function countRemoteObjects(s3, prefix) {
       MaxKeys: 1000,
       ContinuationToken: token,
     }))
-    count += (r.Contents || []).length
+    count += (r.Contents || []).filter(object => !ignore(object.Key)).length
     if (!r.IsTruncated) break
     token = r.NextContinuationToken
   }
@@ -130,7 +139,7 @@ async function main() {
     const local = countLocalFiles(scope.localDir, scope.extRegex)
     let remote
     try {
-      remote = await countRemoteObjects(s3, scope.prefix)
+      remote = await countRemoteObjects(s3, scope.prefix, scope.ignoreRemote)
     } catch (e) {
       console.warn(`⚠️  Preflight: cannot list R2 prefix "${scope.prefix}" (${e.message}) — skipping this scope.`)
       continue

@@ -2456,6 +2456,11 @@ balanced-match@^4.0.2:
   resolved "https://registry.npmjs.org/balanced-match/-/balanced-match-4.0.4.tgz"
   integrity sha512-BLrgEcRTwX2o6gGxGOCNyMvGSp35YofuYzw9h1IMTRmKqttAZZVU67bdb9Pr2vUHA8+j3i2tJfjO6C6+4myGTA==
 
+bezier-easing@^2.1.0:
+  version "2.1.0"
+  resolved "https://registry.npmjs.org/bezier-easing/-/bezier-easing-2.1.0.tgz"
+  integrity sha512-gbIqZ/eslnUFC1tjEvtz0sgx+xTK20wDnYMIA27VA04R7w6xxXQPZDbibjA9DTWZRA2CXtwHykkVzlCaAJAZig==
+
 binary-extensions@^2.0.0:
   version "2.2.0"
   resolved "https://registry.npmmirror.com/binary-extensions/-/binary-extensions-2.2.0.tgz"
@@ -5823,6 +5828,13 @@ package-manager-detector@^1.3.0:
   resolved "https://registry.npmjs.org/package-manager-detector/-/package-manager-detector-1.6.0.tgz"
   integrity sha512-61A5ThoTiDG/C8s8UMZwSorAGwMJ0ERVGj2OjoW5pAalsNOg15+iQiPzrLJ4jhZ1HJzmC2PIHT2oEiH3R5fzNA==
 
+parallax-controller@^1.7.1:
+  version "1.7.1"
+  resolved "https://registry.npmjs.org/parallax-controller/-/parallax-controller-1.7.1.tgz"
+  integrity sha512-facVMEBnUynzMN7hCSqyNpF6uyCpVIl4XAUyTR9D8q2JlhgyPY6bZtj/OkFk3+Cpka1TnYCppQb8BzDWHtSaZg==
+  dependencies:
+    bezier-easing "^2.1.0"
+
 parent-module@^1.0.0:
   version "1.0.1"
   resolved "https://registry.npmjs.org/parent-module/-/parent-module-1.0.1.tgz"
@@ -6094,7 +6106,7 @@ raw-body@^3.0.1:
     iconv-lite "~0.7.0"
     unpipe "~1.0.0"
 
-"react-dom@^18.2.0 || 19.0.0-rc-de68d2f4-20241204 || ^19.0.0", react-dom@^19.2.4, react-dom@>=16.8.0:
+"react-dom@^16.8.0-0 || >=17.0.1 || ^18.0.0 || ^19.0.0", "react-dom@^18.2.0 || 19.0.0-rc-de68d2f4-20241204 || ^19.0.0", react-dom@^19.2.4, react-dom@>=16.8.0:
   version "19.2.4"
   resolved "https://registry.npmjs.org/react-dom/-/react-dom-19.2.4.tgz"
   integrity sha512-AXJdLo8kgMbimY95O2aKQqsz2iWi9jMgKJhRBAxECE4IFxfcazB2LmzloIoibJI3C12IlY20+KFaLv+71bUJeQ==
@@ -6137,6 +6149,13 @@ react-photo-view@^1.2.2:
   resolved "https://registry.npmmirror.com/react-photo-view/-/react-photo-view-1.2.2.tgz"
   integrity sha512-/xsOiDuiR23hKxpmF73EDKPvsBvcWogolXvnBhMZV4CUhd9tnXF91amjKnuQe9BmLaR9CbNxXDOI9SNKeXT5ew==
 
+react-scroll-parallax@^3.5.0:
+  version "3.5.0"
+  resolved "https://registry.npmjs.org/react-scroll-parallax/-/react-scroll-parallax-3.5.0.tgz"
+  integrity sha512-cUyBTFfTMA/4jweZB4j06LQnUQdZlGgVKX2hmZ5a/BuHZsnp85MEo6ygD2otCQH734VJ9xXPVZ3WfiAiF2TesQ==
+  dependencies:
+    parallax-controller "^1.7.1"
+
 react-syntax-highlighter@^15.5.0:
   version "15.5.0"
   resolved "https://registry.npmmirror.com/react-syntax-highlighter/-/react-syntax-highlighter-15.5.0.tgz"
@@ -6148,7 +6167,7 @@ react-syntax-highlighter@^15.5.0:
     prismjs "^1.27.0"
     refractor "^3.6.0"
 
-"react@^18.2.0 || 19.0.0-rc-de68d2f4-20241204 || ^19.0.0", react@^19.2.4, "react@>= 0.14.0", "react@>= 16.8.0 || 17.x.x || ^18.0.0-0 || ^19.0.0-0", react@>=16, react@>=16.8.0:
+"react@^16.8.0-0 || >=17.0.1 || ^18.0.0 || ^19.0.0", "react@^18.2.0 || 19.0.0-rc-de68d2f4-20241204 || ^19.0.0", react@^19.2.4, "react@>= 0.14.0", "react@>= 16.8.0 || 17.x.x || ^18.0.0-0 || ^19.0.0-0", react@>=16, react@>=16.8.0:
   version "19.2.4"
   resolved "https://registry.npmjs.org/react/-/react-19.2.4.tgz"
   integrity sha512-9nfp2hYpCwOjAN+8TZFGhtWEwgvWHXqESH8qT89AT/lWklpLON22Lc8pEtnpsZz7VmawabSU0gCjnj8aC0euHQ==

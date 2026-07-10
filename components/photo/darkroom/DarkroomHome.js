@@ -4,30 +4,47 @@
  * One continuous night in a darkroom: a full-width banner band develops on
  * load and drifts with the scroll, people ride two self-advancing film rows
  * you can grab and drag, the city surfaces as layered strips sliding left,
- * every white-matte square print ends up pinned on one wall, and the session
- * closes on a card floating over liquid gold.
+ * the wall's square prints hang face-down — white paper backs out — and flip
+ * themselves over in a loose diagonal cascade when you reach them, and the
+ * session closes on the archive index: every category, inline.
  *
  * Navigation: right-edge chapter rail + full-screen INDEX overlay.
  */
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { memo, useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { PhotoProvider, PhotoView } from 'react-photo-view'
 import 'react-photo-view/dist/react-photo-view.css'
+import { Parallax, ParallaxProvider } from 'react-scroll-parallax'
 import { getCdnFullUrl, getCdnPreviewUrl, getCdnThumbUrl } from '/lib/cdnUrl'
+import { useLocale } from '/lib/i18n/useLocale'
+import LangSwitch from '/components/photo/darkroom/LangSwitch'
 import DeferredImage from '/components/photo/darkroom/DeferredImage'
-import { LiquidGoldCanvas } from '/components/photo/LiquidGoldCanvas'
+import { useMarquee } from './useMarquee'
 import s from './Darkroom.module.css'
 
 const RAIL_TICKS = [
-    { id: 'top', no: '00', lab: '序 PROLOGUE' },
-    { id: 'ch1', no: '01', lab: '人 PEOPLE' },
-    { id: 'ch2', no: '02', lab: '城市 CITY' },
-    { id: 'ch3', no: '03', lab: '墙 WALL' },
-    { id: 'epi', no: '04', lab: '尾声 EPILOGUE' },
+    { id: 'top', no: '00', lab: '序 PROLOGUE', ja: 'プロローグ' },
+    { id: 'ch1', no: '01', lab: '人 PEOPLE', ja: '人物' },
+    { id: 'ch2', no: '02', lab: '城市 CITY', ja: '街' },
+    { id: 'ch3', no: '03', lab: '墙 WALL', ja: '壁' },
+    { id: 'idx', no: '04', lab: '索引 INDEX', ja: '目次' },
 ]
 
-// Per-panel leftward drift factors — staggered so the banners take turns.
-const HERO_PAN = [0.035, 0.06, 0.045, 0.075, 0.09]
+// Ambient leftward drift, independent of scroll — the 5 banners never quite
+// fill a screen at native aspect, so they cycle through on their own.
+const HERO_SPEED = 30 // px/s
+
+// Parallax: how far the band lags behind the page as the prologue scrolls
+// away, and how much the panels zoom in while it recedes.
+const HERO_LAG = 0.3
+const HERO_ZOOM = 0.09
+const HERO_PARALLAX_X_DESKTOP = 12
+const HERO_PARALLAX_X_MOBILE = 5
+
+// must track the .wallLightboxClosing animation duration in the stylesheet
+const WALL_COLLAPSE_MS = 420
+// longest tile transition-delay (widest grid, see WallGrid) plus its flip
+const WALL_SETTLE_MS = 2100
 
 const pad2 = n => String(n).padStart(2, '0')
 
@@ -53,117 +70,27 @@ function Img({ entry, eager, variant = 'preview', className, style }) {
 /**
  * A self-advancing film row. Crawls leftward on its own, can be grabbed and
  * dragged with pointer/touch (with momentum), and a real click still opens
- * the lightbox — drags are told apart by travel distance.
+ * the lightbox — drags are told apart by travel distance. Its frames hold a
+ * vertical parallax (`data-par`, in % of the frame height) fed by the page's
+ * scroll engine.
  */
-function FilmRow({ photos, cats, speed, start = 0, tall, edge, frameBase, flat }) {
+const ROW_SIZE_CLASS = { tall: 'mrowTall', mid: 'mrowMid', short: 'mrowShort', city: 'mrowCity' }
+const ROW_PARALLAX = { tall: 9, mid: 7.5, short: 6, city: 4.5 }
+
+const FilmRow = memo(function FilmRow({ photos, cats, speed, start = 0, size = 'short', frameBase, flat, scrollVelRef }) {
     const wrapRef = useRef(null)
     const trackRef = useRef(null)
     const COPIES = flat ? 1 : 3
 
-    useEffect(() => {
-        if (flat) return
-        const rm = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-        const wrap = wrapRef.current
-        const track = trackRef.current
-        if (!wrap || !track) return
-
-        let offset = start
-        let unit = 0
-        let raf = null
-        let last = 0
-        let vel = 0
-        let dragging = false
-        let lastX = 0
-        let moved = 0
-        let visible = false
-        let suppressClick = false
-
-        const measure = () => {
-            unit = track.scrollWidth / 3
-        }
-
-        const tick = now => {
-            raf = null
-            const dt = Math.min(64, now - (last || now))
-            last = now
-            if (!dragging) {
-                if (Math.abs(vel) > speed) {
-                    offset += (vel * dt) / 1000
-                    vel *= Math.pow(0.9, dt / 16.7)
-                } else if (!rm) {
-                    offset += (speed * dt) / 1000
-                }
-            }
-            if (unit > 0) offset = ((offset % unit) + unit) % unit
-            track.style.transform = `translate3d(${-offset}px,0,0)`
-            if (visible && !(rm && !dragging && Math.abs(vel) <= speed)) raf = requestAnimationFrame(tick)
-        }
-        const run = () => {
-            if (!raf && visible) {
-                last = 0
-                raf = requestAnimationFrame(tick)
-            }
-        }
-
-        const io = new IntersectionObserver(([e]) => {
-            visible = e.isIntersecting
-            if (visible) run()
-        }, { rootMargin: '120px 0px' })
-        io.observe(wrap)
-
-        const down = e => {
-            dragging = true
-            moved = 0
-            vel = 0
-            lastX = e.clientX
-            wrap.setPointerCapture(e.pointerId)
-            wrap.classList.add(s.grabbing)
-            run()
-        }
-        const move = e => {
-            if (!dragging) return
-            const dx = e.clientX - lastX
-            lastX = e.clientX
-            offset -= dx
-            moved += Math.abs(dx)
-            vel = -dx * 60 // px/s estimate from the last frame
-        }
-        const up = () => {
-            if (!dragging) return
-            dragging = false
-            wrap.classList.remove(s.grabbing)
-            if (moved > 6) suppressClick = true
-            run()
-        }
-        const clickCapture = e => {
-            if (suppressClick) {
-                e.preventDefault()
-                e.stopPropagation()
-                suppressClick = false
-            }
-        }
-
-        wrap.addEventListener('pointerdown', down)
-        wrap.addEventListener('pointermove', move)
-        wrap.addEventListener('pointerup', up)
-        wrap.addEventListener('pointercancel', up)
-        wrap.addEventListener('click', clickCapture, true)
-        window.addEventListener('resize', measure)
-
-        measure()
-        run()
-
-        return () => {
-            io.disconnect()
-            if (raf) cancelAnimationFrame(raf)
-            wrap.removeEventListener('pointerdown', down)
-            wrap.removeEventListener('pointermove', move)
-            wrap.removeEventListener('pointerup', up)
-            wrap.removeEventListener('pointercancel', up)
-            wrap.removeEventListener('click', clickCapture, true)
-            window.removeEventListener('resize', measure)
-        }
-    }, [flat, speed, start])
+    useMarquee({
+        wrapRef,
+        trackRef,
+        speed,
+        start,
+        enabled: !flat,
+        scrollVelRef,
+        grabbingClass: s.grabbing,
+    })
 
     const zhOf = cat => (cats.find(c => c.name === cat) || {}).zh || cat
 
@@ -195,35 +122,208 @@ function FilmRow({ photos, cats, speed, start = 0, tall, edge, frameBase, flat }
     }
 
     return (
-        <div ref={wrapRef} className={`${s.mrow} ${tall ? s.mrowTall : s.mrowShort}`}>
+        <div ref={wrapRef} className={`${s.mrow} ${s[ROW_SIZE_CLASS[size]]}`} data-par={ROW_PARALLAX[size]}>
             <div ref={trackRef} className={s.mtrack}>
                 {Array.from({ length: COPIES }, (_, ci) => (
                     <div key={ci} className={s.film} aria-hidden={ci > 0}>
-                        <div className={s.edgeprint}>{edge}</div>
                         {photos.map((p, i) => frameShell(p, i, ci))}
                     </div>
                 ))}
             </div>
         </div>
     )
+})
+
+/** CITY now uses the same physical contact-roll treatment as PEOPLE. */
+const CITY_SPEED = [24, 31, 18]
+const CITY_START = [0, 260, 120]
+
+const CityRow = memo(function CityRow({ row, ri, cats, flat, scrollVelRef }) {
+    return (
+        <FilmRow
+            photos={row}
+            cats={cats}
+            speed={CITY_SPEED[ri % CITY_SPEED.length]}
+            start={CITY_START[ri % CITY_START.length]}
+            size="city"
+            frameBase={40 + ri * 10}
+            flat={flat}
+            scrollVelRef={scrollVelRef}
+        />
+    )
+})
+
+/**
+ * The wall of square prints, pinned face-down and flipped over by the scroll.
+ *
+ * Kept in its own memoised component: the page is ~1500 nodes and opening a
+ * print used to re-render all of them, which cost a 60ms+ frame right as the
+ * card started to move. Now only the wall reconciles, and only when a print is
+ * actually picked up.
+ *
+ * The wall is square on a wide screen. Narrow screens fit fewer columns, and
+ * squaring off there would leave far too few prints (4×4 = 16), so below the
+ * tablet break the wall runs twice as tall as it is wide. The cascade's
+ * diagonal delay reads `cols` rather than a hard-coded 8.
+ */
+const WALL_GRID_BY_WIDTH = [
+    // [min viewport width, columns, rows]
+    [1280, 8, 8],
+    [1024, 7, 7],
+    [820, 6, 6],
+    [560, 5, 10],
+    [0, 4, 8],
+]
+const WALL_GRID_FALLBACK = [0, 4, 8]
+const wallGridFor = width => {
+    const [, cols, rows] = WALL_GRID_BY_WIDTH.find(([min]) => width >= min) || WALL_GRID_FALLBACK
+    return { cols, rows }
 }
 
+const WallGrid = memo(function WallGrid({ tiles, cols, flipped, settled, sourcePath, onOpen }) {
+    return (
+        <div
+            className={`${s.wallGrid} ${flipped ? s.wallFlipped : ''} ${settled ? s.wallSettled : ''}`}
+            style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
+        >
+            {tiles.map((p, i) => (
+                <div key={p.p} className={`${s.wtile} ${sourcePath === p.p ? s.wallPreviewSource : ''}`}>
+                    <div
+                        className={s.wflip}
+                        style={{ transitionDelay: `${70 + (i % cols) * 65 + Math.floor(i / cols) * 100}ms` }}
+                    >
+                        <div
+                            className={s.wface}
+                            role="button"
+                            tabIndex={0}
+                            aria-label={`Open print ${i + 1}`}
+                            onClick={event => onOpen(event, p)}
+                            onKeyDown={event => {
+                                if (event.key === 'Enter' || event.key === ' ') onOpen(event, p)
+                            }}
+                        >
+                            <Img entry={p} variant="thumb" />
+                        </div>
+                        {/* bare white paper — nothing printed on the back */}
+                        <div className={s.wback} aria-hidden="true" />
+                    </div>
+                </div>
+            ))}
+        </div>
+    )
+})
+
+/**
+ * The archive rows — one line per category with thumbs and counts. Rendered
+ * twice: inline as the closing INDEX chapter, and inside the INDEX overlay.
+ */
+const CatRows = memo(function CatRows({ cats }) {
+    return (
+        <div>
+            {cats.map((c, i) => (
+                <Link key={c.name} className={s.ovRow} href={c.href}>
+                    <span className={s.ovNo}>{pad2(i + 1)}</span>
+                    <span className={s.ovName}>
+                        {c.name}
+                        <span className={s.zh}>{c.zh}</span>
+                        <span className={s.ja}>{c.ja}</span>
+                    </span>
+                    <span className={s.ovThumbs}>
+                        {c.thumbs.map(t => (
+                            <span key={t} className={s.th}>
+                                <DeferredImage src={getCdnThumbUrl(t)} alt="" />
+                            </span>
+                        ))}
+                    </span>
+                    <span className={s.ovCount}>
+                        <b>{c.count}</b> 张
+                    </span>
+                    <span className={s.ovArr}>→</span>
+                </Link>
+            ))}
+        </div>
+    )
+})
+
 export default function DarkroomHome({ data }) {
-    const { hero, stripA, stripB, cityRows, wall, epi, cats, counts } = data
+    const { hero, stripA, stripB, stripC, cityRows, wall, cats, counts } = data
 
     const [overlayOpen, setOverlayOpen] = useState(false)
     const [flat, setFlat] = useState(false)
     const [heroDev, setHeroDev] = useState(false)
-    const [goldOn, setGoldOn] = useState(false)
+    const [wallInView, setWallInView] = useState(false)
+    const [wallFlipped, setWallFlipped] = useState(false)
+    const [wallSettled, setWallSettled] = useState(false)
+    const [wallPreview, setWallPreview] = useState(null)
+    const [previewArmed, setPreviewArmed] = useState(false)
+    const [previewClosing, setPreviewClosing] = useState(false)
+    const [locale, setLocale] = useLocale()
+    const [narrowViewport, setNarrowViewport] = useState(false)
+    // SSR renders the widest grid; the effect below narrows it after mount
+    const [wallGrid, setWallGrid] = useState(() => wallGridFor(1280))
+    const heroParallaxX = narrowViewport ? HERO_PARALLAX_X_MOBILE : HERO_PARALLAX_X_DESKTOP
+    const wallTiles = useMemo(
+        () => wall.slice(0, wallGrid.cols * wallGrid.rows),
+        [wall, wallGrid.cols, wallGrid.rows]
+    )
 
     const rootRef = useRef(null)
     const threadRef = useRef(null)
     const railRef = useRef(null)
     const safelightRef = useRef(null)
-    const panelsRef = useRef(null)
-    const cityRef = useRef(null)
-    const epiRef = useRef(null)
+    const heroBandRef = useRef(null)
+    const heroTrackRef = useRef(null)
+    const scrollVelRef = useRef(0)
+    const wallViewportRef = useRef(null)
     const ticksRef = useRef([])
+    const activeRailIndexRef = useRef(0)
+    const railExpandedRef = useRef(false)
+
+    useEffect(() => {
+        const media = window.matchMedia('(max-width: 900px)')
+        const syncViewport = () => setNarrowViewport(media.matches)
+        syncViewport()
+        media.addEventListener('change', syncViewport)
+        return () => media.removeEventListener('change', syncViewport)
+    }, [])
+
+    useEffect(() => {
+        const syncGrid = () =>
+            setWallGrid(prev => {
+                const next = wallGridFor(window.innerWidth)
+                // keep the identity stable so WallGrid can bail out of re-rendering
+                return prev.cols === next.cols && prev.rows === next.rows ? prev : next
+            })
+        syncGrid()
+        window.addEventListener('resize', syncGrid)
+        return () => window.removeEventListener('resize', syncGrid)
+    }, [])
+
+    // 展开目录时，以当前章节为峰值绘制文字的尺寸和透明度分布；
+    // 直接写 CSS 变量，避免滚动时触发 React 重渲染。
+    const paintRailLabels = useCallback((activeIndex, expanded) => {
+        ticksRef.current.forEach((tick, index) => {
+            const label = tick?.querySelector(`.${s.lab}`)
+            if (!label) return
+
+            const peak = Math.exp(-((index - activeIndex) ** 2) / 1.45)
+            const opacity = expanded ? 0.24 + peak * 0.76 : index === activeIndex ? 1 : 0
+            const scale = expanded ? 0.78 + peak * 0.36 : index === activeIndex ? 1.14 : 0.84
+            const offset = expanded ? (1 - peak) * 4 : index === activeIndex ? 0 : 10
+            const haze = expanded ? 0.18 + peak * 0.46 : 0
+
+            label.style.setProperty('--rail-label-opacity', opacity.toFixed(3))
+            label.style.setProperty('--rail-label-scale', scale.toFixed(3))
+            label.style.setProperty('--rail-label-offset', `${offset.toFixed(1)}px`)
+            tick.style.setProperty('--rail-haze-opacity', haze.toFixed(3))
+        })
+    }, [])
+
+    const setRailExpanded = useCallback((expanded) => {
+        railExpandedRef.current = expanded
+        railRef.current?.classList.toggle(s.railExpanded, expanded)
+        paintRailLabels(activeRailIndexRef.current, expanded)
+    }, [paintRailLabels])
 
     // QA hook (?flat=1): everything visible, no scroll choreography.
     useEffect(() => {
@@ -239,22 +339,42 @@ export default function DarkroomHome({ data }) {
         return () => clearTimeout(t)
     }, [])
 
-    // the gold canvas mounts once the epilogue approaches
+    // hero band: ambient leftward drift, sped up/reversed by scroll velocity,
+    // and grabbable — same drag+momentum feel as the people film rows. The
+    // band's own transform is left to the scroll engine's parallax pass.
+    useMarquee({
+        wrapRef: heroBandRef,
+        trackRef: heroTrackRef,
+        speed: HERO_SPEED,
+        enabled: !flat,
+        scrollVelRef,
+        grabbingClass: s.grabbing,
+    })
+
+    // tracks page scroll speed and decays it to 0 at rest; the people film
+    // rows read this to cruise faster while you scroll and ease back after
     useEffect(() => {
         if (flat) return
-        const el = epiRef.current
-        if (!el) return
-        const io = new IntersectionObserver(
-            ([e]) => {
-                if (e.isIntersecting) {
-                    setGoldOn(true)
-                    io.disconnect()
-                }
-            },
-            { rootMargin: '700px 0px' }
-        )
-        io.observe(el)
-        return () => io.disconnect()
+        const rm = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        if (rm) return
+        let lastY = window.scrollY
+        let lastT = 0
+        let raf = null
+
+        const tick = now => {
+            const dt = Math.max(1, now - (lastT || now))
+            const y = window.scrollY
+            const raw = ((y - lastY) / dt) * 1000
+            lastY = y
+            lastT = now
+            scrollVelRef.current += (raw - scrollVelRef.current) * 0.15
+            if (Math.abs(scrollVelRef.current) < 0.5 && Math.abs(raw) < 0.5) scrollVelRef.current = 0
+            raf = requestAnimationFrame(tick)
+        }
+        raf = requestAnimationFrame(tick)
+        return () => {
+            if (raf) cancelAnimationFrame(raf)
+        }
     }, [flat])
 
     // develop-in reveals
@@ -282,23 +402,68 @@ export default function DarkroomHome({ data }) {
         return () => io.disconnect()
     }, [flat])
 
-    // scroll engine: lerp + hero pan + city drift + rail + safelight
+    // CH.03 is reversible: entering the wall develops the current contact
+    // sheet, and leaving it returns every print to its paper back. Therefore
+    // scrolling back through the chapter always gives the viewer a new flip.
+    useEffect(() => {
+        if (flat) {
+            setWallInView(true)
+            return undefined
+        }
+        const viewport = wallViewportRef.current
+        if (!viewport) return undefined
+        const io = new IntersectionObserver(
+            ([e]) => {
+                setWallInView(e.isIntersecting)
+            },
+            { threshold: 0.16, rootMargin: '-8% 0px -12% 0px' }
+        )
+        io.observe(viewport)
+        return () => io.disconnect()
+    }, [flat])
+
+    // Reset one frame before developing the fixed contact wall. Toggling the
+    // class, rather than using a one-shot observer, makes it work in both
+    // scroll directions.
+    useEffect(() => {
+        if (flat) {
+            setWallFlipped(true)
+            setWallSettled(true)
+            return undefined
+        }
+        if (!wallInView) {
+            setWallFlipped(false)
+            setWallSettled(false)
+            return undefined
+        }
+        setWallFlipped(false)
+        setWallSettled(false)
+        const raf = requestAnimationFrame(() => setWallFlipped(true))
+        // give the tiles their compositing layers back once the cascade lands
+        const settle = window.setTimeout(() => setWallSettled(true), WALL_SETTLE_MS)
+        return () => {
+            cancelAnimationFrame(raf)
+            window.clearTimeout(settle)
+        }
+    }, [flat, wallInView])
+
+    // scroll engine: lerp + parallax + rail + safelight
     useEffect(() => {
         if (flat) return
         const rm = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-        const panels = panelsRef.current ? [...panelsRef.current.children] : []
-        const bleeds = panels.map(p => p.firstChild)
-        const crows = cityRef.current ? [...cityRef.current.querySelectorAll(`.${s.crow}`)] : []
+        const root = rootRef.current
+        // every [data-par] row drifts its photos against the page; the value is
+        // the one-way travel in % of each photo's own height (see the --pz
+        // zoom in the stylesheet, which is what buys the travel its headroom)
+        const parEls = root ? [...root.querySelectorAll('[data-par]')] : []
         const people = document.getElementById('ch1')
+        const heroSec = document.getElementById('top')
         const secs = RAIL_TICKS.map(t => document.getElementById(t.id)).filter(Boolean)
         let vh = window.innerHeight
-        let vw = window.innerWidth
-        let panelMax = []
-        let cityTop = 0
-        let cityH = 1
-        let cityDrift = []
+        let pars = []
         let peopleTop = 0
         let peopleH = 1
+        let heroH = 1
         let docH = 1
         let railH = 0
         let target = window.scrollY
@@ -307,40 +472,39 @@ export default function DarkroomHome({ data }) {
 
         const measure = () => {
             vh = window.innerHeight
-            vw = window.innerWidth
-            // .bleed is 16% wider than its panel, centered — 8% hidden per side
-            panelMax = panels.map(p => p.offsetWidth * 0.075)
-            if (cityRef.current) {
-                const r = cityRef.current.getBoundingClientRect()
-                cityTop = r.top + window.scrollY
-                cityH = Math.max(1, r.height)
-                // each row may drift left only as far as it stays full-bleed
-                cityDrift = crows.map((row, i) => {
-                    const want = vw * [0.14, 0.24, 0.09][i % 3]
-                    const avail = Math.max(0, row.scrollWidth - vw - 10)
-                    return Math.min(want, avail)
-                })
-            }
+            const parallaxScale = window.innerWidth <= 900 ? 0.55 : 1
+            pars = parEls.map(el => {
+                const r = el.getBoundingClientRect()
+                return {
+                    el,
+                    top: r.top + window.scrollY,
+                    h: Math.max(1, r.height),
+                    amp: (parseFloat(el.dataset.par) || 0) * parallaxScale,
+                }
+            })
             if (people) {
                 peopleTop = people.offsetTop
                 peopleH = Math.max(1, people.offsetHeight)
             }
+            heroH = Math.max(1, heroSec ? heroSec.offsetHeight : vh)
             docH = document.documentElement.scrollHeight - vh
             railH = railRef.current ? railRef.current.offsetHeight + 60 : 0
         }
 
         const render = y => {
-            if (y < vh * 1.5 && bleeds.length) {
-                bleeds.forEach((b, i) => {
-                    if (!b) return
-                    const x = Math.min(y * HERO_PAN[i % HERO_PAN.length], panelMax[i] || 60)
-                    b.style.transform = `translate3d(${-x}px,0,0)`
-                })
-            }
-            if (crows.length) {
-                const pr = Math.min(1, Math.max(0, (y + vh - cityTop) / (cityH + vh)))
-                crows.forEach((row, i) => {
-                    row.style.transform = `translate3d(${-pr * (cityDrift[i] || 0)}px,0,0)`
+            if (!rm) {
+                // the prologue band sinks slower than the page and zooms in as
+                // it goes; it never uncovers its own top edge because it lags
+                // by less than the page has already scrolled
+                const band = heroBandRef.current
+                if (band) {
+                    const hp = Math.min(1, Math.max(0, y / heroH))
+                    band.style.transform = `translate3d(0,${(hp * heroH * HERO_LAG).toFixed(1)}px,0)`
+                    band.style.setProperty('--hz', (1 + hp * HERO_ZOOM).toFixed(4))
+                }
+                pars.forEach(p => {
+                    const t = Math.min(1, Math.max(0, (y + vh - p.top) / (p.h + vh)))
+                    p.el.style.setProperty('--py', `${((0.5 - t) * 2 * p.amp).toFixed(2)}%`)
                 })
             }
             if (safelightRef.current && people) {
@@ -359,6 +523,8 @@ export default function DarkroomHome({ data }) {
             ticksRef.current.forEach((tk, j) => {
                 if (tk) tk.classList.toggle(s.tickOn, j === act)
             })
+            activeRailIndexRef.current = act
+            paintRailLabels(act, railExpandedRef.current)
         }
 
         const frame = () => {
@@ -387,52 +553,111 @@ export default function DarkroomHome({ data }) {
             window.removeEventListener('load', onResize)
             if (raf) cancelAnimationFrame(raf)
         }
-    }, [flat])
+    }, [flat, paintRailLabels])
 
-    // overlay: lock scroll, close on Escape
+    // The card mounts holding its start transform and only then begins to fly.
+    // That first paint is expensive — a near-full-width print plus a wide,
+    // blurred drop shadow — and if it lands on the animation's opening frame
+    // the flip visibly stutters as it leaves the wall. Two frames of stillness
+    // buy the rasterised layer; after that the flight is pure compositing.
     useEffect(() => {
-        if (!overlayOpen) return
+        if (!wallPreview) {
+            setPreviewArmed(false)
+            return undefined
+        }
+        let inner = 0
+        const outer = requestAnimationFrame(() => {
+            inner = requestAnimationFrame(() => setPreviewArmed(true))
+        })
+        return () => {
+            cancelAnimationFrame(outer)
+            cancelAnimationFrame(inner)
+        }
+    }, [wallPreview])
+
+    const closeWallPreview = useCallback(() => {
+        if (!wallPreview || previewClosing) return
+        setPreviewClosing(true)
+        window.setTimeout(() => {
+            setWallPreview(null)
+            setPreviewClosing(false)
+        }, WALL_COLLAPSE_MS)
+    }, [wallPreview, previewClosing])
+
+    // Overlay and wall preview both own the scroll lock and Escape key.
+    useEffect(() => {
+        if (!overlayOpen && !wallPreview) return undefined
         document.body.style.overflow = 'hidden'
         const onKey = e => {
-            if (e.key === 'Escape') setOverlayOpen(false)
+            if (e.key !== 'Escape') return
+            if (wallPreview) closeWallPreview()
+            else setOverlayOpen(false)
         }
         window.addEventListener('keydown', onKey)
         return () => {
             document.body.style.overflow = ''
             window.removeEventListener('keydown', onKey)
         }
-    }, [overlayOpen])
+    }, [overlayOpen, wallPreview, closeWallPreview])
 
     const goTo = useCallback(id => {
         const el = document.getElementById(id)
         if (el) el.scrollIntoView({ behavior: 'smooth' })
     }, [])
 
-    const peopleCounts = cats.filter(c => ['Portrait', 'Emotion', 'Lover', 'Wedding'].includes(c.name))
+    // duplicated hero copies (for the seamless loop) forward clicks to the
+    // first copy's PhotoView so the lightbox never gets duplicate entries
+    const openHeroFrom = i => {
+        const first = heroTrackRef.current && heroTrackRef.current.children[0]
+        const clicks = first ? first.querySelectorAll(`.${s.panelClick}`) : []
+        if (clicks[i]) clicks[i].click()
+    }
+
+    // CH.01 is the Portrait index alone — no other people categories mixed in
+    const peopleCounts = cats.filter(c => c.name === 'Portrait')
     const cityCounts = cats.filter(c => ['HK', 'City'].includes(c.name))
     const fmtCounts = list => list.map(c => `${c.name.toUpperCase()} ${c.count}`).join(' · ')
 
-    let edgeA = ''
-    for (let i = 0; i < 30; i++) edgeA += 'TP-5063 PAN 400   ▸▸   TAITAN_PASCAL · UTOPIA   ▸▸   '
-    let edgeB = ''
-    for (let i = 0; i < 30; i++) edgeB += 'HP5 PLUS 400 — 二号卷   ▸▸   PEOPLE · 人   ▸▸   '
-
-    const wallPicked = Math.min(21, Math.max(0, wall.length - 3))
+    const HERO_COPIES = flat ? 1 : 3
+    // The card is laid out at the viewport centre and animated back to the
+    // tile with transform alone — dx/dy are the tile's offset from that
+    // centre, so no frame of the flight touches layout.
+    const openWallPreview = useCallback((event, entry) => {
+        const rect = event.currentTarget.getBoundingClientRect()
+        const ratio = entry.w && entry.h ? entry.w / entry.h : 1
+        const finalWidth = Math.min(window.innerWidth * 0.86, window.innerHeight * 0.78 * ratio)
+        setPreviewClosing(false)
+        setWallPreview({
+            entry,
+            scale: Math.max(0.05, rect.width / Math.max(finalWidth, 1)),
+            width: finalWidth,
+            dx: rect.left + rect.width / 2 - window.innerWidth / 2,
+            dy: rect.top + rect.height / 2 - window.innerHeight / 2,
+        })
+    }, [])
 
     return (
-        <div ref={rootRef} className={`${s.root} ${flat ? s.flat : ''}`}>
+        <div ref={rootRef} className={`${s.root} ${flat ? s.flat : ''}`} data-lang={locale}>
+            <ParallaxProvider isDisabled={flat}>
             <PhotoProvider maskOpacity={0.96} pullClosable>
                 {/* fixed chrome */}
                 <div className={`${s.chrome} ${s.chromeTl}`}>
-                    <b>TP</b> — UTOPIA <span style={{ color: 'var(--silverFaint)' }}>暗房 DARKROOM</span>
+                    <b>TP</b> — <span>{locale === 'zh' ? '暗房' : locale === 'ja' ? '暗室' : 'DARKROOM'}</span>
                 </div>
                 <div className={`${s.chrome} ${s.chromeTr}`}>
                     <button className={s.idxBtn} onClick={() => setOverlayOpen(true)} aria-haspopup="dialog">
-                        INDEX 索引 <span className={s.idxN}>{counts.cats}</span>
+                        {locale === 'zh' ? '索引' : locale === 'ja' ? '目次' : 'INDEX'} <span className={s.idxN}>{counts.cats}</span>
                     </button>
+                    <LangSwitch locale={locale} onChange={setLocale} embedded />
                 </div>
 
-                <nav ref={railRef} className={s.rail} aria-label="chapters">
+                <nav
+                    ref={railRef}
+                    className={s.rail}
+                    aria-label="chapters"
+                    onPointerEnter={() => setRailExpanded(true)}
+                    onPointerLeave={() => setRailExpanded(false)}
+                >
                     <div ref={threadRef} className={s.thread} />
                     {RAIL_TICKS.map((t, i) => (
                         <button
@@ -441,7 +666,7 @@ export default function DarkroomHome({ data }) {
                             className={s.tick}
                             onClick={() => goTo(t.id)}
                         >
-                            <span className={s.lab}>{t.lab}</span>
+                            <span className={s.lab}>{locale === 'ja' ? t.ja : t.lab}</span>
                             <span className={s.no}>{t.no}</span>
                             <span className={s.dot} />
                         </button>
@@ -450,11 +675,55 @@ export default function DarkroomHome({ data }) {
 
                 <div ref={safelightRef} className={s.safelight} />
 
-                {/* ———— prologue: full-width banner band ———— */}
+                {/* ———— prologue: photo band with text floating on top ———— */}
                 <section className={`${s.hero} ${heroDev ? s.heroDeveloped : ''}`} id="top">
+                    <div ref={heroBandRef} className={s.heroBand}>
+                        <div ref={heroTrackRef} className={s.heroTrack}>
+                            {Array.from({ length: HERO_COPIES }, (_, ci) => (
+                                <div key={ci} className={s.heroSet} aria-hidden={ci > 0}>
+                                    {hero.map((p, i) => (
+                                        <div key={`${ci}-${p.p}`} className={s.panel} style={{ '--fw': p.fw }}>
+                                            {ci === 0 ? (
+                                                <PhotoView src={getCdnFullUrl(p.p)}>
+                                                    <div className={s.panelClick}>
+                                                        <Parallax
+                                                            className={s.panelParallax}
+                                                            translateX={[`${-heroParallaxX}%`, `${heroParallaxX}%`]}
+                                                        >
+                                                            <Img entry={{ ...p, cat: 'BANNER' }} eager={ci === 0 && i < 2} />
+                                                        </Parallax>
+                                                    </div>
+                                                </PhotoView>
+                                            ) : (
+                                                <div className={s.panelClick} onClick={() => openHeroFrom(i)}>
+                                                    <Parallax
+                                                        className={s.panelParallax}
+                                                        translateX={[`${-heroParallaxX}%`, `${heroParallaxX}%`]}
+                                                    >
+                                                        <Img entry={{ ...p, cat: 'BANNER' }} />
+                                                    </Parallax>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <div className={s.heroShade} />
                     <div className={s.heroBody}>
-                        <div className={s.heroEyebrow}>
-                            <span className={s.lamp} /> UTOPIA · DARKROOM SESSION — NANJING · 2018→2026
+                        <div className={`${s.book} ${s.heroBook}`}>
+                            <div className={s.where}>
+                                <span className={s.zh}>常驻南京 · 东南大学 SEU.EDU.CN</span>
+                                <span className={s.en}>BASED IN NANJING · SEU.EDU.CN</span>
+                                <span className={s.ja}>南京在住 · 東南大学 SEU.EDU.CN</span>
+                            </div>
+                            <Link className={s.cta} href="/photographer/order">
+                                <span className={`${s.ctaZh} ${s.zh}`}>预约拍摄</span>
+                                <span className={`${s.ctaEn} ${s.en}`}>BOOK A SESSION</span>
+                                <span className={`${s.ctaZh} ${s.ja}`}>予約する</span>
+                                <span className={s.ctaArr}>→</span>
+                            </Link>
                         </div>
                         <h1 className={s.h1}>
                             TAITAN<span className={s.u}>_</span>PASCAL
@@ -462,26 +731,16 @@ export default function DarkroomHome({ data }) {
                         <div className={s.heroSub}>
                             <span className={s.zh}>把光留在相纸上。</span>
                             <span className={s.en}>LIGHT, KEPT ON PAPER — 摄影</span>
+                            <span className={s.ja}>光を、印画紙に焼き付ける。</span>
                             <span className={s.heroMeta}>
                                 ARCHIVE <b>{counts.total}</b> · CATEGORIES <b>{counts.cats}</b> · BASE <b>NANJING</b> ·{' '}
-                                <b>接受预约</b>
+                                <b>{locale === 'en' ? 'BOOKING OPEN' : locale === 'ja' ? '予約受付中' : '接受预约'}</b>
                             </span>
                         </div>
                     </div>
-                    <div ref={panelsRef} className={s.heroBand}>
-                        {hero.map((p, i) => (
-                            <div key={p.p} className={s.panel} style={{ '--fw': p.fw }}>
-                                <div className={s.bleed}>
-                                    <PhotoView src={getCdnFullUrl(p.p)}>
-                                        <Img entry={{ ...p, cat: 'BANNER' }} eager={i < 2} />
-                                    </PhotoView>
-                                </div>
-                            </div>
-                        ))}
-                        <div className={s.scrollcue}>
-                            <span>向下卷动 · 开始显影 SCROLL TO DEVELOP</span>
-                            <span className={s.line} />
-                        </div>
+                    <div className={s.scrollcue}>
+                        <span>{locale === 'ja' ? '下にスクロールして現像開始' : '向下卷动 · 开始显影 SCROLL TO DEVELOP'}</span>
+                        <span className={s.line} />
                     </div>
                 </section>
 
@@ -492,37 +751,52 @@ export default function DarkroomHome({ data }) {
                     <div className={s.reelHead}>
                         <div>
                             <div className={s.chEyebrow}>
-                                <span className={s.safeOn}>● SAFELIGHT ON 安全灯</span>
+                                <span className={s.safeOn}>{locale === 'ja' ? '● セーフライト点灯' : '● SAFELIGHT ON 安全灯'}</span>
                             </div>
                             <div className={s.reelTitle}>
-                                PEOPLE<span className={s.zh}>人</span>
+                                PEOPLE<span className={s.zh}>人</span><span className={s.ja}>人物</span>
                             </div>
                         </div>
                         <div className={s.reelMeta}>
                             <div>{fmtCounts(peopleCounts)}</div>
-                            <div className={s.note}>双卷同显 · 抓住胶片可以拖动</div>
+                            <div className={s.note}>
+                                {locale === 'en' ? 'Three rolls, developing together · drag the film to browse'
+                                    : locale === 'ja' ? '3本同時現像・フィルムをドラッグして操作できます'
+                                    : '三卷同显 · 抓住胶片可以拖动'}
+                            </div>
                         </div>
                     </div>
                     <FilmRow
                         photos={stripA}
                         cats={cats}
-                        speed={26}
-                        tall
-                        edge={edgeA}
+                        speed={34}
+                        size="tall"
                         frameBase={4}
                         flat={flat}
+                        scrollVelRef={scrollVelRef}
                     />
                     <FilmRow
                         photos={stripB}
                         cats={cats}
-                        speed={17}
+                        speed={20}
                         start={420}
-                        edge={edgeB}
+                        size="mid"
                         frameBase={12}
                         flat={flat}
+                        scrollVelRef={scrollVelRef}
+                    />
+                    <FilmRow
+                        photos={stripC}
+                        cats={cats}
+                        speed={10}
+                        start={160}
+                        size="short"
+                        frameBase={24}
+                        flat={flat}
+                        scrollVelRef={scrollVelRef}
                     />
                     <div className={s.reelFoot}>
-                        <span>TP-5063 PAN 400 · 24EXP × 2</span>
+                        <span>TP-5063 PAN 400 · 24EXP × 3</span>
                         <span>
                             <span className={s.cur}>DRAG 拖拽浏览</span> · CLICK 点开放大 · ALL {counts.people} IN INDEX
                         </span>
@@ -536,33 +810,30 @@ export default function DarkroomHome({ data }) {
                     <div className={s.chHead}>
                         <div className={s.chEyebrow}>
                             <span>CH.02 — 显影中 DEVELOPING</span>
-                            <span className={s.dim}>{fmtCounts(cityCounts)}</span>
+                            <span className={s.dim}>
+                                {fmtCounts(cityCounts)} ·{' '}
+                                {locale === 'en' ? 'DRAG THE LAYERS' : locale === 'ja' ? 'ドラッグできます' : 'DRAG 可拖动'}
+                            </span>
                         </div>
                         <h2 className={s.h2}>
-                            CITY<span className={s.zh}>城市</span>
+                            CITY<span className={s.zh}>城市</span><span className={s.ja}>街</span>
                         </h2>
                         <p className={s.chLine}>
-                            霓虹与骑楼之间，快门比脚步诚实。
+                            <span className={s.zh}>霓虹与骑楼之间，快门比脚步诚实。</span>
                             <span className={s.en}>BETWEEN NEON AND ARCADES, THE SHUTTER IS MORE HONEST THAN FOOTSTEPS.</span>
+                            <span className={s.ja}>ネオンとアーケードの間、シャッターは足取りより正直だ。</span>
                         </p>
                     </div>
-                    <div ref={cityRef} className={s.cityRows}>
+                    <div className={s.cityRows}>
                         {cityRows.map((row, ri) => (
-                            <div key={ri} className={`${s.crow} ${[s.crowA, s.crowB, s.crowC][ri % 3]}`}>
-                                {row.map((p, i) => (
-                                    <PhotoView key={p.p} src={getCdnFullUrl(p.p)}>
-                                        <div
-                                            className={s.citem}
-                                            style={{ aspectRatio: p.w && p.h ? `${p.w}/${p.h}` : '3/2' }}
-                                        >
-                                            <Img entry={p} />
-                                            <span className={s.cno}>
-                                                №{pad2(ri * 7 + i + 11)} {p.cat.toUpperCase()}
-                                            </span>
-                                        </div>
-                                    </PhotoView>
-                                ))}
-                            </div>
+                            <CityRow
+                                key={ri}
+                                row={row}
+                                ri={ri}
+                                cats={cats}
+                                flat={flat}
+                                scrollVelRef={scrollVelRef}
+                            />
                         ))}
                     </div>
                 </section>
@@ -574,76 +845,55 @@ export default function DarkroomHome({ data }) {
                     <div className={s.chHead}>
                         <div className={s.chEyebrow}>
                             <span>CH.03 — 白边方片 SQUARE PRINTS</span>
-                            <span className={s.dim}>{counts.wall} PRINTS · WHITE MATTE · 4 CATEGORIES</span>
+                            <span className={s.dim}>{wallTiles.length} PRINTS · WHITE MATTE · 4 CATEGORIES</span>
                         </div>
                         <h2 className={s.h2}>
-                            WALL<span className={s.zh}>墙</span>
+                            WALL<span className={s.zh}>墙</span><span className={s.ja}>壁</span>
                         </h2>
                         <p className={s.chLine}>
-                            这些年攒下的白边方片，一次钉成一面墙。
-                            <span className={s.en}>YEARS OF SQUARE PRINTS, PINNED INTO ONE WALL.</span>
+                            <span className={s.zh}>这些年攒下的白边方片，背面朝外钉了一墙 —— 走到这里，它们自己哗啦一片翻过来。</span>
+                            <span className={s.en}>YEARS OF SQUARE PRINTS, PINNED FACE-DOWN — REACH THE WALL AND THEY TURN THEMSELVES OVER.</span>
+                            <span className={s.ja}>長年撮り溜めた白フチ写真を裏返しに貼った —— ここまで来ると、ひとりでに一斉にめくれていく。</span>
                         </p>
                     </div>
                     <div className={s.wallWrap}>
-                        <div className={s.wallGrid}>
-                            {wall.map((p, i) => (
-                                <PhotoView key={p.p} src={getCdnFullUrl(p.p)}>
-                                    <div
-                                        className={`${s.wtile} ${s.devable} ${i === wallPicked ? s.picked : ''}`}
-                                        data-devable
-                                    >
-                                        <Img entry={p} variant="thumb" style={{ transitionDelay: `${(i % 10) * 50}ms` }} />
-                                        {i === wallPicked && (
-                                            <svg className={s.grease} viewBox="0 0 100 100" preserveAspectRatio="none">
-                                                <ellipse cx="50" cy="50" rx="46" ry="44" pathLength="100" transform="rotate(3 50 50)" />
-                                            </svg>
-                                        )}
-                                    </div>
-                                </PhotoView>
-                            ))}
+                        <div ref={wallViewportRef} className={s.wallViewport}>
+                            <WallGrid
+                                tiles={wallTiles}
+                                cols={wallGrid.cols}
+                                flipped={wallFlipped}
+                                settled={wallSettled}
+                                sourcePath={wallPreview ? wallPreview.entry.p : null}
+                                onOpen={openWallPreview}
+                            />
                         </div>
                         <div className={s.wallFoot}>
-                            <span>WALL №.01 — {counts.wall} PRINTS · 每张都可点开</span>
+                            <span>WALL №.01 — {wallTiles.length} PRINTS · 每张都可翻开</span>
                             <span>TAITAN_PASCAL · UTOPIA ARCHIVE</span>
                         </div>
                     </div>
                 </section>
 
-                {/* ———— epilogue: card on liquid gold ———— */}
-                <section ref={epiRef} className={s.epi} id="epi">
-                    <div className={s.gold}>
-                        {goldOn && !flat && <LiquidGoldCanvas className={s.goldCanvas} controls={false} />}
-                        <div className={`${s.epiCard} ${s.devable}`} data-devable>
-                            <PhotoView src={getCdnFullUrl(epi.p)}>
-                                <div
-                                    className={s.cardPh}
-                                    style={{ aspectRatio: epi.w && epi.h ? `${epi.w}/${epi.h}` : '3/2' }}
-                                >
-                                    <Img entry={epi} />
-                                </div>
-                            </PhotoView>
-                            <div className={s.cardBody}>
-                                <p className={s.zhBig}>
-                                    定影完成，挂起来晾干。
-                                    <br />
-                                    下一卷，从你开始。
-                                </p>
-                                <p className={s.en}>
-                                    FIXED, WASHED, HUNG TO DRY.
-                                    <br />
-                                    THE NEXT ROLL STARTS WITH YOU.
-                                </p>
-                                <div className={s.book}>
-                                    <div className={s.where}>常驻南京 · 东南大学 SEU.EDU.CN</div>
-                                    <div className={s.what}>婚礼 · 情侣 · 人像 · 街头 — 约拍全流程</div>
-                                    <Link className={s.cta} href="/photographer/order">
-                                        <span className={s.ctaZh}>预约拍摄</span>
-                                        <span className={s.ctaEn}>BOOK A SESSION</span>
-                                        <span className={s.ctaArr}>→</span>
-                                    </Link>
-                                </div>
-                            </div>
+                <div className={s.divider}>CH.04 ▸ 归档 THE ARCHIVE — 索引 INDEX</div>
+
+                {/* ———— closing chapter: the index, inline ———— */}
+                <section className={s.idxSec} id="idx">
+                    <div className={s.chHead}>
+                        <div className={s.chEyebrow}>
+                            <span>CH.04 — 索引 INDEX</span>
+                            <span className={s.dim}>{counts.cats} CATEGORIES · {counts.total} PRINTS</span>
                         </div>
+                        <h2 className={s.h2}>
+                            INDEX<span className={s.zh}>索引</span><span className={s.ja}>目次</span>
+                        </h2>
+                        <p className={s.chLine}>
+                            <span className={s.zh}>定影完成，归档入册 —— 点开任意一类，看完整画廊。</span>
+                            <span className={s.en}>FIXED AND FILED — ENTER ANY CATEGORY FOR THE FULL GALLERY.</span>
+                            <span className={s.ja}>定影を終えて、アーカイブへ —— カテゴリーを開くと完全なギャラリーが見られる。</span>
+                        </p>
+                    </div>
+                    <div className={s.idxList}>
+                        <CatRows cats={cats} />
                     </div>
                 </section>
 
@@ -660,38 +910,39 @@ export default function DarkroomHome({ data }) {
                     <div className={s.overlay} role="dialog" aria-modal="true" aria-label="category index">
                         <div className={s.ovHead}>
                             <div className={s.t}>
-                                INDEX<span className={s.zh}>全部分类</span>
+                                INDEX<span className={s.zh}>全部分类</span><span className={s.ja}>全カテゴリー</span>
                             </div>
                             <button className={s.ovClose} onClick={() => setOverlayOpen(false)}>
                                 CLOSE ✕
                             </button>
                         </div>
-                        <div>
-                            {cats.map((c, i) => (
-                                <Link key={c.name} className={s.ovRow} href={c.href}>
-                                    <span className={s.ovNo}>{pad2(i + 1)}</span>
-                                    <span className={s.ovName}>
-                                        {c.name}
-                                        <span className={s.zh}>{c.zh}</span>
-                                    </span>
-                                    <span className={s.ovThumbs}>
-                                        {c.thumbs.map(t => (
-                                            <span key={t} className={s.th}>
-                                                <DeferredImage src={getCdnThumbUrl(t)} alt="" />
-                                            </span>
-                                        ))}
-                                    </span>
-                                    <span className={s.ovCount}>
-                                        <b>{c.count}</b> 张
-                                    </span>
-                                    <span className={s.ovArr}>→</span>
-                                </Link>
-                            ))}
-                        </div>
+                        <CatRows cats={cats} />
                         <div className={s.ovFoot}>ENTER A CATEGORY TO VIEW THE FULL GALLERY — 点击进入完整画廊</div>
                     </div>
                 )}
+                {wallPreview && (
+                    <div className={s.wallLightbox} role="dialog" aria-modal="true" aria-label="Photo preview" onClick={event => {
+                        if (event.target === event.currentTarget) closeWallPreview()
+                    }}>
+                        <button className={s.wallPreviewClose} onClick={closeWallPreview} aria-label="Close photo preview">CLOSE ✕</button>
+                        <div
+                            className={`${s.wallLightboxCard} ${
+                                previewClosing ? s.wallLightboxClosing : previewArmed ? s.wallLightboxOpening : ''
+                            }`}
+                            style={{
+                                '--wall-dx': `${wallPreview.dx}px`,
+                                '--wall-dy': `${wallPreview.dy}px`,
+                                '--wall-scale': wallPreview.scale,
+                                '--wall-final-width': `${wallPreview.width}px`,
+                            }}
+                        >
+                            <Img entry={wallPreview.entry} variant="full" eager />
+                            <span>TP · {wallPreview.entry.cat.toUpperCase()} · ARCHIVE PRINT</span>
+                        </div>
+                    </div>
+                )}
             </PhotoProvider>
+            </ParallaxProvider>
         </div>
     )
 }

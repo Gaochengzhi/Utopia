@@ -10,7 +10,7 @@
 # 用法:
 #   ./upload.sh                    # 同步所有内容 (文章 + 图片)
 #   ./upload.sh --articles-only    # 只同步文章
-#   ./upload.sh --images-only      # 只同步图片
+#   ./upload.sh --images-only      # 发布摄影图库（R2 变体 + D1 摄影索引）
 #   ./upload.sh --full             # 全量重建 D1 (跳过增量，重新 seed)
 #   ./upload.sh --dry-run          # 预览模式，不做任何修改
 #   ./upload.sh --skip-images      # 跳过图片优化和同步
@@ -22,9 +22,9 @@
 #   Phase 1: optimize-images.mjs --no-sync — 本地图片转 webp
 #            (必须在索引构建之前完成,否则 D1 会记录已被转换删除的 .jpg)
 #   ┌─────────────────── Phase 2: 并行执行 ──────────────────┐
-#   │  Images:   sync-r2.mjs --dir .pic / photography → R2   │
+#   │  Images:   sync-r2.mjs → R2, then build-photo-variants │
 #   │  Articles: sync-r2.mjs --dir post → R2                 │
-#   │  Index:    build-content-index.mjs → SQL               │
+#   │  Index:    build-content-index.mjs → D1 SQL             │
 #   └────────────────────────────────────────────────────────┘
 #                         ↓ 全部完成后
 #   Phase 3: d1-seed-remote.sh → D1 数据库
@@ -144,7 +144,7 @@ fi
 if [ "$ARTICLES_ONLY" = true ]; then
   info "Mode: 仅同步文章"
 elif [ "$IMAGES_ONLY" = true ]; then
-  info "Mode: 仅同步图片"
+  info "Mode: 发布摄影图库（不触及文章与博客插图）"
 else
   info "Mode: 同步所有内容 (并行)"
 fi
@@ -203,8 +203,11 @@ run_images_sync() {
     exit 0
   fi
   {
-    "$NODE_BIN" scripts/sync-r2.mjs --dir .pic --delete $SYNC_EXTRA \
-      && "$NODE_BIN" scripts/sync-r2.mjs --dir photography --delete $SYNC_EXTRA
+    if [ "$IMAGES_ONLY" = false ]; then
+      "$NODE_BIN" scripts/sync-r2.mjs --dir .pic --delete $SYNC_EXTRA
+    fi
+    "$NODE_BIN" scripts/sync-r2.mjs --dir photography --delete $SYNC_EXTRA \
+      && "$NODE_BIN" scripts/build-photo-variants.mjs $DRY_FLAG
   } 2>&1 | stream_task "🖼️ 图片" "$CYAN" "$LOG_DIR/images.log"
 }
 
@@ -219,11 +222,11 @@ run_articles_r2() {
     | stream_task "📄 文章" "$BLUE" "$LOG_DIR/articles_r2.log"
 }
 
-# --- Task C: 构建文章索引 ---
+# --- Task C: 构建文章 / 摄影索引 ---
 run_build_index() {
   set -o pipefail
-  if [ "$IMAGES_ONLY" = true ] || [ "$SKIP_D1" = true ]; then
-    skip_msg "跳过: 文章索引构建"
+  if [ "$SKIP_D1" = true ]; then
+    skip_msg "跳过: 内容索引构建"
     exit 0
   fi
   local BUILD_ARGS=""
@@ -253,7 +256,7 @@ TASK_NAMES+=("📄 文章R2同步")
 
 run_build_index &
 PIDS+=($!)
-TASK_NAMES+=("📝 文章索引构建")
+TASK_NAMES+=("📝 内容索引构建")
 
 info "已启动 ${#PIDS[@]} 个并行任务，实时输出如下:"
 echo ""
@@ -283,7 +286,7 @@ fi
 # ============================================
 # 串行步骤: 上传 SQL 到 D1 (依赖 build_index 完成)
 # ============================================
-if [ "$IMAGES_ONLY" = false ] && [ "$SKIP_D1" = false ]; then
+if [ "$SKIP_D1" = false ]; then
   step "上传到 D1 数据库"
   
   SEED_FILE="scripts/d1-seed.sql"

@@ -41,18 +41,40 @@
   letter-spacing: 0.14em;
   color: var(--silverDim);
 }
-.chromeTl { top: 20px; left: 24px; }
-.chromeTl b { color: var(--silver); font-weight: 500; }
-.chromeTr { top: 14px; right: 24px; }
-.idxBtn {
+.chromeTl {
+  top: 16px;
+  left: 20px;
   display: flex;
   align-items: center;
   gap: 10px;
-  cursor: pointer;
-  border: 1px solid var(--rule);
-  background: rgba(14, 13, 11, 0.72);
-  backdrop-filter: blur(8px);
+  border: 1px solid rgba(217, 212, 203, 0.12);
+  background: rgba(18, 16, 13, 0.45);
+  backdrop-filter: blur(14px) saturate(1.3);
+  -webkit-backdrop-filter: blur(14px) saturate(1.3);
   padding: 9px 14px;
+}
+.chromeTl b { color: var(--silver); font-weight: 500; }
+.chromeTr {
+  top: 16px;
+  right: 24px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(217, 212, 203, 0.12);
+  background: rgba(18, 16, 13, 0.45);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(14px) saturate(1.3);
+  -webkit-backdrop-filter: blur(14px) saturate(1.3);
+}
+.idxBtn {
+  display: flex;
+  height: 31px;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  border: 0;
+  background: transparent;
+  padding: 0 14px;
   font-family: var(--mono);
   font-size: 11px;
   letter-spacing: 0.18em;
@@ -73,6 +95,7 @@
   flex-direction: column;
   gap: 24px;
   align-items: flex-end;
+  isolation: isolate;
 }
 .rail::before {
   content: '';
@@ -93,22 +116,51 @@
 }
 .tick {
   position: relative;
+  z-index: 0;
   display: flex;
   align-items: center;
   gap: 10px;
+  isolation: isolate;
   cursor: pointer;
   background: none;
   border: 0;
   padding: 0;
 }
+.tick::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: -17px;
+  right: -20px;
+  bottom: -17px;
+  left: -13rem;
+  opacity: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(8, 7, 6, 0), rgba(8, 7, 6, 0.1) 44%, rgba(8, 7, 6, 0.5) 100%);
+  backdrop-filter: blur(14px) saturate(1.2);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  -webkit-mask-image: radial-gradient(ellipse 105% 105% at 100% 50%, #000 5%, rgba(0, 0, 0, 0.8) 46%, transparent 88%);
+  mask-image: radial-gradient(ellipse 105% 105% at 100% 50%, #000 5%, rgba(0, 0, 0, 0.8) 46%, transparent 88%);
+  transform: translateX(10px) scaleX(0.86);
+  transform-origin: right center;
+  transition: opacity 0.32s ease, transform 0.52s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.railExpanded .tick::before {
+  opacity: var(--rail-haze-opacity, 0.3);
+  transform: translateX(0) scaleX(1);
+}
 .tick .lab {
   font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.16em;
-  color: var(--silverFaint);
-  opacity: 0;
-  transform: translateX(6px);
-  transition: 0.35s;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  color: var(--silver);
+  opacity: var(--rail-label-opacity, 0);
+  transform: translateX(var(--rail-label-offset, 10px)) scale(var(--rail-label-scale, 0.84));
+  transform-origin: right center;
+  transition:
+    opacity 0.34s ease-out,
+    transform 0.52s cubic-bezier(0.22, 1, 0.36, 1);
   white-space: nowrap;
 }
 .tick .no {
@@ -120,8 +172,12 @@
 .tick .dot { width: 11px; height: 1px; background: var(--silverFaint); transition: 0.3s; }
 .tickOn .no { color: var(--safe); }
 .tickOn .dot { background: var(--safe); width: 18px; box-shadow: 0 0 8px var(--safeDim); }
-.tickOn .lab, .rail:hover .lab { opacity: 1; transform: none; }
-.tickOn .lab { color: var(--silver); }
+.tickOn .lab {
+  color: #fffdf8;
+  --rail-label-opacity: 1;
+  --rail-label-offset: 0px;
+  --rail-label-scale: 1.14;
+}
 
 /* safelight ambient wash */
 .safelight {
@@ -133,47 +189,116 @@
   background: radial-gradient(120% 85% at 50% 0%, rgba(225, 78, 31, 0.32), transparent 62%);
 }
 
-/* ————— prologue: title + full-width banner band ————— */
+/* ————— prologue: text floats over a continuously drifting photo band ————— */
 .hero {
   position: relative;
-  min-height: 100vh;
+  height: 100vh;
+  min-height: 640px;
   overflow: hidden;
+}
+
+/*
+ * The band: all five banner picks, full-bleed, on an infinite marquee track
+ * (3 looped copies) that drifts left on its own — at native aspect ratio the
+ * five of them never quite fill one screen, so they slowly cycle through
+ * regardless of whether the page is scrolling.
+ */
+.heroBand {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  background: var(--film);
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  /* --hz: the parallax zoom, driven per frame by the scroll engine */
+  will-change: transform;
+}
+.heroBand img { -webkit-user-drag: none; }
+.heroTrack { display: flex; height: 100%; width: max-content; will-change: transform; }
+.heroSet { display: flex; height: 100%; gap: 3px; margin-right: 3px; }
+.panel {
+  position: relative;
+  flex: none;
+  height: 100%;
+  aspect-ratio: var(--fw);
+  overflow: hidden;
+}
+.panelClick { width: 100%; height: 100%; cursor: zoom-in; }
+.grabbing .panelClick { cursor: grabbing; }
+.panelParallax { width: 100%; height: 100%; }
+.panel img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  /* The third-party Parallax wrapper moves within this clipped panel; this
+     zoom provides the bleed needed to keep every edge covered. */
+  transform: translate3d(var(--drag-parallax-x, 0px), 0, 0) scale(calc(var(--hz, 1) + 0.24));
+  filter: blur(14px) brightness(0.3) contrast(0.6) sepia(0.25);
+  transition: filter 2s cubic-bezier(0.22, 0.61, 0.36, 1), opacity 1.6s ease;
+}
+.heroDeveloped .panel img {
+  opacity: 1;
+  filter: blur(0) brightness(0.97) contrast(1.02) sepia(0);
+}
+.panel:nth-child(1) img { transition-delay: 0.1s; }
+.panel:nth-child(2) img { transition-delay: 0.4s; }
+.panel:nth-child(3) img { transition-delay: 0.7s; }
+.panel:nth-child(4) img { transition-delay: 1s; }
+.panel:nth-child(5) img { transition-delay: 1.3s; }
+
+.heroShade {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(14, 13, 11, 0.5) 0%,
+    rgba(14, 13, 11, 0.08) 30%,
+    rgba(14, 13, 11, 0.1) 52%,
+    rgba(14, 13, 11, 0.86) 92%,
+    var(--paper) 100%
+  );
+}
+
+/*
+ * The title layer covers the whole prologue, so it must stay transparent to
+ * the pointer — otherwise it swallows every grab and click meant for the
+ * band beneath it. Only the booking card takes events back.
+ */
+.heroBody {
+  position: relative;
+  z-index: 3;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-end;
+  padding: 0 6vw 9vh;
+  pointer-events: none;
 }
-.heroBody { padding: 13vh 6vw 5vh; }
-.heroEyebrow {
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 0.32em;
-  color: var(--silverDim);
-  margin-bottom: 24px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
+.heroBody .book { pointer-events: auto; }
+.book.heroBook {
+  margin-top: 0;
+  margin-bottom: 26px;
+  border-top: none;
+  padding-top: 0;
 }
-.lamp {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--safe);
-  box-shadow: 0 0 12px var(--safe);
-  animation: lamp 3.2s ease-in-out infinite;
-  flex: none;
-}
-@keyframes lamp { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 .h1 {
   font-family: var(--disp);
   font-weight: 900;
   font-stretch: 125%;
-  font-size: clamp(36px, 7.2vw, 124px);
+  font-size: clamp(48px, 9.5vw, 168px);
   line-height: 0.92;
   letter-spacing: -0.015em;
   color: var(--silver);
   text-transform: uppercase;
   margin: 0;
   white-space: nowrap;
+  text-shadow: 0 4px 30px rgba(0, 0, 0, 0.45);
 }
 .h1 .u { color: var(--safe); }
 .heroSub {
@@ -185,6 +310,7 @@
 }
 .heroSub .zh { font-size: 18px; font-weight: 300; color: var(--silver); }
 .heroSub .en { font-family: var(--mono); font-size: 12px; letter-spacing: 0.1em; color: var(--silverDim); }
+.heroSub .ja { font-family: var(--mono); font-size: 12px; letter-spacing: 0.1em; color: var(--silverDim); }
 .heroMeta {
   font-family: var(--mono);
   font-size: 11px;
@@ -193,45 +319,6 @@
 }
 .heroMeta b { color: var(--silverDim); font-weight: 500; }
 
-/*
- * The band: all five banner picks, full-bleed. Each panel's flex weight ≈ its
- * visible aspect ratio, so the row height settles to 100vw/Σfw and portraits
- * stay nearly uncropped. The inner .bleed is 16% wider than the panel — the
- * hidden margin the scroll-linked leftward parallax moves through.
- */
-.heroBand {
-  position: relative;
-  display: flex;
-  gap: 3px;
-  background: var(--film);
-  width: 100%;
-}
-.panel {
-  position: relative;
-  flex: var(--fw) 1 0%;
-  min-width: 0;
-  aspect-ratio: var(--fw);
-  overflow: hidden;
-}
-.bleed { position: absolute; inset: 0 -8%; will-change: transform; }
-.bleed img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  cursor: zoom-in;
-  opacity: 0;
-  filter: blur(14px) brightness(0.3) contrast(0.6) sepia(0.25);
-  transition: filter 2s cubic-bezier(0.22, 0.61, 0.36, 1), opacity 1.6s ease;
-}
-.heroDeveloped .bleed img {
-  opacity: 1;
-  filter: blur(0) brightness(0.97) contrast(1.02) sepia(0);
-}
-.panel:nth-child(1) img { transition-delay: 0.1s; }
-.panel:nth-child(2) img { transition-delay: 0.4s; }
-.panel:nth-child(3) img { transition-delay: 0.7s; }
-.panel:nth-child(4) img { transition-delay: 1s; }
-.panel:nth-child(5) img { transition-delay: 1.3s; }
 .scrollcue {
   position: absolute;
   right: 26px;
@@ -262,7 +349,7 @@
 }
 
 /* ————— chapters shared ————— */
-.chHead { padding: 8vh 6vw 5vh; overflow: hidden; }
+.chHead { padding: clamp(38px, 5vh, 72px) 6vw clamp(20px, 3vh, 38px); overflow: hidden; }
 .chEyebrow {
   font-family: var(--mono);
   font-size: 11px;
@@ -295,8 +382,25 @@
   color: var(--silverDim);
   letter-spacing: 0.1em;
 }
+.h2 .ja {
+  font-weight: 700;
+  font-family: var(--cjk);
+  font-size: 0.42em;
+  vertical-align: 0.14em;
+  margin-left: 0.18em;
+  color: var(--silverDim);
+  letter-spacing: 0.1em;
+}
 .chLine { max-width: 560px; margin-top: 26px; color: var(--silverDim); font-size: 15px; }
 .chLine .en {
+  display: block;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: 0.06em;
+  color: var(--silverFaint);
+  margin-top: 8px;
+}
+.chLine .ja {
   display: block;
   font-family: var(--mono);
   font-size: 11.5px;
@@ -339,6 +443,14 @@
   margin-left: 0.2em;
   letter-spacing: 0.12em;
 }
+.reelTitle .ja {
+  font-family: var(--cjk);
+  font-weight: 700;
+  font-size: 0.44em;
+  color: var(--silverDim);
+  margin-left: 0.2em;
+  letter-spacing: 0.12em;
+}
 .reelMeta {
   text-align: right;
   font-family: var(--mono);
@@ -357,7 +469,7 @@
   touch-action: pan-y;
   user-select: none;
   -webkit-user-select: none;
-  margin-bottom: 30px;
+  margin-bottom: 12px;
 }
 .grabbing { cursor: grabbing; }
 .grabbing .frame .ph { cursor: grabbing; }
@@ -366,7 +478,7 @@
 .film {
   position: relative;
   background: var(--film);
-  padding: 30px 0 52px;
+  padding: 30px 0 42px;
   display: flex;
   width: max-content;
 }
@@ -400,11 +512,29 @@
 .frame { position: relative; margin: 0 10px; display: flex; flex-direction: column; }
 .frame .ph { overflow: hidden; background: #000; border: 1px solid #1b1815; cursor: zoom-in; }
 .mrowTall .frame .ph { height: clamp(230px, 36vh, 470px); }
+.mrowMid .frame .ph { height: clamp(200px, 31vh, 400px); }
 .mrowShort .frame .ph { height: clamp(170px, 27vh, 350px); }
-.frame img { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.92); }
+/* CITY carries more frames: two-thirds of PEOPLE's medium contact print. */
+.mrowCity .frame .ph { height: clamp(133px, 20.7vh, 267px); }
+/*
+ * --pz zooms each frame just past its crop so --py (set per row by the scroll
+ * engine, in % of the photo's own height) has somewhere to travel: the
+ * headroom (pz-1)/2 must stay above the row's data-par.
+ */
+.mrowTall { --pz: 1.24; }
+.mrowMid { --pz: 1.21; }
+.mrowShort { --pz: 1.18; }
+.mrowCity { --pz: 1.14; }
+.frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: translate3d(var(--drag-parallax-x, 0px), var(--py, 0%), 0) scale(var(--pz, 1));
+  filter: brightness(0.92);
+}
 .frame .fno {
   position: absolute;
-  bottom: -32px;
+  bottom: -20px;
   left: 2px;
   font-family: var(--mono);
   font-size: 9.5px;
@@ -413,7 +543,7 @@
 }
 .peoplecap {
   position: absolute;
-  bottom: -32px;
+  bottom: -20px;
   right: 2px;
   font-family: var(--mono);
   font-size: 9.5px;
@@ -437,21 +567,33 @@
 .cityRows {
   position: relative;
   overflow: hidden;
-  padding: 1vh 0 7vh;
+  padding: 1vh 0 6vh;
   display: flex;
   flex-direction: column;
-  gap: clamp(18px, 3vh, 38px);
+  gap: 0;
 }
+/* each layer is its own marquee: clipping box, looping track, three copies */
+.crowWrap {
+  position: relative;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.crowWrap img { -webkit-user-drag: none; }
+.ctrack { display: flex; width: max-content; will-change: transform; }
 .crow {
   display: flex;
   align-items: flex-start;
   gap: 14px;
   width: max-content;
-  will-change: transform;
+  margin-right: 14px;
 }
-.crowA { margin-left: -6vw; }
-.crowB { margin-left: -14vw; }
-.crowC { margin-left: -3vw; }
+/* depth: the fast middle layer is zoomed most and travels furthest */
+.crowA { --pz: 1.25; }
+.crowB { --pz: 1.32; }
+.crowC { --pz: 1.21; }
 .citem {
   position: relative;
   flex: none;
@@ -460,6 +602,7 @@
   border: 1px solid #1b1815;
   cursor: zoom-in;
 }
+.grabbing .citem { cursor: grabbing; }
 /* vw-based heights: row content width scales with the viewport, so every
    layer overflows and has room to drift on any screen width */
 .crowA .citem { height: clamp(180px, 20vw, 620px); }
@@ -473,6 +616,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transform: translate3d(var(--drag-parallax-x, 0px), var(--py, 0%), 0) scale(var(--pz, 1));
   filter: brightness(0.88) saturate(0.96);
   transition: filter 0.4s ease;
 }
@@ -489,21 +633,80 @@
   opacity: 0.85;
 }
 
-/* ————— CH.03 the matte wall ————— */
-.wallWrap { padding: 2vh 6vw 8vh; }
-.wallGrid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 10px; }
-.wtile { position: relative; overflow: visible; cursor: zoom-in; }
-.wtile img {
+/* ————— CH.03 the matte wall — prints pinned face-down, flipped by scroll ————— */
+.wallWrap { padding: 1vh 6vw 6vh; }
+.wallPreviewClose {
+  border: 1px solid var(--rule);
+  background: transparent;
+  color: var(--silver);
+  font: inherit;
+  cursor: pointer;
+}
+.wallViewport { perspective: 1600px; }
+/* columns (and rows — the wall is square) come from JS, which needs the count
+   anyway to time the diagonal cascade */
+.wallGrid {
+  display: grid;
+  gap: 10px;
+  perspective: 1600px;
+}
+.wtile { position: relative; aspect-ratio: 1 / 1; }
+/* the card: face-down (180°) until the wall enters view, then the whole grid
+   flips itself over in one burst — each card's transition-delay is set inline
+   from its diagonal distance. Exactly one half-turn, eased out: the bezier
+   used to overshoot, which read as the card flipping past and bouncing back */
+.wflip {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transform: rotateX(180deg);
+  transition: transform 0.8s cubic-bezier(0.22, 0.86, 0.24, 1);
+  will-change: transform;
+}
+.wallFlipped .wflip { transform: rotateX(0deg); }
+/* once the cascade has landed, hand the tiles' compositing layers back —
+   holding ~50 of them for the page's life starves the print-flip animation */
+.wallSettled .wflip { will-change: auto; }
+.wface,
+.wback {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.wface {
+  z-index: 1;
+  cursor: zoom-in;
+  outline: none;
+  transform-origin: 50% 58%;
+  transition: transform 0.32s cubic-bezier(0.22, 0.61, 0.36, 1), filter 0.32s ease;
+}
+.wface:hover,
+.wface:active { transform: translateY(-8px) scale(1.055); filter: brightness(1.04); }
+.wface:focus-visible { box-shadow: 0 0 0 2px var(--safe), 0 0 0 5px rgba(225, 78, 31, 0.24); }
+.wface img {
   width: 100%;
-  aspect-ratio: 1/1;
+  height: 100%;
   object-fit: cover;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45);
+  transition: box-shadow 0.3s ease;
+}
+.wface:hover img { box-shadow: 0 10px 30px rgba(0, 0, 0, 0.65); }
+/* the print has left the wall — the flying card is now that print, so the
+   tile just lifts and hands off rather than turning a flip of its own */
+.wallPreviewSource .wface {
   opacity: 0;
-  transform: translateY(10px);
-  transition: opacity 0.9s ease, transform 0.9s cubic-bezier(0.22, 0.61, 0.36, 1);
+  transform: translateY(-6px) scale(1.02);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+/* the back of the print: bare paper, nothing on it, and the same pure white as
+   the matte border baked into the front of every square print */
+.wback {
+  transform: rotateX(180deg);
+  overflow: hidden;
+  background: #fff;
   box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45);
 }
-.wtile.dev img { opacity: 1; transform: none; }
-.wtile:hover img { box-shadow: 0 10px 30px rgba(0, 0, 0, 0.65); }
 .wallFoot {
   margin-top: 26px;
   display: flex;
@@ -514,6 +717,67 @@
   font-size: 10px;
   letter-spacing: 0.2em;
   color: var(--silverFaint);
+}
+
+/* A wall print does not use the generic zoom viewer: it lifts off the wall and
+   simply eases up into the inspection light. No tumble, no rotation — the same
+   ease-out curve the rest of the page moves on. Position is animated with
+   transform only; the old keyframes drove `left`/`top`, which relaid out and
+   repainted the full-size print on every frame. */
+.wallLightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: rgba(5, 4, 3, 0.96);
+  animation: wallLightFade 0.35s ease both;
+}
+.wallPreviewClose {
+  position: fixed;
+  top: 24px;
+  right: 5vw;
+  z-index: 1;
+  padding: 8px 10px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.15em;
+}
+.wallPreviewClose:hover { border-color: var(--safe); color: var(--safe); }
+.wallLightboxCard {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  width: var(--wall-final-width);
+  padding: clamp(7px, 1.1vw, 15px) clamp(7px, 1.1vw, 15px) clamp(22px, 3vw, 42px);
+  background: #fff;
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.72), 0 2px 8px rgba(0, 0, 0, 0.35);
+  will-change: transform;
+  /* held on the tile until armed one paint later — see the arming effect */
+  opacity: 0.85;
+  transform: translate(-50%, -50%) translate3d(var(--wall-dx), var(--wall-dy), 0) scale(var(--wall-scale));
+}
+.wallLightboxOpening { animation: wallZoomIn 0.62s cubic-bezier(0.22, 0.86, 0.24, 1) both; }
+.wallLightboxCard img { display: block; width: 100%; max-height: 78vh; object-fit: contain; }
+.wallLightboxCard span { display: block; margin-top: 9px; color: #5e594f; font-family: var(--mono); font-size: 9px; letter-spacing: 0.16em; }
+.wallLightboxClosing { animation: wallZoomOut 0.42s cubic-bezier(0.4, 0, 0.3, 1) both; }
+@keyframes wallLightFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes wallZoomIn {
+  from {
+    opacity: 0.85;
+    transform: translate(-50%, -50%) translate3d(var(--wall-dx), var(--wall-dy), 0) scale(var(--wall-scale));
+  }
+  22% { opacity: 1; }
+  to { opacity: 1; transform: translate(-50%, -50%) translate3d(0, 0, 0) scale(1); }
+}
+@keyframes wallZoomOut {
+  from { opacity: 1; transform: translate(-50%, -50%) translate3d(0, 0, 0) scale(1); }
+  62% { opacity: 1; }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -50%) translate3d(var(--wall-dx), var(--wall-dy), 0) scale(var(--wall-scale));
+  }
 }
 
 /* grease pencil circle (wall) */
@@ -535,60 +799,22 @@
   stroke-dashoffset: 16;
 }
 
-/* ————— epilogue: card on liquid gold ————— */
-.epi { padding: 12vh 0 0; }
-.gold {
-  position: relative;
-  min-height: 88vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 9vh 6vw;
-  overflow: hidden;
-  background: radial-gradient(120% 100% at 50% 20%, #2e1f0a 0%, #1a1206 55%, #0f0a04 100%);
-}
-.goldCanvas { position: absolute !important; inset: 0; }
-.epiCard {
-  position: relative;
-  z-index: 2;
-  display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
-  gap: clamp(24px, 3.4vw, 52px);
-  align-items: center;
-  width: min(1140px, 100%);
-  background: rgba(12, 11, 9, 0.66);
-  border: 1px solid rgba(217, 212, 203, 0.16);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  padding: clamp(22px, 3vw, 44px);
-  box-shadow: 0 40px 120px rgba(0, 0, 0, 0.55);
-}
-.cardPh {
-  overflow: hidden;
-  background: #000;
-  cursor: zoom-in;
-  border: 1px solid rgba(217, 212, 203, 0.1);
-}
-.cardPh img { width: 100%; height: 100%; object-fit: cover; }
-.zhBig { font-size: clamp(24px, 2.3vw, 36px); font-weight: 300; line-height: 1.55; color: var(--silver); margin: 0; }
-.cardBody .en {
-  font-family: var(--mono);
-  font-size: 11.5px;
-  letter-spacing: 0.12em;
-  color: var(--silverDim);
-  margin: 16px 0 0;
-}
+/* ————— closing chapter: the index, inline ————— */
+.idxSec { padding: 4vh 0 10vh; }
+.idxList { padding: 0 6vw; }
 .book { margin-top: 36px; border-top: 1px solid rgba(217, 212, 203, 0.16); padding-top: 26px; }
-.book .where { font-family: var(--mono); font-size: 11px; letter-spacing: 0.18em; color: var(--silverDim); margin-bottom: 8px; }
-.book .what { font-size: 14px; color: var(--silverDim); margin-bottom: 28px; }
+.book .where { font-family: var(--mono); font-size: 13px; font-weight: 600; letter-spacing: 0.16em; color: var(--silver); margin-bottom: 24px; }
+.book .where .en { display: block; margin-top: 4px; font-size: 0.8em; font-weight: 500; color: var(--silverDim); }
 .cta {
   display: inline-flex;
   align-items: baseline;
   gap: 16px;
-  background: var(--safe);
-  border: 1px solid var(--safe);
-  color: #160b05;
+  background: rgba(201, 162, 57, 0.18);
+  border: 1px solid rgba(224, 189, 98, 0.55);
+  color: #f4dfa0;
   padding: 17px 32px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   transition: background 0.35s, border-color 0.35s, color 0.35s;
 }
 .cta .ctaZh {
@@ -605,7 +831,7 @@
   letter-spacing: 0.22em;
 }
 .cta .ctaArr { font-size: 19px; line-height: 1; transition: transform 0.3s; }
-.cta:hover { background: var(--silver); border-color: var(--silver); }
+.cta:hover { background: rgba(201, 162, 57, 0.34); border-color: rgba(224, 189, 98, 0.9); color: #fff3d6; }
 .cta:hover .ctaArr { transform: translateX(5px); }
 
 .foot {
@@ -644,6 +870,7 @@
   text-transform: uppercase;
 }
 .ovHead .t .zh { font-family: var(--cjk); font-size: 0.5em; font-weight: 700; color: var(--silverDim); margin-left: 0.3em; }
+.ovHead .t .ja { font-family: var(--cjk); font-size: 0.5em; font-weight: 700; color: var(--silverDim); margin-left: 0.3em; }
 .ovClose {
   cursor: pointer;
   font-family: var(--mono);
@@ -680,6 +907,7 @@
   transition: color 0.3s;
 }
 .ovName .zh { font-family: var(--cjk); font-weight: 400; font-size: 0.5em; color: var(--silverDim); margin-left: 14px; letter-spacing: 0.14em; }
+.ovName .ja { font-family: var(--cjk); font-weight: 400; font-size: 0.5em; color: var(--silverDim); margin-left: 14px; letter-spacing: 0.14em; }
 .ovRow:hover .ovName { color: #fff; }
 .ovThumbs { display: flex; gap: 6px; justify-content: flex-end; }
 .ovThumbs .th { width: 46px; height: 46px; overflow: hidden; border: 1px solid #1e1b17; flex: none; }
@@ -699,79 +927,109 @@
 
 /* ————— interstitial divider ————— */
 .divider {
-  padding: 5vh 6vw;
+  padding: clamp(22px, 3.5vh, 42px) 6vw;
   display: flex;
   align-items: center;
-  gap: 26px;
+  gap: 14px;
   font-family: var(--mono);
   font-size: 10px;
-  letter-spacing: 0.3em;
+  letter-spacing: 0.18em;
   color: var(--silverFaint);
   white-space: nowrap;
   overflow: hidden;
 }
 .divider::before,
-.divider::after { content: ''; height: 1px; background: var(--rule); flex: 1; }
+.divider::after {
+  content: '';
+  height: 1px;
+  flex: 1;
+  background: repeating-linear-gradient(90deg, var(--rule) 0 20px, transparent 20px 26px);
+}
 
 /* ————— responsive ————— */
 @media (max-width: 900px) {
   .rail { display: none; }
   .h1 { font-size: clamp(26px, 8.4vw, 148px); }
-  .heroBody { padding: 12vh 5vw 5vh; }
+  .heroBody { padding: 0 5vw 5vh; }
   .heroMeta { display: block; width: 100%; }
-  .heroBand { flex-wrap: wrap; row-gap: 3px; }
-  .panel { flex-basis: 30%; }
-  .panel:nth-child(5) { flex-basis: 60%; }
+  /* Narrow screens get a shorter photo stage instead of stretching every
+     banner to 100vh. The remaining lower area belongs to the title, so the
+     portrait subject stays visible from head to hem rather than being hidden
+     behind the copy. */
+  .heroBand { bottom: auto; height: 72svh; max-height: 680px; }
+  .panel img {
+    transform: translate3d(var(--drag-parallax-x, 0px), 0, 0) scale(calc(var(--hz, 1) + 0.1));
+  }
   .scrollcue { display: none; }
   .h2 { white-space: normal; }
-  .chHead { padding: 7vh 5vw 4vh; }
+  .chHead { padding: 5vh 5vw 3vh; }
   .reelHead { padding: 0 5vw 4vh; flex-direction: column; }
   .reelMeta { text-align: left; }
   .mrowTall .frame .ph { height: clamp(180px, 44vw, 340px); }
+  .mrowMid .frame .ph { height: clamp(160px, 39vw, 300px); }
   .mrowShort .frame .ph { height: clamp(140px, 34vw, 260px); }
+  .mrowCity .frame .ph { height: clamp(108px, 21vw, 180px); }
+  .mrowTall { --pz: 1.15; }
+  .mrowMid { --pz: 1.13; }
+  .mrowShort { --pz: 1.12; }
   .reelFoot { padding: 2vh 5vw 0; }
   .crowA .citem { height: clamp(120px, 30vw, 240px); }
   .crowB .citem { height: clamp(140px, 36vw, 280px); }
   .crowC .citem { height: clamp(100px, 25vw, 200px); }
-  .wallGrid { grid-template-columns: repeat(4, 1fr); gap: 8px; }
-  .gold { padding: 8vh 5vw; }
-  .epiCard { grid-template-columns: 1fr; gap: 22px; }
+  .crowA { --pz: 1.16; }
+  .crowB { --pz: 1.18; }
+  .crowC { --pz: 1.14; }
+  .wallGrid { gap: 5px; } /* the column count is set inline, from wallGridFor() */
   .ovRow { grid-template-columns: 34px 1fr 60px; gap: 14px; }
   .ovThumbs, .ovArr { display: none; }
   .chromeTl { left: 5vw; }
-  .chromeTl span { display: none; }
   .chromeTr { right: 5vw; }
 }
 
 /* ————— flat (QA screenshots) ————— */
 .flat .hero { min-height: 0; }
+.flat .heroBand, .flat .heroTrack { transform: none !important; }
 .flat .heroBody { padding: 90px 6vw 40px; }
 .flat .rail, .flat .safelight, .flat .scrollcue { display: none; }
 .flat .bleed img { opacity: 1; filter: none; transition: none; }
-.flat .chHead { padding: 90px 6vw 50px; }
-.flat .divider { padding: 56px 6vw; }
+.flat .chHead { padding: 56px 6vw 28px; }
+.flat .divider { padding: 30px 6vw; }
 .flat .reel { padding: 60px 0 30px; }
 .flat .reelHead { padding: 0 4vw 40px; }
 .flat .mtrack { display: block; width: auto; transform: none !important; }
 .flat .film { flex-wrap: wrap; width: auto; padding: 30px 4vw 40px; }
 .flat .frame { margin-bottom: 40px; }
-.flat .mrowTall .frame .ph, .flat .mrowShort .frame .ph { height: 300px; }
-.flat .mrow { cursor: default; margin-bottom: 20px; }
+.flat .mrowTall .frame .ph, .flat .mrowMid .frame .ph, .flat .mrowShort .frame .ph { height: 300px; }
+.flat .mrowCity .frame .ph { height: 200px; }
+.flat .mrow { cursor: default; margin-bottom: 10px; }
 .flat .reelFoot { padding: 20px 4vw 0; }
-.flat .cityRows { gap: 24px; padding-bottom: 60px; }
-.flat .crow { flex-wrap: wrap; width: auto; margin-left: 0 !important; padding: 0 4vw; row-gap: 22px; transform: none !important; }
+.flat .cityRows { gap: 0; padding-bottom: 60px; }
+.flat .crowWrap { cursor: default; overflow: visible; }
+.flat .ctrack { display: block; width: auto; transform: none !important; }
+.flat .crow { flex-wrap: wrap; width: auto; margin-right: 0; padding: 0 4vw; row-gap: 22px; }
 .flat .crowA .citem, .flat .crowB .citem, .flat .crowC .citem { height: 240px; margin-top: 0; }
+.flat .panelParallax, .flat .panel img, .flat .frame img, .flat .citem img { transform: none !important; }
 .flat .devable img { opacity: 1; filter: none; transform: none; transition: none; }
-.flat .wtile img { opacity: 1; transform: none; transition: none; }
+.flat .wflip { transform: none !important; }
 .flat .grease ellipse { stroke-dashoffset: 16; transition: none; }
 .flat .wallWrap { padding: 30px 6vw 90px; }
-.flat .epi { padding: 100px 0 0; }
-.flat .gold { min-height: 0; padding: 90px 6vw; }
+.flat .idxSec { padding: 40px 0 90px; }
 
 /* ————— reduced motion ————— */
 @media (prefers-reduced-motion: reduce) {
   .root * { animation: none !important; transition: none !important; }
   .devable img, .bleed img { opacity: 1; filter: none; transform: none; }
-  .wtile img { opacity: 1; transform: none; }
+  .wflip { transform: none !important; }
+  /* with the flight suppressed, the card still has to land centred and opaque */
+  .wallLightboxCard { opacity: 1; transform: translate(-50%, -50%); }
   .grease ellipse { stroke-dashoffset: 16; }
 }
+
+/* ————— i18n: EN/JA mode hides the alternate-language captions ————— */
+.ja { display: none; }
+[data-lang="zh"] .en { display: none; }
+[data-lang="en"] .zh { display: none; }
+[data-lang="ja"] .zh { display: none; }
+[data-lang="ja"] .en { display: none; }
+[data-lang="ja"] .ja { display: inline; }
+[data-lang="ja"] p.ja { display: block; }

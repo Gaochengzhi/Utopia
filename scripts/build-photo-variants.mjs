@@ -1,14 +1,11 @@
 #!/usr/bin/env node
 
-import fs from 'fs'
-import path from 'path'
 import { GetObjectCommand, ListObjectsV2Command, PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import pLimit from 'p-limit'
 import sharp from 'sharp'
 import { loadProjectEnv } from './load-env.mjs'
 
-const ROOT = process.cwd()
-loadProjectEnv(ROOT)
+loadProjectEnv(process.cwd())
 
 const VARIANTS = {
   thumb: { prefix: 'thumb-v3', size: 480, quality: 70 },
@@ -36,17 +33,8 @@ function requireConfig() {
   return { accountId, accessKeyId, secretAccessKey }
 }
 
-function toKey(publicPath) {
-  return String(publicPath || '').replace(/^\/+/, '')
-}
-
 function variantKey(sourceKey, variant) {
   return sourceKey.replace(/^photography\/content\//, `photography/${VARIANTS[variant].prefix}/`)
-}
-
-function sourceCandidates(sourceKey) {
-  if (/\.webp$/i.test(sourceKey)) return [sourceKey]
-  return [sourceKey, sourceKey.replace(/\.(?:jpe?g|png|gif|bmp)$/i, '.webp')]
 }
 
 async function listKeys(client, prefix) {
@@ -65,16 +53,8 @@ async function listKeys(client, prefix) {
 }
 
 async function readSource(client, sourceKey) {
-  for (const key of sourceCandidates(sourceKey)) {
-    try {
-      const response = await client.send(new GetObjectCommand({ Bucket: BUCKET, Key: key }))
-      return Buffer.from(await response.Body.transformToByteArray())
-    } catch (error) {
-      const status = error?.$metadata?.httpStatusCode
-      if (status !== 404 && error?.name !== 'NoSuchKey') throw error
-    }
-  }
-  throw new Error(`Source not found: ${sourceKey}`)
+  const response = await client.send(new GetObjectCommand({ Bucket: BUCKET, Key: sourceKey }))
+  return Buffer.from(await response.Body.transformToByteArray())
 }
 
 async function main() {
@@ -91,10 +71,12 @@ async function main() {
       secretAccessKey: config.secretAccessKey,
     },
   })
-  const manifestPath = path.join(ROOT, 'lib', 'data', 'photoManifest.json')
-  const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'))
-  const sourceKeys = [...new Set(manifest.photos.map(photo => toKey(photo.path)))]
-    .filter(key => key.startsWith('photography/content/'))
+  // Source discovery must come from R2 rather than the checked-in layout
+  // manifest. A photographer can add images on the content machine without
+  // making a code commit; after the source sync, this finds precisely those
+  // newly uploaded files and creates only their missing presentation variants.
+  const sourceKeys = [...await listKeys(client, 'photography/content/')]
+    .filter(key => /\.(?:jpe?g|png|gif|webp|bmp)$/i.test(key))
 
   const existingByVariant = new Map()
   for (const variant of selectedVariants) {
@@ -107,7 +89,7 @@ async function main() {
   }
   if (limitArg > 0) jobs = jobs.slice(0, limitArg)
 
-  console.log(`Photos: ${sourceKeys.length}`)
+  console.log(`Photography sources: ${sourceKeys.length}`)
   console.log(`Variants: ${selectedVariants.join(', ')}`)
   console.log(`Missing outputs: ${jobs.length}${FORCE ? ' (force mode)' : ''}`)
   if (DRY_RUN || jobs.length === 0) return

@@ -382,6 +382,10 @@ node scripts/optimize-images.mjs --force       # 强制全量重处理
 node scripts/optimize-images.mjs --scope blog         # 仅博客图片
 node scripts/optimize-images.mjs --scope photography  # 仅摄影图片
 node scripts/optimize-images.mjs --no-sync     # 仅本地压缩，不上传 R2
+node scripts/build-photo-variants.mjs          # 仅为缺失的摄影缩略/预览图生成 R2 变体
+
+# 在保存完整摄影图库的图片机上执行：
+npm run upload:images                          # 压缩新图、同步 R2、生成变体并刷新 D1 摄影索引
 ```
 
 ---

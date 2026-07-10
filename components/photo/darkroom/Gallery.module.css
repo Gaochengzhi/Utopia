@@ -35,14 +35,28 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 22px 5vw 0;
+  padding: 16px 5vw 0;
   font-family: var(--mono);
   font-size: 11px;
   letter-spacing: 0.16em;
   color: var(--silverDim);
 }
-.back { transition: color 0.3s; }
-.back:hover { color: var(--silver); }
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 36px;
+  box-sizing: border-box;
+  padding: 9px 14px;
+  border: 1px solid rgba(217, 212, 203, 0.12);
+  background: rgba(18, 16, 13, 0.45);
+  backdrop-filter: blur(14px) saturate(1.3);
+  -webkit-backdrop-filter: blur(14px) saturate(1.3);
+  color: var(--silver);
+  transition: border-color 0.3s, background 0.3s, color 0.3s;
+}
+.back:hover { border-color: rgba(217, 212, 203, 0.42); background: rgba(28, 25, 20, 0.62); }
+.backMark { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.25; stroke-linejoin: round; }
 .pos b { color: var(--safe); font-weight: 500; }
 
 /* ————— category strip ————— */
@@ -102,6 +116,15 @@
   color: var(--silverDim);
   letter-spacing: 0.1em;
 }
+.h1 .ja {
+  font-family: var(--cjk);
+  font-weight: 700;
+  font-size: 0.4em;
+  vertical-align: 0.16em;
+  margin-left: 0.2em;
+  color: var(--silverDim);
+  letter-spacing: 0.1em;
+}
 
 /* ————— develop-in ————— */
 .devable img {
@@ -117,24 +140,16 @@
     transform 1.2s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
-/* ————— lead print ————— */
-.leadWrap { padding: 0 5vw 3vh; display: flex; justify-content: center; }
-.lead {
-  background: var(--paper2);
-  border: 1px solid var(--rule);
-  padding: 12px 12px 0;
-  width: min(100%, calc(66vh * var(--ar)));
-}
-.lead .ph { overflow: hidden; background: #000; cursor: zoom-in; }
-.lead img { width: 100%; height: 100%; object-fit: cover; }
-.lead .cap {
+/* ————— lead row: a few big prints filling the full width ————— */
+.leadWrap { padding: 0 2.5vw 2vh; }
+.leadCap {
   display: flex;
   justify-content: space-between;
   gap: 14px;
-  padding: 10px 2px 11px;
+  padding: 12px 2vw 0;
   font-family: var(--mono);
   font-size: 10px;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.16em;
   color: var(--silverFaint);
 }
 
@@ -181,7 +196,7 @@
 }
 .jrow { display: flex; gap: 10px; margin-bottom: 10px; }
 .jrow:last-child { margin-bottom: 0; }
-.jit { position: relative; flex: 1 1 0%; min-width: 0; }
+.jit { position: relative; flex: 1 1 0%; min-width: 0; display: flex; flex-direction: column; }
 .jit .ph {
   overflow: hidden;
   background: #000;
@@ -198,16 +213,27 @@
 }
 .jit:hover img { filter: brightness(1.02); }
 .jit .fno {
-  position: absolute;
-  right: 7px;
-  bottom: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 23px;
+  padding: 4px 7px;
+  border: 1px solid #1b1815;
+  border-top: 0;
+  background: #080706;
   font-family: var(--mono);
   font-size: 8.5px;
+  line-height: 15px;
   letter-spacing: 0.18em;
-  color: rgba(217, 212, 203, 0.75);
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+  color: rgba(217, 212, 203, 0.68);
+  white-space: nowrap;
+  overflow: hidden;
   pointer-events: none;
 }
+.filmDate { color: var(--silverFaint); }
 .jpad { flex: 1 1 0%; min-width: 0; }
 
 /* ————— foot ————— */
@@ -269,21 +295,26 @@
 /* ————— responsive ————— */
 @media (max-width: 760px) {
   .head { padding: 5vh 5vw 4vh; }
-  .lead { width: 100%; }
+  .h1 { font-size: clamp(36px, 12vw, 54px); }
   .roll { padding: 36px 3vw 30px; }
-  .jrow { display: block; margin-bottom: 0; }
-  .jit { margin-bottom: 10px; }
-  .jit .fno { right: 9px; bottom: 8px; }
-  .jpad { display: none; }
-  .nextRow { grid-template-columns: 1fr; }
-  .nayR { text-align: left; align-items: flex-start; }
+  /* Keep the contact-sheet rhythm on a narrow screen: a portrait no longer
+     monopolises the viewport, while landscapes still earn a wider share of
+     the row through their existing flex-grow aspect ratio. */
+  .jrow { display: flex; gap: 6px; margin-bottom: 6px; }
+  .jit { margin-bottom: 0; }
+  .jit .fno { gap: 6px; min-height: 20px; padding: 3px 5px; font-size: 7.5px; line-height: 14px; }
+  .filmDate { display: none; }
+  .jpad { display: block; }
+  .nextRow { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+  .nay { min-width: 0; padding: 20px 4px; gap: 7px; }
+  .nayName { font-size: clamp(18px, 6vw, 26px); }
+  .nayName i { display: block; margin: 5px 0 0; font-size: 0.42em; }
 }
 
 /* ————— flat (QA) ————— */
 .flat .devable img { opacity: 1; filter: none; transform: none; transition: none; }
 .flat .head { padding: 60px 5vw 40px; }
 .flat .leadWrap { padding-bottom: 30px; }
-.flat .lead { width: min(100%, 720px); }
 .flat .roll { margin: 50px 0; }
 .flat .foot { padding: 50px 5vw 40px; }
 
@@ -292,3 +323,10 @@
   .root * { animation: none !important; transition: none !important; }
   .devable img { opacity: 1; filter: none; transform: none; }
 }
+
+/* ————— i18n: EN/JA mode hides the alternate-language captions ————— */
+.ja { display: none; }
+[data-lang="en"] .zh { display: none; }
+[data-lang="ja"] .zh { display: none; }
+[data-lang="ja"] .en { display: none; }
+[data-lang="ja"] .ja { display: inline; }

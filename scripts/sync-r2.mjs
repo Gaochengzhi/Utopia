@@ -32,6 +32,11 @@
  * dir is empty/missing or when it would remove more than max(50, 25%) of
  * the remote objects under a prefix — this protects against running the
  * sync on a machine that doesn't hold the full content set.
+ *
+ * Photography display variants (thumb and preview prefixes) are intentionally generated
+ * directly in R2 and are not kept in public/photography. They are therefore
+ * excluded from `--delete`, otherwise a normal source sync would erase the
+ * optimized assets that the gallery requests.
  */
 
 import { S3Client, PutObjectCommand, HeadObjectCommand, ListObjectsV2Command, DeleteObjectCommand } from '@aws-sdk/client-s3'
@@ -65,6 +70,10 @@ const CONTENT_TYPE_MAP = {
   '.md': 'text/markdown; charset=utf-8',
   '.mdx': 'text/markdown; charset=utf-8',
   '.txt': 'text/plain; charset=utf-8',
+}
+
+function isGeneratedPhotographyVariant(key) {
+  return /^photography\/(?:thumb|thumb-v\d+|preview|preview-v\d+)\//.test(key)
 }
 
 function getContentType(filePath) {
@@ -377,7 +386,9 @@ async function main() {
 
     // Delete remote files not present locally (if --delete flag)
     if (DO_DELETE) {
-      const deleteCandidates = [...remoteMap.keys()].filter(k => !localMap.has(k))
+      const deleteCandidates = [...remoteMap.keys()].filter(
+        k => !localMap.has(k) && !isGeneratedPhotographyVariant(k)
+      )
 
       // Safety guards: "local wins" deletion is catastrophic when run on a
       // machine that doesn't hold the full content set (e.g. the dev machine
@@ -399,7 +410,7 @@ async function main() {
 
       let dirDeleted = 0
       for (const [remoteKey] of remoteMap) {
-        if (!localMap.has(remoteKey)) {
+        if (!localMap.has(remoteKey) && !isGeneratedPhotographyVariant(remoteKey)) {
           if (DRY_RUN) {
             console.log(`   [DRY DELETE] ${remoteKey}`)
             dirDeleted++
