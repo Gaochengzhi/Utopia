@@ -201,10 +201,9 @@ export default function WaterfallCards({ initialPosts, totalPosts, isAuthenticat
 
         for (const line of lines) {
             const trimmed = line.trim()
-            if (trimmed && !trimmed.startsWith('!')) {
-                const parsed = trimmed.replace(/[#*_~`\[\]]/g, '').trim()
-                if (parsed) return parsed
-            }
+            if (!trimmed || trimmed.startsWith('!') || trimmed.startsWith('<')) continue
+            const parsed = trimmed.replace(/<[^>]+>/g, '').replace(/[#*_~`\[\]]/g, '').trim()
+            if (parsed) return parsed
         }
 
         return fallbackTitle || '无标题'
@@ -226,6 +225,15 @@ export default function WaterfallCards({ initialPosts, totalPosts, isAuthenticat
         text = text.replace(/```[\s\S]*?```/g, '')
         // 移除行内代码
         text = text.replace(/`[^`]+`/g, '')
+        // iframe / video / raw HTML — cards are text excerpts, not a second renderer
+        text = text.replace(/<(iframe|script|style|svg|video|object|embed)[\s\S]*?<\/\1>/gi, '')
+        text = text.replace(/<!--[\s\S]*?-->/g, '')
+        text = text.replace(/<[^>]+>/g, '')
+        text = text.replace(/&nbsp;/gi, ' ')
+        text = text.replace(/&amp;/g, '&')
+        text = text.replace(/&lt;/g, '<')
+        text = text.replace(/&gt;/g, '>')
+        text = text.replace(/&quot;/g, '"')
         // 移除链接
         text = text.replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1')
         // 移除图片

@@ -61,6 +61,9 @@ function stripMarkdown(content) {
   return content
     .replace(/```[\s\S]*?```/g, '')     // code blocks
     .replace(/`[^`]*`/g, '')             // inline code
+    .replace(/<(iframe|script|style|svg|video|object|embed)[\s\S]*?<\/\1>/gi, '')
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/<[^>]+>/g, '')             // remaining HTML tags
     .replace(/!\[.*?\]\(.*?\)/g, '')     // images
     .replace(/\[([^\]]*)\]\(.*?\)/g, '$1')  // links → text
     .replace(/#{1,6}\s/g, '')             // headings
