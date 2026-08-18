@@ -47,7 +47,8 @@ function slugify(text) {
  * Creates a heading component factory that assigns deterministic IDs.
  * Uses a shared counter ref so duplicate headings get unique suffixes.
  */
-function createHeadingRenderer(slugCounterRef) {
+function createHeadingRenderer(slugCounterRef, wrapFirstH1) {
+    let firstH1Wrapped = false
     return function HeadingComponent({ node, children, ...props }) {
         const Tag = node.tagName // h1, h2, etc.
         const text = extractText(children)
@@ -62,7 +63,12 @@ function createHeadingRenderer(slugCounterRef) {
             counter[slug] = 0
         }
 
-        return <Tag id={slug} {...props}>{children}</Tag>
+        const heading = <Tag id={slug} {...props}>{children}</Tag>
+        if (wrapFirstH1 && Tag === "h1" && !firstH1Wrapped) {
+            firstH1Wrapped = true
+            return wrapFirstH1(heading)
+        }
+        return heading
     }
 }
 
@@ -74,19 +80,46 @@ function extractText(children) {
     return ""
 }
 
-export default function MarkdownArticle({ content }) {
+function contentHasH1(content) {
+    if (!content) return false
+    const lines = content.replace(/\r\n/g, "\n").split("\n")
+    let inCodeBlock = false
+    for (const line of lines) {
+        if (/^```/.test(line.trim())) {
+            inCodeBlock = !inCodeBlock
+            continue
+        }
+        if (inCodeBlock) continue
+        if (/^#\s+\S/.test(line)) return true
+    }
+    return false
+}
+
+export default function MarkdownArticle({ content, meta }) {
     // Reset slug counter on every render so IDs match the Toc parse order
     const slugCounterRef = useRef({})
     slugCounterRef.current = {}
 
-    const HeadingRenderer = createHeadingRenderer(slugCounterRef)
+    const wrapFirstH1 = meta
+        ? (heading) => (
+            <header className="article-head">
+                {heading}
+                {meta}
+            </header>
+        )
+        : null
+
+    const HeadingRenderer = createHeadingRenderer(slugCounterRef, wrapFirstH1)
+    const showMetaAbove = Boolean(meta) && !contentHasH1(content)
 
     return (
-        <ReactMarkdown
-            className="markdown-body lg:max-w-3xl p-4 mylist text-ink mx-auto"
-            remarkPlugins={[remarkGfm, remarkMath]}
-            rehypePlugins={[[rehypeKatex, { strict: false }], rehypeRaw]}
-            components={{
+        <div className="lg:max-w-3xl mx-auto p-4">
+            {showMetaAbove ? <header className="article-head">{meta}</header> : null}
+            <ReactMarkdown
+                className="markdown-body mylist text-ink"
+                remarkPlugins={[remarkGfm, remarkMath]}
+                rehypePlugins={[[rehypeKatex, { strict: false }], rehypeRaw]}
+                components={{
                 h1: HeadingRenderer,
                 h2: HeadingRenderer,
                 h3: HeadingRenderer,
@@ -181,5 +214,6 @@ export default function MarkdownArticle({ content }) {
         >
             {content}
         </ReactMarkdown>
+        </div>
     )
 }

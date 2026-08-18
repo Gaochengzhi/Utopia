@@ -359,6 +359,31 @@
     color: rgb(var(--c-ink)) !important;
 }
 
+.article-head {
+    text-align: center;
+    margin-bottom: 2.25rem;
+    padding-top: 1.25rem;
+}
+
+.article-head > h1 {
+    border-bottom: none !important;
+    padding-bottom: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: 0.55rem !important;
+}
+
+.article-kicker {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: baseline;
+    gap: 0.35em 0.55em;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.14em;
+    color: rgb(var(--c-ink2));
+}
+
 .markdown-body h1,
 .markdown-body h2,
 .markdown-body h3,

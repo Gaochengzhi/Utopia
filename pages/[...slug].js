@@ -113,6 +113,25 @@ export default function Post({ contents, filename, status, folderContents, folde
 
     // Use dynamic content (from protected API) if available, otherwise static props content
     const displayContent = dynamicContent || contents
+    const category = (folderPath || '').replace(/^post\/?/, '').split('/').filter(Boolean)[0] || 'UTOPIA'
+    const publishedOn = formatStampDate(updatedAt)
+    const articleMeta = (
+        <div className="article-kicker">
+            {isProtected && (
+                <>
+                    <span>私密</span>
+                    <span aria-hidden="true">·</span>
+                </>
+            )}
+            <span>{category}</span>
+            {publishedOn && (
+                <>
+                    <span aria-hidden="true">·</span>
+                    <span>{publishedOn}</span>
+                </>
+            )}
+        </div>
+    )
 
     return (
         <>
@@ -136,16 +155,7 @@ export default function Post({ contents, filename, status, folderContents, folde
                             <Toc content={displayContent} />
                         </div>
                         <div className="flex-1 max-w-4xl mx-auto min-w-0">
-                            {/* 票据式文章头：编号行 */}
-                            <div className="lg:max-w-3xl mx-auto px-4 pt-8">
-                                <div className="tk-meta tk-dbl pt-3">
-                                    <span>{(folderPath || '').replace(/^post\/?/, '') || 'UTOPIA'}</span>
-                                    <span className="tk-leader" />
-                                    {isProtected && <span className="mr-2">私密 ·</span>}
-                                    <span>{formatStampDate(updatedAt) || 'UTOPIA PRESS'}</span>
-                                </div>
-                            </div>
-                            <MarkdownArticle content={displayContent} />
+                            <MarkdownArticle content={displayContent} meta={articleMeta} />
                             <PageView slug={folderPath + '/' + filename} />
                             <div className="pb-10">
                                 <Footer />
