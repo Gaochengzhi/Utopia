@@ -311,10 +311,7 @@ export default function WaterfallCards({ initialPosts, totalPosts, isAuthenticat
             )}
             <span>{categoryOf(post)}</span>
             {formatDate(post.time) && (
-                <>
-                    <span className="mx-1">·</span>
-                    <span>{formatDate(post.time)}</span>
-                </>
+                <span className="ml-1">· {formatDate(post.time)}</span>
             )}
         </div>
     )

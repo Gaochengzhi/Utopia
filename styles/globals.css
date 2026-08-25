@@ -1089,7 +1089,8 @@ pre .token-line,
 @layer components {
     /* 卡片编号行、页脚行的容器：mono 小字 + 点线 */
     .tk-meta {
-        @apply flex items-baseline font-mono text-[0.7rem] tracking-[0.12em] text-ink2 whitespace-nowrap;
+        @apply flex flex-wrap items-baseline font-mono text-[0.7rem] tracking-[0.12em] text-ink2 whitespace-nowrap;
+        row-gap: 0.25rem;
     }
 
     .tk-leader {
