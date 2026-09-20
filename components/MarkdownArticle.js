@@ -1,7 +1,6 @@
 import ReactMarkdown from "react-markdown"
-import remarkMath from "remark-math"
 import rehypeKatex from "rehype-katex"
-import remarkGfm from "remark-gfm"
+import { markdownPlugins } from "/lib/markdownPlugins.mjs"
 import rehypeRaw from "rehype-raw"
 // PrismAsyncLight loads language grammars on demand instead of bundling the
 // full Prism registry. The full build was a major memory cost in the
@@ -115,7 +114,7 @@ export default function MarkdownArticle({ content, meta }) {
             {showMetaAbove ? <header className="article-head">{meta}</header> : null}
             <ReactMarkdown
                 className="markdown-body mylist text-ink"
-                remarkPlugins={[remarkGfm, remarkMath]}
+                remarkPlugins={markdownPlugins}
                 rehypePlugins={[[rehypeKatex, { strict: false }], rehypeRaw]}
                 components={{
                 h1: HeadingRenderer,

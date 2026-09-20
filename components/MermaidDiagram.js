@@ -83,12 +83,13 @@ export default function MermaidDiagram({ chart }) {
                         el.style.removeProperty("background")
                         el.style.removeProperty("background-color")
                     })
-                    // Keep labels readable on phones; wide diagrams scroll locally.
+                    // Keep the intrinsic size of small diagrams, but shrink wide
+                    // diagrams to the article on every screen (no forced zoom).
                     const naturalWidth = svgEl.viewBox.baseVal.width
                     if (naturalWidth) {
                         svgEl.style.width = `${naturalWidth}px`
-                        svgEl.style.minWidth = `${Math.min(naturalWidth, Math.max(640, naturalWidth * 0.8))}px`
                     }
+                    svgEl.style.minWidth = "0"
                     svgEl.style.maxWidth = "100%"
                     svgEl.style.height = "auto"
                     svgEl.removeAttribute("height")
@@ -128,7 +129,7 @@ export default function MermaidDiagram({ chart }) {
     }
 
     return (
-        <div className="mermaid-container" tabIndex={0} role="region" aria-label="Diagram — scroll horizontally to view wide charts">
+        <div className="mermaid-container" role="region" aria-label="Diagram">
             <div ref={containerRef} className="mermaid-svg-wrapper" />
             {!rendered && (
                 <div className="mermaid-loading">

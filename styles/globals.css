@@ -517,6 +517,10 @@
 
 /* Mermaid's SVG owns its palette; page night mode must not recolor its labels. */
 .mermaid-container {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
     margin: 1.25rem 0;
     padding: 1rem;
     border: 1px solid #e3d9cc;
@@ -524,15 +528,17 @@
     background: #faf8f4 !important;
     color: #35312b;
     color-scheme: light;
-    overflow-x: auto;
 }
 .mermaid-svg-wrapper {
+    width: 100%;
+    min-width: 0;
     min-height: 40px;
 }
 .mermaid-svg-wrapper svg {
     display: block;
     margin-inline: auto;
     max-width: 100%;
+    min-width: 0;
     height: auto;
     background: #faf8f4 !important;
 }

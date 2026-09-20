@@ -29,6 +29,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Test Markdown rendering
+        run: npm run test:markdown
+
       - name: Build content index
         run: node scripts/build-content-index.mjs
 
