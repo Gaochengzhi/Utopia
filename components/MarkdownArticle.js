@@ -7,9 +7,7 @@ import rehypeRaw from "rehype-raw"
 // full Prism registry. The full build was a major memory cost in the
 // Cloudflare Worker (SSR) and dominated this route's client bundle.
 import SyntaxHighlighter from "react-syntax-highlighter/dist/cjs/prism-async-light"
-import vscDarkPlus from "react-syntax-highlighter/dist/cjs/styles/prism/vsc-dark-plus"
-import "github-markdown-css/github-markdown-light.css"
-import "katex/dist/katex.min.css"
+import { warmCodeTheme } from "/lib/readingTheme"
 import { useRef } from "react"
 import { CDN_BASE, handleCdnError } from "/lib/cdnUrl"
 import dynamic from "next/dynamic"
@@ -113,7 +111,7 @@ export default function MarkdownArticle({ content, meta }) {
     const showMetaAbove = Boolean(meta) && !contentHasH1(content)
 
     return (
-        <div className="lg:max-w-3xl mx-auto p-4">
+        <div className="article-content">
             {showMetaAbove ? <header className="article-head">{meta}</header> : null}
             <ReactMarkdown
                 className="markdown-body mylist text-ink"
@@ -151,14 +149,14 @@ export default function MarkdownArticle({ content, meta }) {
 
                     return !inline && match ? (
                         <SyntaxHighlighter
-                            style={vscDarkPlus}
+                            style={warmCodeTheme}
                             language={lang}
                             PreTag="div"
                             wrapLines={false}
                             showLineNumbers={false}
                             customStyle={{
-                                background: '#1e1e1e !important',
-                                padding: '1rem',
+                                background: 'transparent',
+                                padding: 0,
                                 margin: 0,
                                 borderRadius: '0.5rem',
                                 fontSize: '0.875rem',
@@ -166,7 +164,7 @@ export default function MarkdownArticle({ content, meta }) {
                             }}
                             codeTagProps={{
                                 style: {
-                                    background: '#1e1e1e !important'
+                                    background: 'transparent'
                                 }
                             }}
                             {...props}
@@ -175,14 +173,7 @@ export default function MarkdownArticle({ content, meta }) {
                         </SyntaxHighlighter>
                     ) : (
                         <code
-                            style={{
-                                background: 'rgba(229, 231, 235, 0.9)',
-                                color: '#c7254e',
-                                padding: '0.15em 0.4em',
-                                borderRadius: '4px',
-                                fontSize: '0.9em',
-                                fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-                            }}
+                            className={className}
                             {...props}
                         >
                             {children}

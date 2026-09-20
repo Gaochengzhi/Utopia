@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState, useCallback } from "react"
+import { mermaidThemeVariables } from "/lib/readingTheme"
 
 /**
  * MermaidDiagram — renders a single mermaid code block into an SVG.
  *
- * Uses mermaid's built-in "forest" theme (same style Typora defaults to
- * for attractive green-toned diagrams). Always renders on a white background
- * so it looks identical in both light and dark page modes.
+ * Uses the same warm, light palette as the author's Typora reading theme.
+ * Diagram surfaces stay light in both page modes.
  */
 
 let mermaidInstance = null
@@ -23,8 +23,8 @@ async function getMermaid() {
 
         mermaidInstance.initialize({
             startOnLoad: false,
-            // "forest" — the green-toned built-in theme, same as Typora's popular setting
-            theme: "forest",
+            theme: "base",
+            themeVariables: mermaidThemeVariables,
             fontFamily:
                 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
             fontSize: 14,
@@ -72,6 +72,23 @@ export default function MermaidDiagram({ chart }) {
 
                 const svgEl = containerRef.current.querySelector("svg")
                 if (svgEl) {
+                    // Mermaid turns authored node colors into inline !important
+                    // declarations. Remove these so the light surface AND label
+                    // rules can apply together, including on older articles.
+                    svgEl.querySelectorAll(".node .label-container[style], .node-bkg[style], .node text[style], .node tspan[style]").forEach(el => {
+                        el.style.removeProperty("fill")
+                    })
+                    svgEl.querySelectorAll(".node .label[style], foreignObject [style]").forEach(el => {
+                        el.style.removeProperty("color")
+                        el.style.removeProperty("background")
+                        el.style.removeProperty("background-color")
+                    })
+                    // Keep labels readable on phones; wide diagrams scroll locally.
+                    const naturalWidth = svgEl.viewBox.baseVal.width
+                    if (naturalWidth) {
+                        svgEl.style.width = `${naturalWidth}px`
+                        svgEl.style.minWidth = `${Math.min(naturalWidth, Math.max(640, naturalWidth * 0.8))}px`
+                    }
                     svgEl.style.maxWidth = "100%"
                     svgEl.style.height = "auto"
                     svgEl.removeAttribute("height")
@@ -111,7 +128,7 @@ export default function MermaidDiagram({ chart }) {
     }
 
     return (
-        <div className="mermaid-container">
+        <div className="mermaid-container" tabIndex={0} role="region" aria-label="Diagram — scroll horizontally to view wide charts">
             <div ref={containerRef} className="mermaid-svg-wrapper" />
             {!rendered && (
                 <div className="mermaid-loading">

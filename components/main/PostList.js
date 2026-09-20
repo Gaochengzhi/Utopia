@@ -1,14 +1,6 @@
-import "github-markdown-css/github-markdown-light.css"
 import Link from "next/link"
-import ReactMarkdown from "react-markdown"
 import { formateTime } from "../util/treeSort"
-import remarkMath from "remark-math"
-import rehypeKatex from "rehype-katex"
-import remarkGfm from "remark-gfm"
-import "katex/dist/katex.min.css"
-import rehypeRaw from "rehype-raw"
-import SyntaxHighlighter from "react-syntax-highlighter/dist/cjs/prism-async-light"
-import vscDarkPlus from "react-syntax-highlighter/dist/cjs/styles/prism/vsc-dark-plus"
+import MarkdownArticle from "../MarkdownArticle"
 
 const FileTextIcon = ({ className }) => (
   <svg className={className} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -40,57 +32,9 @@ export default function PostList({ posts, rest }) {
                     <div className="flex-grow border-t border-gray-200 dark:border-gray-600"></div>
                   </div>
                 </div>
-                <div className="flex flex-col  bg-white   mb-14  ">
+                <div className="flex flex-col bg-paper mb-14  ">
                   <div className=" max-h-[40rem] overflow-y-hidden lg:max-w-[70vw]  ">
-                    <ReactMarkdown
-                      className="markdown-body  p-4 mylist"
-                      remarkPlugins={[remarkGfm, remarkMath]}
-                      rehypePlugins={[[rehypeKatex, { strict: false }], rehypeRaw]}
-                      components={{
-                        pre: ({ node, inline, className, ...props }) => (
-                          <pre className={className} {...props} />
-                        ),
-                        code({ node, inline, className, children, ...props }) {
-                          const match = /language-(\w+)/.exec(className || "")
-                          return !inline && match ? (
-                            <SyntaxHighlighter
-                              style={vscDarkPlus}
-                              language={match[1]}
-                              PreTag="div"
-                              wrapLines={false}
-                              showLineNumbers={false}
-                              customStyle={{
-                                background: '#1e1e1e',
-                                padding: '1rem',
-                                margin: 0,
-                                borderRadius: '0.5rem',
-                                fontSize: '0.875rem',
-                                lineHeight: '1.6'
-                              }}
-                              {...props}
-                            >
-                              {String(children).replace(/\n$/, "")}
-                            </SyntaxHighlighter>
-                          ) : (
-                            <code
-                              style={{
-                                background: 'rgba(229, 231, 235, 0.9)',
-                                color: '#c7254e',
-                                padding: '0.15em 0.4em',
-                                borderRadius: '4px',
-                                fontSize: '0.9em',
-                                fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-                              }}
-                              {...props}
-                            >
-                              {children}
-                            </code>
-                          )
-                        },
-                      }}
-                    >
-                      {post.content}
-                    </ReactMarkdown>
+                    <MarkdownArticle content={post.content} />
                   </div>
                   <div className="flex px-4 mt-3 items-center">
                     <div className="flex text-lg items-center space-x-2">

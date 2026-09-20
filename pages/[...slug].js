@@ -142,7 +142,7 @@ export default function Post({ contents, filename, status, folderContents, folde
                         <meta name="viewport" content="initial-scale=1.0, width=device-width" />
                     </Head>
                     <Navbar folderPath={folderPath} />
-                    <div className="main lg:flex lg:mr-9 w-screen bg-paper">
+                    <div className="main article-layout bg-paper">
                         {showToc ? (
                             <div className="hidetoc">
                                 <SlugToc paths={path} />
@@ -154,7 +154,7 @@ export default function Post({ contents, filename, status, folderContents, folde
                         <div className="hidden lg:block flex-shrink-0">
                             <Toc content={displayContent} />
                         </div>
-                        <div className="flex-1 max-w-4xl mx-auto min-w-0">
+                        <div className="article-column">
                             <MarkdownArticle content={displayContent} meta={articleMeta} />
                             <PageView slug={folderPath + '/' + filename} />
                             <div className="pb-10">

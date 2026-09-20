@@ -3,31 +3,33 @@
 @tailwind utilities;
 
 /* ═══════════════════════════════════════════════════════
-   票据视觉体系 tokens —— light = 纯白，dark = 碳黑
+   阅读主题 tokens —— 暖纸色、棕灰墨色与少量陶土色
    Tailwind 色名 paper/panel/chip/ink/ink2/rule/accent/ledger
    引用这些变量（见 tailwind.config.js），.dark 下自动换肤
    ═══════════════════════════════════════════════════════ */
 @layer base {
     :root {
-        --c-paper: 255 255 255;
-        --c-panel: 244 244 244;
-        --c-chip: 250 250 250;
-        --c-ink: 23 23 23;
-        --c-ink2: 115 115 115;
-        --c-rule: 212 212 212;
-        --c-accent: 84 98 120;
-        --c-ledger: 71 92 122;
+        --c-paper: 250 248 244;
+        --c-panel: 241 235 224;
+        --c-chip: 246 242 235;
+        --c-ink: 53 49 43;
+        --c-ink2: 118 108 96;
+        --c-rule: 222 213 200;
+        --c-accent: 166 95 64;
+        --c-ledger: 151 85 57;
+        color-scheme: light;
     }
 
     .dark {
-        --c-paper: 23 23 23;
-        --c-panel: 38 38 38;
-        --c-chip: 32 32 32;
-        --c-ink: 229 229 229;
-        --c-ink2: 163 163 163;
-        --c-rule: 64 64 64;
-        --c-accent: 132 144 160;
-        --c-ledger: 142 156 176;
+        --c-paper: 38 35 31;
+        --c-panel: 49 44 38;
+        --c-chip: 43 39 34;
+        --c-ink: 234 227 215;
+        --c-ink2: 182 168 149;
+        --c-rule: 78 68 56;
+        --c-accent: 216 161 131;
+        --c-ledger: 215 177 148;
+        color-scheme: dark;
     }
 
     html {
@@ -349,29 +351,52 @@
     }
 }
 
-/* ═══════════════════════════════════════════════════════
-   Markdown 正文 —— 覆盖 github-markdown-css，
-   全部走票据 token，因此 light/dark 一套规则通吃
-   ═══════════════════════════════════════════════════════ */
+/* Reading layout: one width limit, with more room on large displays. */
+.article-layout {
+    width: 100%;
+    min-width: 0;
+}
+.article-column {
+    flex: 1 1 0%;
+    min-width: 0;
+    max-width: 70rem;
+    margin-inline: auto;
+}
+.article-content {
+    width: 100%;
+    min-width: 0;
+    padding: 1rem;
+}
+@media (min-width: 1024px) {
+    .article-layout { display: flex; padding-right: 2rem; }
+    .article-content { padding: 1.5rem 2rem; }
+}
+@media (min-width: 1800px) {
+    .article-column { max-width: 80rem; }
+}
+
+/* Markdown: warm paper, quiet hierarchy and compact long-form reading. */
 .markdown-body {
-    font-size: 1.1rem !important;
+    font-size: 1rem !important;
+    line-height: 1.7;
     background-color: transparent !important;
     color: rgb(var(--c-ink)) !important;
+    overflow-wrap: break-word;
 }
-
+.markdown-body ::selection {
+    background: rgb(var(--c-accent) / 0.18);
+}
 .article-head {
     text-align: center;
-    margin-bottom: 2.25rem;
-    padding-top: 1.25rem;
+    margin-bottom: 2rem;
+    padding-top: 1rem;
 }
-
 .article-head > h1 {
     border-bottom: none !important;
     padding-bottom: 0 !important;
     margin-top: 0 !important;
     margin-bottom: 0.55rem !important;
 }
-
 .article-kicker {
     display: flex;
     flex-wrap: wrap;
@@ -383,174 +408,224 @@
     letter-spacing: 0.14em;
     color: rgb(var(--c-ink2));
 }
-
-.markdown-body h1,
-.markdown-body h2,
-.markdown-body h3,
-.markdown-body h4,
-.markdown-body h5,
-.markdown-body h6 {
+.markdown-body :is(h1, h2, h3, h4, h5, h6) {
     color: rgb(var(--c-ink)) !important;
-    border-bottom-color: rgb(var(--c-rule)) !important;
+    border-bottom: 0 !important;
+    margin-top: 1.45em;
+    margin-bottom: 0.65em;
+    padding-bottom: 0;
+    font-weight: 600;
+    line-height: 1.35;
 }
-
-.markdown-body p,
-.markdown-body li,
-.markdown-body td,
-.markdown-body th {
-    font-size: 1.1rem !important;
-    color: rgb(var(--c-ink)) !important;
+.markdown-body h1 { font-size: 1.84em; }
+.markdown-body h2 { font-size: 1.48em; }
+.markdown-body h3 { font-size: 1.24em; }
+.markdown-body h4 { font-size: 1.12em; }
+.markdown-body :is(h5, h6) { font-size: 1em; }
+.markdown-body :is(p, li, td, th) {
+    font-size: inherit;
+    color: inherit;
 }
-
+.markdown-body :is(p, blockquote, ul, ol, table) {
+    margin-top: 0.78em;
+    margin-bottom: 0.78em;
+}
 .markdown-body blockquote {
     color: rgb(var(--c-ink2)) !important;
-    border-left: 3px solid rgb(var(--c-rule)) !important;
+    background: rgb(var(--c-panel));
+    border-left: 2px solid rgb(var(--c-rule)) !important;
+    border-radius: 8px;
+    padding: 0.55rem 1rem;
 }
-
+.markdown-body blockquote > :first-child { margin-top: 0; }
+.markdown-body blockquote > :last-child { margin-bottom: 0; }
 .markdown-body hr {
-    height: 0 !important;
-    background: none !important;
-    border: none !important;
-    border-top: 3px double rgb(var(--c-ink)) !important;
-    opacity: .55;
+    height: 1px !important;
+    background: rgb(var(--c-rule)) !important;
+    border: 0 !important;
+    margin: 1.65rem 0;
 }
-
 .markdown-body table {
-    background-color: transparent !important;
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    border-collapse: collapse;
+    border-top: 1px solid rgb(var(--c-rule));
+    border-bottom: 1px solid rgb(var(--c-rule));
+    background: transparent !important;
+    font-size: 0.93em;
 }
-
 .markdown-body tr {
-    background-color: transparent !important;
-    border-top-color: rgb(var(--c-rule)) !important;
+    background: transparent !important;
+    border-top: 0 !important;
+    border-bottom: 1px solid rgb(var(--c-rule) / 0.7);
 }
-
-.markdown-body th,
-.markdown-body td {
-    border-color: rgb(var(--c-rule)) !important;
+.markdown-body tr:last-child { border-bottom: 0; }
+.markdown-body :is(th, td) {
+    border: 0 !important;
+    padding: 0.7rem 1.1rem 0.7rem 0;
+    text-align: left;
+    line-height: 1.55;
 }
-
-/* Inline code：纸上的红墨标注，两种模式通用 */
+.markdown-body th { font-weight: 600; }
+.markdown-body tbody tr:hover {
+    background: rgb(var(--c-accent) / 0.04) !important;
+}
 .markdown-body code:not(pre code) {
-    background-color: rgb(var(--c-panel)) !important;
+    background: rgb(var(--c-panel)) !important;
     color: rgb(var(--c-accent)) !important;
-    padding: 0.15em 0.4em !important;
-    border-radius: 0 !important;
+    border: 1px solid rgb(var(--c-rule));
+    padding: 0.08em 0.42em 0.1em !important;
+    border-radius: 999px !important;
     font-size: 0.9em !important;
 }
-
-/* Force dark theme for code blocks in both light and dark modes */
-.markdown-body pre,
-.markdown-body pre > div {
-    background-color: #1e1e1e !important;
+.markdown-body pre {
+    margin: 0.9rem 0 1.1rem !important;
+    padding: 0.9rem 1rem !important;
+    border: 1px solid #e3d9cc;
+    border-radius: 8px !important;
+    background: #f5f1e9 !important;
+    color: #35312b;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    overflow-x: auto;
+    color-scheme: light;
 }
-
+.markdown-body pre :is(code, div) {
+    background: transparent !important;
+    border: 0;
+    color: inherit;
+    text-shadow: none;
+}
+.markdown-body pre code { white-space: pre; }
 .markdown-body a {
     color: rgb(var(--c-ledger)) !important;
     text-decoration: underline;
     text-decoration-color: rgb(var(--c-rule));
     text-underline-offset: 3px;
 }
-
 .markdown-body a:hover {
     color: rgb(var(--c-accent)) !important;
     text-decoration-color: rgb(var(--c-accent));
 }
-
 .markdown-body img {
     border: 1px solid rgb(var(--c-rule));
     padding: 5px;
     background: rgb(var(--c-paper));
-    border-radius: 0 !important;
+    border-radius: 4px;
 }
 
-/* ═══════════════════════════════════════════════════════
-   Mermaid Diagram Styles — always light bg, both modes
-   ═══════════════════════════════════════════════════════ */
-
-/* Container: always white bg, thin border, scrolls if oversized */
-.mermaid-container,
-.dark .mermaid-container,
-.markdown-body .mermaid-container,
-.dark .markdown-body .mermaid-container {
-    margin: 1.5rem 0;
-    padding: 1rem 0.5rem;
-    border: 1px solid #e5e7eb;
-    border-radius: 6px;
-    background: #ffffff !important;
+/* Mermaid's SVG owns its palette; page night mode must not recolor its labels. */
+.mermaid-container {
+    margin: 1.25rem 0;
+    padding: 1rem;
+    border: 1px solid #e3d9cc;
+    border-radius: 8px;
+    background: #faf8f4 !important;
+    color: #35312b;
+    color-scheme: light;
     overflow-x: auto;
 }
-
-/* SVG wrapper: center, constrain, scroll on overflow */
 .mermaid-svg-wrapper {
-    display: flex;
-    justify-content: center;
-    align-items: center;
     min-height: 40px;
-    max-height: 600px;
-    overflow: auto;
 }
-
 .mermaid-svg-wrapper svg {
+    display: block;
+    margin-inline: auto;
     max-width: 100%;
-    max-height: 580px;
     height: auto;
+    background: #faf8f4 !important;
+}
+.markdown-body .mermaid-svg-wrapper svg :is(text, tspan) {
+    fill: #35312b !important;
+    color: #35312b !important;
+    stroke: none !important;
+}
+.markdown-body .mermaid-svg-wrapper svg foreignObject,
+.markdown-body .mermaid-svg-wrapper svg foreignObject * {
+    color: #35312b !important;
+    background: transparent !important;
+    font-size: 14px;
+    line-height: 1.5;
+}
+.markdown-body .mermaid-svg-wrapper svg foreignObject p { margin: 0; }
+/* Override dark authored node styles together with their foreground.
+   Restrict fills to node/label surfaces so data colors and arrows survive. */
+.markdown-body .mermaid-svg-wrapper svg :is(
+    .node rect, .node circle, .node ellipse, .node polygon, .node path,
+    .label-container, .branchLabel rect, rect.branchLabelBkg
+) {
+    fill: #eee5d8 !important;
+    stroke: #b6a895 !important;
+}
+.markdown-body .mermaid-svg-wrapper svg .node:nth-child(4n + 2) :is(rect, circle, ellipse, polygon, path) {
+    fill: #e3eadf !important;
+}
+.markdown-body .mermaid-svg-wrapper svg .node:nth-child(4n + 3) :is(rect, circle, ellipse, polygon, path) {
+    fill: #e2e9ed !important;
+}
+.markdown-body .mermaid-svg-wrapper svg .node:nth-child(4n) :is(rect, circle, ellipse, polygon, path) {
+    fill: #f1e2da !important;
+}
+.markdown-body .mermaid-svg-wrapper svg :is(.node .divider, .node .label-line) {
+    fill: none !important;
+}
+.markdown-body .mermaid-svg-wrapper svg :is(.state-start, .state-end) {
+    fill: #85786a !important;
+    stroke: #85786a !important;
+}
+.markdown-body .mermaid-svg-wrapper svg .edgeLabel,
+.markdown-body .mermaid-svg-wrapper svg .edgeLabel p {
+    background: #faf8f4 !important;
+}
+.markdown-body .mermaid-svg-wrapper svg :is(#sequencenumber, #sequencenumber circle) {
+    fill: #eee5d8 !important;
+    stroke: #85786a !important;
+}
+/* Timeline/mindmap panels are paths named node-bkg, not flowchart nodes. */
+.markdown-body .mermaid-svg-wrapper svg .node-bkg {
+  fill: #eee5d8 !important;
+  stroke: #b6a895 !important;
+}
+.markdown-body .mermaid-svg-wrapper svg :is(.section-1, .section-5, .section-9) .node-bkg {
+  fill: #e3eadf !important;
+}
+.markdown-body .mermaid-svg-wrapper svg :is(.section-2, .section-6, .section-10) .node-bkg {
+  fill: #e2e9ed !important;
+}
+.markdown-body .mermaid-svg-wrapper svg :is(.section-3, .section-7, .section-11) .node-bkg {
+  fill: #f1e2da !important;
+}
+.markdown-body .mermaid-svg-wrapper svg .eventWrapper {
+  filter: none !important;
 }
 
-/* Enforce consistent font sizes (min ~12px, target 14px) */
-.mermaid-svg-wrapper text,
-.mermaid-svg-wrapper .label,
-.mermaid-svg-wrapper .nodeLabel,
-.mermaid-svg-wrapper .edgeLabel,
-.mermaid-svg-wrapper .cluster-label,
-.mermaid-svg-wrapper .messageText,
-.mermaid-svg-wrapper .actor,
-.mermaid-svg-wrapper .taskText,
-.mermaid-svg-wrapper .titleText,
-.mermaid-svg-wrapper .sectionTitle {
-    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif !important;
-    font-size: clamp(12px, 14px, 16px) !important;
-}
-
-.mermaid-svg-wrapper .edgeLabel {
-    font-size: clamp(11px, 12px, 14px) !important;
-}
-
-/* Loading state — same in both modes */
 .mermaid-loading {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 0.75rem;
     padding: 1.5rem 1rem;
-    color: #6b7280;
+    color: #766c60;
     font-size: 0.85rem;
 }
-
 .mermaid-loading-spinner {
     width: 18px;
     height: 18px;
-    border: 2px solid #e5e7eb;
-    border-top-color: #6b7280;
+    border: 2px solid #ded5c8;
+    border-top-color: #a65f40;
     border-radius: 50%;
     animation: mermaidSpin 0.8s linear infinite;
 }
-
-@keyframes mermaidSpin {
-    to { transform: rotate(360deg); }
-}
-
-/* Error state — always light bg */
-.mermaid-error,
-.dark .mermaid-error,
-.markdown-body .mermaid-error,
-.dark .markdown-body .mermaid-error {
-    margin: 1.5rem 0;
-    border-radius: 6px;
-    border: 1px solid #fca5a5;
-    background: #ffffff !important;
+@keyframes mermaidSpin { to { transform: rotate(360deg); } }
+.mermaid-error {
+    margin: 1.25rem 0;
+    border-radius: 8px;
+    border: 1px solid #d6b8a7;
+    background: #faf8f4 !important;
+    color-scheme: light;
     overflow: hidden;
 }
-
 .mermaid-error-header {
     display: flex;
     align-items: center;
@@ -558,18 +633,16 @@
     padding: 0.5rem 0.75rem;
     font-size: 0.8rem;
     font-weight: 600;
-    color: #dc2626;
-    border-bottom: 1px solid #fca5a5;
+    color: #a34737;
+    border-bottom: 1px solid #d6b8a7;
 }
-
-.mermaid-error-code {
+.markdown-body .mermaid-error-code {
     margin: 0 !important;
     padding: 0.75rem !important;
-    background: transparent !important;
-    color: #92400e !important;
-    font-size: 0.8rem !important;
-    line-height: 1.5 !important;
-    overflow-x: auto;
+    border: 0;
+    background: #faf8f4 !important;
+    color: #82472f !important;
+    font-size: 0.8rem;
     white-space: pre-wrap;
     word-break: break-word;
 }
@@ -911,128 +984,15 @@ h3 {
     top: 0;
 }
 
-/* 增加文章内容字体大小 */
-.mylist {
-    font-size: 1.1rem; /* 整体增加mylist内容字体大小 */
+/* Markdown list indentation follows the compact reading scale. */
+.mylist :is(ul, ol) {
+    padding-left: 1.45rem;
 }
-
-.mylist p {
-    font-size: 1.1rem; /* 段落字体大小 */
-}
-
-.mylist ul {
-    list-style: initial;
-    margin: initial;
-    padding: 0 0 0 40px;
-    font-size: 1.1rem; /* 增加列表字体大小 */
-}
-
-.mylist ul li {
-    display: list-item;
-}
-
-.mylist ol {
-    list-style-type: decimal;
-    margin: initial;
-    padding: 0 0 0 40px;
-    font-size: 1.1rem; /* 增加有序列表字体大小 */
-}
-
-.mylist ol li {
-    display: list-item;
-}
-
-.mylist pre {
-    margin-bottom: 2em !important;
-    padding: 0em !important;
-    padding-left: 1ch !important;
-    border-radius: 3px !important;
-}
-
-/* 强制所有模式下代码块都使用暗色背景 */
-.mylist pre {
-    background: #1e1e1e !important;
-}
-
-.dark .mylist pre {
-    background: #1e1e1e !important;
-}
-
-/* 修复暗色模式下的代码块行高亮问题 */
-.line-highlight.line-highlight {
-    background: transparent !important;
-    box-shadow: none !important;
-}
-
-/* 暗色模式下的代码块行高亮 - 如果需要保留高亮功能 */
-.dark .line-highlight.line-highlight {
-    background: rgba(255, 255, 255, 0.05) !important;
-    box-shadow: inset 3px 0 0 rgba(255, 255, 255, 0.2) !important;
-}
-
-/* 修复所有可能的 Prism.js 行高亮样式 */
-.token.line-highlight,
-.prism-code .line-highlight,
-code .line-highlight,
-pre .line-highlight {
-    background: transparent !important;
-    box-shadow: none !important;
-}
-
-/* 暗色模式下的 Prism.js 行高亮 */
-.dark .token.line-highlight,
-.dark .prism-code .line-highlight,
-.dark code .line-highlight,
-.dark pre .line-highlight {
-    background: rgba(255, 255, 255, 0.05) !important;
-    box-shadow: inset 3px 0 0 rgba(255, 255, 255, 0.2) !important;
-}
-
-/* 修复 react-syntax-highlighter 代码行背景问题 */
-.token-line,
-.prism-code .token-line,
-code .token-line,
-pre .token-line,
-.linenumber {
-    background: transparent !important;
-    background-color: transparent !important;
-}
-
-/* 修复代码块内的所有行元素 */
-.dark .token-line,
-.dark .prism-code .token-line,
-.dark code .token-line,
-.dark pre .token-line,
-.dark .linenumber {
-    background: transparent !important;
-    background-color: transparent !important;
-}
-
-/* 更彻底的修复：覆盖所有可能的代码块行背景样式 — 仅限 pre 内部的代码块 */
-.mylist pre *,
-.mylist pre span,
-.mylist pre div {
-    background: transparent !important;
-    background-color: transparent !important;
-}
-
-/* 专门针对 react-syntax-highlighter 生成的元素 — 仅限 pre 内部 */
-.dark .mylist pre *,
-.dark .mylist pre span,
-.dark .mylist pre div {
-    background: transparent !important;
-    background-color: transparent !important;
-}
-
-/* Inline code inside .mylist —— 纸上的红墨标注，token 通吃两种模式 */
-.mylist > code,
-.mylist code:not(pre code) {
-    background-color: rgb(var(--c-panel)) !important;
-    color: rgb(var(--c-accent)) !important;
-    padding: 0.15em 0.4em !important;
-    border-radius: 0 !important;
-    font-size: 0.9em !important;
-}
+.mylist ul { list-style-type: disc; }
+.mylist ol { list-style-type: decimal; }
+.mylist li { display: list-item; padding-left: 0.15rem; }
+.mylist li > :is(ul, ol) { margin-block: 0; }
+.mylist li::marker { color: rgb(var(--c-ink2)); }
 
 .mynav {
     background: rgb(var(--c-paper) / 0.82);
@@ -1070,11 +1030,11 @@ pre .token-line,
     }
 
     /* Color Variants */
-    .tag-orange { --tag-color: 194, 96, 32; }
-    .tag-purple { --tag-color: 136, 84, 190; }
-    .tag-sky    { --tag-color: 44, 122, 168; }
+    .tag-orange { --tag-color: 151, 85, 57; }
+    .tag-purple { --tag-color: 121, 97, 123; }
+    .tag-sky    { --tag-color: 77, 104, 120; }
     .tag-gray   { --tag-color: 122, 114, 98; }
-    .tag-green  { --tag-color: 74, 138, 84; }
+    .tag-green  { --tag-color: 82, 106, 75; }
 
     .dark .tag-orange { --tag-color: 224, 146, 92; }
     .dark .tag-purple { --tag-color: 178, 140, 220; }
@@ -1119,7 +1079,7 @@ pre .token-line,
     }
 
     .tk-tab-on {
-        @apply bg-ink text-paper border-ink;
+        @apply bg-panel text-accent border-rule;
     }
 
     /* 加密卡的涂黑摘要 */

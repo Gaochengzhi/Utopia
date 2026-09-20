@@ -1,3 +1,5 @@
+import 'github-markdown-css/github-markdown-light.css'
+import 'katex/dist/katex.min.css'
 import '../styles/globals.css'
 // Self-hosted display faces for the photographer pages (no Google Fonts
 // dependency — must stay reachable from mainland China).

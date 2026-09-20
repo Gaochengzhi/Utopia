@@ -1,70 +1,140 @@
 import MarkdownArticle from "/components/MarkdownArticle"
 import Head from "next/head"
+import Navbar from "/components/Navbar"
+import { Toc, MobileToc } from "/components/Toc"
 
 const testContent = `
-# Mermaid Diagram Test Page
+# Reading theme preview
+
+暖纸色背景与深棕灰文字，让长文阅读更自然。这里是一段中英文混排的示例，便于检查阅读宽度、正文密度与图表文字。
+
+> 引用、**重点**和 [链接](https://gaochengzhi.com) 应当清楚可读。
+
+## Timeline
+
+\`\`\`mermaid
+timeline
+    title Reading and writing
+    2023-09 : Collect sources : Keep the original context
+    2024-03 : Compare ideas : Identify useful differences
+    2024-05 : Build a model : Make assumptions visible
+    2024-06 : Try examples : Check the difficult cases
+    2025-03 : Revise : Improve the explanation
+    2025-07 : Discuss : Learn from feedback
+    2025-12 : Connect : Link related ideas
+    2026-01 : Write : Make the reasoning readable
+    2026-08 : Publish : Share the finished work
+\`\`\`
 
 ## Flowchart
 
 \`\`\`mermaid
-graph TD
-    A[🚀 Start] --> B{Is it working?}
-    B -->|Yes| C[🎉 Celebrate]
-    B -->|No| D[🔍 Debug]
-    D --> E[Fix the bug]
-    E --> B
-    C --> F[✅ Ship it!]
+flowchart LR
+    A[整理思路] --> B{建立联系}
+    B -->|继续| C[形成文章]
+    B -->|修改| D[重新思考]
+    style A fill:#222,color:#222
 \`\`\`
 
-## Sequence Diagram
+## Sequence diagram
 
 \`\`\`mermaid
 sequenceDiagram
-    participant U as 👤 User
-    participant B as 🌐 Browser
-    participant S as ⚡ Server
-    participant D as 🗄️ Database
-
-    U->>B: Visit blog post
-    B->>S: GET /post/article.md
-    S->>D: Query content
-    D-->>S: Markdown + Mermaid
-    S-->>B: Rendered HTML
-    B-->>U: Beautiful diagrams!
+    autonumber
+    participant U as Reader
+    participant B as Blog
+    U->>B: Open an article
+    Note over U,B: Clear labels on light surfaces
+    B-->>U: Display content
 \`\`\`
 
-## State Diagram
+## State diagram
 
 \`\`\`mermaid
 stateDiagram-v2
     [*] --> Idle
     Idle --> Loading: fetch
-    Loading --> Rendering: data received
+    Loading --> Ready: success
     Loading --> Error: timeout
-    Rendering --> Rendered: SVG ready
     Error --> Idle: retry
-    Rendered --> [*]
+    Ready --> [*]
 \`\`\`
 
-## Regular Code Block (should still work)
+## Code and math
+
+\`inline code\` and $E = mc^2$.
 
 \`\`\`python
+# Read, reflect, write
 def hello():
-    print("Mermaid support added!")
+    count = 3
+    print("Warm paper")
 \`\`\`
 
-## Inline math still works: $E = mc^2$
+## Pie chart
+
+\`\`\`mermaid
+pie title Time for ideas
+    "Reading" : 35
+    "Writing" : 30
+    "Discussion" : 20
+    "Revision" : 15
+\`\`\`
+
+## Gantt chart
+
+\`\`\`mermaid
+gantt
+    title A small writing project
+    dateFormat YYYY-MM-DD
+    section Draft
+    Read sources :done, read, 2026-09-01, 3d
+    Write draft :active, draft, after read, 4d
+    Review :crit, review, after draft, 2d
+\`\`\`
+
+## Mindmap
+
+\`\`\`mermaid
+mindmap
+  root((Reading))
+    Sources
+      Papers
+      Notes
+    Questions
+      Evidence
+      Assumptions
+    Writing
+      Draft
+      Review
+\`\`\`
+
+## Table
+
+| Area | Surface | Text |
+| --- | --- | --- |
+| Article | Warm paper | Brown gray |
+| Diagram | Sand, sage, blue gray | Dark ink |
+| Code | Pale cream | Muted syntax colors |
 `
 
 export default function TestMermaid() {
     return (
         <>
             <Head>
-                <title>Mermaid Test</title>
+                <title>Reading Theme Preview</title>
+                <meta name="robots" content="noindex" />
             </Head>
-            <div className="max-w-4xl mx-auto py-20 px-4 bg-white dark:bg-gray-900 min-h-screen">
-                <MarkdownArticle content={testContent} />
+            <Navbar />
+            <div className="main article-layout bg-paper min-h-screen">
+                <div className="hidden lg:block flex-shrink-0">
+                    <Toc content={testContent} />
+                </div>
+                <div className="article-column">
+                    <MarkdownArticle content={testContent} />
+                </div>
             </div>
+            <div className="lg:hidden"><MobileToc content={testContent} /></div>
         </>
     )
 }
